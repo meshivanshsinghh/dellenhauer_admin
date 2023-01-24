@@ -14,7 +14,7 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="$FLUTTER_BASE_HREF">
+  <base href="/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -54,5 +54,33 @@
       });
     });
   </script>
+  
+  <!--setting up firebase -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-analytics.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // replace it with your firebase details
+    const firebaseConfig = {
+      apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
+      authDomain: "dellenhauer-eae5f.firebaseapp.com",
+      projectId: "dellenhauer-eae5f",
+      storageBucket: "dellenhauer-eae5f.appspot.com",
+      messagingSenderId: "337585374916",
+      appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
+      measurementId: "G-6TTJEH91W"
+    };
+
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.getAnalytics(app);
+  </script>
+ 
+
 </body>
 </html>
