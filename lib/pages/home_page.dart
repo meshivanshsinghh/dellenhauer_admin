@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
@@ -64,8 +65,8 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[6], icons[6]) as Tab,
                     ],
                     contents: [
+                      ChannelsScreen(),
                       OverviewScreen(),
-                      Container(),
                       Container(),
                       Container(),
                       Container(),

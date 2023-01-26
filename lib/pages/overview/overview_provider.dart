@@ -15,75 +15,38 @@ class OverviewProvider extends ChangeNotifier {
 
   void attachContext(BuildContext context) {
     this.context = context;
-    _userCount = 0;
-    _channelCount = 0;
-    _servicesCount = 0;
-    _requestCount = 0;
   }
 
   // getting initial data
   Future<void> loadData({bool reload = false}) async {
-    _userCount = 0;
-    _channelCount = 0;
-    _servicesCount = 0;
-    _requestCount = 0;
-    await getUserCount();
-    await getChannelCount();
-    await getServicesCount();
-    await getRequestCount();
+    await getData();
   }
 
   // getting user data
-  Future getUserCount() async {
+  Future getData() async {
     try {
-      QuerySnapshot query = await firebaseFirestore.collection('users').get();
-      _userCount += query.docs.length;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // get channel data
-  Future getChannelCount() async {
-    try {
-      QuerySnapshot query =
+      // user data
+      QuerySnapshot queryUserData =
+          await firebaseFirestore.collection('users').get();
+      _userCount = queryUserData.docs.length;
+      // channelcount
+      QuerySnapshot queryChannel =
           await firebaseFirestore.collection('channels').get();
-      _channelCount += query.docs.length;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // getting services data
-  Future getServicesCount() async {
-    try {
-      DocumentSnapshot query =
+      _channelCount = queryChannel.docs.length;
+      // services count
+      DocumentSnapshot queryServices =
           await firebaseFirestore.collection('admin').doc('services').get();
 
-      if (query.exists) {
-        _servicesCount += query['total_count'] as int;
-        notifyListeners();
-      } else {
-        _servicesCount = 0;
-        notifyListeners();
-      }
-    } catch (e) {
-      return null;
-    }
-  }
+      _servicesCount = queryServices['total_count'] as int;
 
-  // getting request count
-  Future getRequestCount() async {
-    try {
-      QuerySnapshot query = await firebaseFirestore
+      // requests count
+      QuerySnapshot queryRequests = await firebaseFirestore
           .collection('admin')
           .doc('settings')
           .collection('channelRequests')
           .get();
 
-      _requestCount += query.docs.length;
+      _requestCount = queryRequests.docs.length;
       notifyListeners();
     } catch (e) {
       return null;

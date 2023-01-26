@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/home_page.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
@@ -33,6 +34,8 @@ class MyApp extends StatelessWidget {
             create: (_) => AdminDataProvider()),
         ChangeNotifierProvider<OverviewProvider>(
             create: (_) => OverviewProvider()),
+        ChangeNotifierProvider<ChannelProvider>(
+            create: (_) => ChannelProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
