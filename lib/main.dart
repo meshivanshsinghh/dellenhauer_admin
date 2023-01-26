@@ -1,13 +1,23 @@
 import 'package:dellenhauer_admin/pages/home_page.dart';
+import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
+      appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
+      messagingSenderId: "337585374916",
+      projectId: "dellenhauer-eae5f",
+    ),
+  );
   setUrlStrategy(PathUrlStrategy());
   runApp(const MyApp());
 }
@@ -21,6 +31,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AdminDataProvider>(
             create: (_) => AdminDataProvider()),
+        ChangeNotifierProvider<OverviewProvider>(
+            create: (_) => OverviewProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
