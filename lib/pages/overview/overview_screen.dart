@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -44,41 +42,57 @@ class _OverviewScreenState extends State<OverviewScreen> {
         child: Container(
           margin: const EdgeInsets.all(20),
           padding: const EdgeInsets.only(top: 30, bottom: 10),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              overviewProvider.loadData(reload: true);
-            },
-            color: Colors.red,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              scrollDirection: Axis.vertical,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hey Admin!',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 30),
+          child: overviewProvider.userCount == 0 &&
+                  overviewProvider.requestCount == 0 &&
+                  overviewProvider.channelCount == 0 &&
+                  overviewProvider.servicesCount == 0
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.redAccent,
                   ),
-                  const SizedBox(height: 30),
-                  Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 10,
-                    spacing: 10,
-                    children: [
-                      card('TOTAL USERS', overviewProvider.userCount,
-                          FontAwesomeIcons.solidUser),
-                      card('TOTAL CHANNELS', overviewProvider.channelCount,
-                          FontAwesomeIcons.peopleGroup),
-                      card('TOTAL JOIN REQUESTS', overviewProvider.requestCount,
-                          FontAwesomeIcons.userPlus),
-                      card('TOTAL SERVICES', overviewProvider.servicesCount,
-                          FontAwesomeIcons.briefcase),
-                    ],
+                )
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    overviewProvider.loadData(reload: true);
+                  },
+                  color: Colors.red,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Hey Admin!',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 30),
+                        ),
+                        const SizedBox(height: 30),
+                        Wrap(
+                          direction: Axis.horizontal,
+                          runSpacing: 10,
+                          spacing: 10,
+                          children: [
+                            card('TOTAL USERS', overviewProvider.userCount,
+                                FontAwesomeIcons.solidUser),
+                            card(
+                                'TOTAL CHANNELS',
+                                overviewProvider.channelCount,
+                                FontAwesomeIcons.peopleGroup),
+                            card(
+                                'TOTAL JOIN REQUESTS',
+                                overviewProvider.requestCount,
+                                FontAwesomeIcons.userPlus),
+                            card(
+                                'TOTAL SERVICES',
+                                overviewProvider.servicesCount,
+                                FontAwesomeIcons.briefcase),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
         ));
   }
 

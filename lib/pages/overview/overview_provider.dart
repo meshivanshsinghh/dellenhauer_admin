@@ -15,18 +15,10 @@ class OverviewProvider extends ChangeNotifier {
 
   void attachContext(BuildContext context) {
     this.context = context;
-    _userCount = 0;
-    _channelCount = 0;
-    _servicesCount = 0;
-    _requestCount = 0;
   }
 
   // getting initial data
   Future<void> loadData({bool reload = false}) async {
-    _userCount = 0;
-    _channelCount = 0;
-    _servicesCount = 0;
-    _requestCount = 0;
     await getUserCount();
     await getChannelCount();
     await getServicesCount();
@@ -37,7 +29,7 @@ class OverviewProvider extends ChangeNotifier {
   Future getUserCount() async {
     try {
       QuerySnapshot query = await firebaseFirestore.collection('users').get();
-      _userCount += query.docs.length;
+      _userCount = query.docs.length;
       notifyListeners();
     } catch (e) {
       return null;
@@ -49,7 +41,7 @@ class OverviewProvider extends ChangeNotifier {
     try {
       QuerySnapshot query =
           await firebaseFirestore.collection('channels').get();
-      _channelCount += query.docs.length;
+      _channelCount = query.docs.length;
       notifyListeners();
     } catch (e) {
       return null;
@@ -62,13 +54,8 @@ class OverviewProvider extends ChangeNotifier {
       DocumentSnapshot query =
           await firebaseFirestore.collection('admin').doc('services').get();
 
-      if (query.exists) {
-        _servicesCount += query['total_count'] as int;
-        notifyListeners();
-      } else {
-        _servicesCount = 0;
-        notifyListeners();
-      }
+      _servicesCount = query['total_count'] as int;
+      notifyListeners();
     } catch (e) {
       return null;
     }
@@ -83,7 +70,7 @@ class OverviewProvider extends ChangeNotifier {
           .collection('channelRequests')
           .get();
 
-      _requestCount += query.docs.length;
+      _requestCount = query.docs.length;
       notifyListeners();
     } catch (e) {
       return null;
