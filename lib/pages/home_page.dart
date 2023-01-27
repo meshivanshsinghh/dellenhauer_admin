@@ -1,5 +1,6 @@
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
+import 'package:dellenhauer_admin/pages/users/users_screen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -65,9 +66,9 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[6], icons[6]) as Tab,
                     ],
                     contents: [
-                      ChannelsScreen(),
-                      OverviewScreen(),
-                      Container(),
+                      const OverviewScreen(),
+                      const ChannelsScreen(),
+                      const UserScreen(),
                       Container(),
                       Container(),
                       Container(),

@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/models/channel_model.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -15,7 +15,7 @@ class ChannelsScreen extends StatefulWidget {
 
 class _ChannelsScreenState extends State<ChannelsScreen> {
   String? _sortByText;
-  late ChannelProvider channelProvider;
+
   ScrollController? scrollController;
   late bool _descending;
   late String _orderBy;
@@ -156,7 +156,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           // displaying content here
           Expanded(
               child: hasData == false
-                  ? const Text("hellworld")
+                  ? emptyPage(FontAwesomeIcons.peopleGroup, 'No Channel Found!')
                   : RefreshIndicator(
                       child: ListView.builder(
                         itemCount: _data.length + 1,
@@ -223,7 +223,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         return const [
           PopupMenuItem(value: 'new', child: Text('Newest First')),
           PopupMenuItem(value: 'old', child: Text('Oldest First')),
-          PopupMenuItem(value: 'users', child: Text('Most Users')),
+          // PopupMenuItem(value: 'users', child: Text('Most Users')),
         ];
       },
       onSelected: (dynamic value) {
@@ -239,12 +239,13 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             _orderBy = 'created_timestamp';
             _descending = false;
           });
-        } else if (value == 'users') {
-          setState(() {
-            _sortByText = 'Most Users';
-            _orderBy = 'members_id';
-          });
         }
+        // else if (value == 'users') {
+        //   setState(() {
+        //     _sortByText = 'Most Users';
+        //     _orderBy = 'members_id';
+        //   });
+        // }
         // refreshing data
         refreshData();
       },
@@ -263,53 +264,192 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       ),
       child: Row(
         children: [
-          CachedNetworkImage(
-            imageUrl: channelModel.channelPhoto,
-            placeholder: (context, url) {
-              return Container(
-                height: 130,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/placeholder.jpeg'),
-                    fit: BoxFit.cover,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showContentPreview(context, channelModel.channelPhoto),
+            child: CachedNetworkImage(
+              imageUrl: channelModel.channelPhoto,
+              placeholder: (context, url) {
+                return Container(
+                  height: 130,
+                  width: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/placeholder.jpeg'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              );
-            },
-            errorWidget: (context, url, error) {
-              return Container(
-                height: 130,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/placeholder.jpeg'),
-                    fit: BoxFit.cover,
+                );
+              },
+              errorWidget: (context, url, error) {
+                return Container(
+                  height: 130,
+                  width: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/placeholder.jpeg'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              );
-            },
-            imageBuilder: (context, imageProvider) {
-              return Container(
-                height: 130,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                  image: DecorationImage(
-                    image: imageProvider,
-                    fit: BoxFit.cover,
+                );
+              },
+              imageBuilder: (context, imageProvider) {
+                return Container(
+                  height: 130,
+                  width: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(top: 15, left: 15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  channelModel.channelName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    // members
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.solidUser,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            channelModel.membersId.length.toString(),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // moderators
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.userSecret,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            channelModel.membersId.length.toString(),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.remove_red_eye,
+                          size: 15,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      onTap: () =>
+                          handlePreview(context, channelModel.channelPhoto),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 15,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      onTap: () => showSnackbar(context, 'Editing'),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.delete,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                      onTap: () => showSnackbar(context, 'Editing'),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          )
         ],
       ),
     );
+  }
+
+  void handlePreview(BuildContext context, String imageUrl) async {
+    await showContentPreview(context, imageUrl);
   }
 }

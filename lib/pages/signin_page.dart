@@ -74,12 +74,12 @@ class _SignInPageState extends State<SignInPage> {
                   decoration: InputDecoration(
                     hintText: 'Enter password',
                     focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purple)),
+                        borderSide: BorderSide(color: Colors.red)),
                     enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purple)),
+                        borderSide: BorderSide(color: Colors.red)),
                     border: const OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Colors.purple,
+                        color: Colors.red,
                       ),
                     ),
                     labelText: 'Password',
@@ -121,7 +121,7 @@ class _SignInPageState extends State<SignInPage> {
               height: 45,
               width: 200,
               decoration: BoxDecoration(
-                color: Colors.purple,
+                color: Colors.red,
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(

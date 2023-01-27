@@ -19,34 +19,58 @@ class OverviewProvider extends ChangeNotifier {
 
   // getting initial data
   Future<void> loadData({bool reload = false}) async {
-    await getData();
+    await getUserCount();
+    await getChannelCount();
+    await getServicesCount();
+    await getRequestCount();
   }
 
   // getting user data
-  Future getData() async {
+  Future getUserCount() async {
     try {
-      // user data
-      QuerySnapshot queryUserData =
-          await firebaseFirestore.collection('users').get();
-      _userCount = queryUserData.docs.length;
-      // channelcount
-      QuerySnapshot queryChannel =
+      QuerySnapshot query = await firebaseFirestore.collection('users').get();
+      _userCount = query.docs.length;
+      notifyListeners();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // get channel data
+  Future getChannelCount() async {
+    try {
+      QuerySnapshot query =
           await firebaseFirestore.collection('channels').get();
-      _channelCount = queryChannel.docs.length;
-      // services count
-      DocumentSnapshot queryServices =
+      _channelCount = query.docs.length;
+      notifyListeners();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // getting services data
+  Future getServicesCount() async {
+    try {
+      DocumentSnapshot query =
           await firebaseFirestore.collection('admin').doc('services').get();
 
-      _servicesCount = queryServices['total_count'] as int;
+      _servicesCount = query['total_count'] as int;
+      notifyListeners();
+    } catch (e) {
+      return null;
+    }
+  }
 
-      // requests count
-      QuerySnapshot queryRequests = await firebaseFirestore
+  // getting request count
+  Future getRequestCount() async {
+    try {
+      QuerySnapshot query = await firebaseFirestore
           .collection('admin')
           .doc('settings')
           .collection('channelRequests')
           .get();
 
-      _requestCount = queryRequests.docs.length;
+      _requestCount = query.docs.length;
       notifyListeners();
     } catch (e) {
       return null;
