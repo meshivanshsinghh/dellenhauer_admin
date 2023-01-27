@@ -1,5 +1,7 @@
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_screen.dart';
+import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
 import 'package:dellenhauer_admin/pages/users/users_screen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
@@ -69,8 +71,8 @@ class _HomePageState extends State<HomePage> {
                       const OverviewScreen(),
                       const ChannelsScreen(),
                       const UserScreen(),
-                      Container(),
-                      Container(),
+                      const PushNotificationScreen(),
+                      const RequestsScreenList(),
                       Container(),
                       Container(),
                     ],
