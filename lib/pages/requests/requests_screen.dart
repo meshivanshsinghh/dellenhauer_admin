@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/pages/requests/request_list.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_provider.dart';
+import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -31,10 +33,9 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
       requestsProvider = Provider.of<RequestsProvider>(context, listen: false);
 
       requestsProvider.attachContext(context);
-      requestsProvider.setLoading(isLoading: true);
+      requestsProvider.setChannelDataLoading(isLoading: true);
       requestsProvider.getChannelData(
         orderBy: orderBy,
-        sortByText: sortByText,
         descending: descending,
       );
     });
@@ -42,9 +43,9 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
 
   void refreshData() {
     requestsProvider = Provider.of<RequestsProvider>(context, listen: false);
-    requestsProvider.setLastVisible(lastVisible: null);
-    requestsProvider.setLoading(isLoading: true);
-    requestsProvider.data.clear();
+    requestsProvider.setLastVisibleChannelList(lastVisible: null);
+    requestsProvider.setChannelDataLoading(isLoading: true);
+    requestsProvider.channelData.clear();
     requestsProvider.getChannelData(orderBy: orderBy, descending: descending);
     requestsProvider.notifyListeners();
   }
@@ -57,16 +58,20 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
 
   void _scrollListener() async {
     requestsProvider = Provider.of<RequestsProvider>(context, listen: true);
-    if (!requestsProvider.isLoading) {
+    if (!requestsProvider.isLoadingChannelList) {
       if (scrollController!.position.pixels ==
           scrollController!.position.maxScrollExtent) {
-        requestsProvider.setLoading(isLoading: true);
+        requestsProvider.setChannelDataLoading(isLoading: true);
         requestsProvider.getChannelData(
           orderBy: orderBy,
           descending: descending,
         );
       }
     }
+  }
+
+  navigateToRequestsScreen(BuildContext context, ChannelModel channelData) {
+    nextScreen(context, RequestListScreen(channelModel: channelData));
   }
 
   @override
@@ -135,13 +140,13 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
 
           // displaying content here
           Expanded(
-              child: requestsProvider.isLoading == true
+              child: requestsProvider.isLoadingChannelList == true
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: Colors.redAccent,
                       ),
                     )
-                  : requestsProvider.hasData == false
+                  : requestsProvider.hasChannelData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
                       : RefreshIndicator(
@@ -150,18 +155,19 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
                           },
                           color: Colors.red,
                           child: ListView.builder(
-                            itemCount: requestsProvider.data.length + 1,
+                            itemCount: requestsProvider.channelData.length + 1,
                             itemBuilder: (context, index) {
-                              if (index < requestsProvider.data.length) {
+                              if (index < requestsProvider.channelData.length) {
                                 final ChannelModel d = ChannelModel.fromMap(
-                                    requestsProvider.data[index].data()
+                                    requestsProvider.channelData[index].data()
                                         as dynamic);
                                 return buildChannelList(d);
                               }
                               return Center(
                                 child: Opacity(
-                                  opacity:
-                                      requestsProvider.isLoading ? 1.0 : 0.0,
+                                  opacity: requestsProvider.isLoadingChannelList
+                                      ? 1.0
+                                      : 0.0,
                                   child: const SizedBox(
                                     width: 32,
                                     height: 32,
@@ -308,6 +314,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
               color: Colors.black54,
             ),
           ),
+          onTap: () => navigateToRequestsScreen(context, channelData),
         ),
       ),
     );

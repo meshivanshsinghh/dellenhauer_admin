@@ -68,8 +68,8 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[6], icons[6]) as Tab,
                     ],
                     contents: [
-                      const OverviewScreen(),
                       const ChannelsScreen(),
+                      const OverviewScreen(),
                       const UserScreen(),
                       const PushNotificationScreen(),
                       const RequestsScreenList(),
