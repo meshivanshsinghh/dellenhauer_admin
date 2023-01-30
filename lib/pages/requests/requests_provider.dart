@@ -31,8 +31,6 @@ class RequestsProvider extends ChangeNotifier {
 
   void attachContext(BuildContext context) {
     this.context = context;
-    _channelData = [];
-    _requestData = [];
   }
 
   /* 

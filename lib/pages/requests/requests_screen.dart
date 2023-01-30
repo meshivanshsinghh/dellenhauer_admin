@@ -31,7 +31,6 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
     Future.delayed(Duration.zero, () {
       scrollController = ScrollController()..addListener(_scrollListener);
       requestsProvider = Provider.of<RequestsProvider>(context, listen: false);
-
       requestsProvider.attachContext(context);
       requestsProvider.setChannelDataLoading(isLoading: true);
       requestsProvider.getChannelData(

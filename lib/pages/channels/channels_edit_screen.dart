@@ -306,7 +306,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           ),
           Switch(
             value: value,
-            activeColor: Colors.blue,
+            activeColor: Colors.redAccent,
             onChanged: onChanged,
           ),
         ],
