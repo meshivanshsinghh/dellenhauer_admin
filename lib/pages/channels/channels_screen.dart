@@ -269,7 +269,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => showContentPreview(context, channelModel.channelPhoto),
+            onTap: () =>
+                showImageContentDialog(context, channelModel.channelPhoto),
             child: CachedNetworkImage(
               imageUrl: channelModel.channelPhoto,
               placeholder: (context, url) {
@@ -454,6 +455,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   }
 
   void handlePreview(BuildContext context, String imageUrl) async {
-    await showContentPreview(context, imageUrl);
+    await showImageContentDialog(context, imageUrl);
   }
 }

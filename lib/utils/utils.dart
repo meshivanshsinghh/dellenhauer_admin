@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:flutter/material.dart';
 
 void showSnackbar(BuildContext context, String content) {
@@ -6,7 +7,7 @@ void showSnackbar(BuildContext context, String content) {
   ));
 }
 
-showContentPreview(context, imageUrl) {
+showImageContentDialog(context, imageUrl) {
   showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -69,6 +70,42 @@ void deletingUser(BuildContext context, String title, String content,
             button1,
             button2,
           ],
+        );
+      });
+}
+
+// dialog for displaying content
+showTextContentDialog(context, String text, UserModel userData) {
+  showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(15),
+            child: SizedBox(
+                height: 400,
+                width: 400,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Image(
+                        image: NetworkImage(userData.profilePic!),
+                      ),
+                      title: Text('${userData.firstName} ${userData.lastName}'),
+                      subtitle: Text(
+                        '${userData.phoneNumber}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      text,
+                      maxLines: null,
+                      style: const TextStyle(color: Colors.black87),
+                    )
+                  ],
+                )),
+          ),
         );
       });
 }

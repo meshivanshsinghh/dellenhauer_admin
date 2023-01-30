@@ -1,6 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_model.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_provider.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -31,6 +34,8 @@ class _RequestListScreenState extends State<RequestListScreen> {
       scrollController = ScrollController()..addListener(_scrollListener);
       requestsProvider = Provider.of<RequestsProvider>(context, listen: false);
       requestsProvider.attachContext(context);
+      requestsProvider.requestData.clear();
+      requestsProvider.setLastVisibleChannelRequestList(lastVisible: null);
       requestsProvider.setRequestDataLoading(isLoading: true);
       requestsProvider.getChannelRequestList(
         orderBy: orderBy,
@@ -132,7 +137,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Click on any channel to view list of channel requests',
+                      'Approve/Decline the requests in this channel',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black54,
@@ -233,13 +238,13 @@ class _RequestListScreenState extends State<RequestListScreen> {
         if (value == 'new') {
           setState(() {
             sortByText = 'Newest First';
-            orderBy = 'created_timestamp';
+            orderBy = 'createdAt';
             descending = true;
           });
         } else if (value == 'old') {
           setState(() {
             sortByText = 'Oldest First';
-            orderBy = 'created_timestamp';
+            orderBy = 'createdAt';
             descending = false;
           });
         }
@@ -250,6 +255,150 @@ class _RequestListScreenState extends State<RequestListScreen> {
 
   // request list
   Widget buildRequestList(ChannelRequestModel requestData) {
-    return Container();
+    return Column(
+      children: [
+        FutureBuilder(
+          future: requestsProvider.returnUserModelFromId(requestData.userId),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Error');
+            } else if (snapshot.hasData) {
+              return Container(
+                height: 120,
+                padding: const EdgeInsets.all(15),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[200]!),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.only(top: 20),
+                child: ListTile(
+                  leading: CachedNetworkImage(
+                    imageUrl: snapshot.data!.profilePic!,
+                    placeholder: (context, url) {
+                      return Container(
+                        height: 60,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[300],
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/placeholder.jpeg'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                    errorWidget: (context, url, error) {
+                      return Container(
+                        height: 60,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[300],
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/placeholder.jpeg'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                    imageBuilder: (context, imageProvider) {
+                      return Container(
+                        height: 60,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[300],
+                          image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  title: SelectableText(
+                    '${snapshot.data!.firstName} ${snapshot.data!.lastName}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: SelectableText(
+                    'Request Id: ${requestData.requestId} \nQuery: ${requestData.requestText}',
+                    maxLines: 3,
+                  ),
+                  isThreeLine: true,
+                  trailing: IconButton(
+                      icon: const Icon(FontAwesomeIcons.eye),
+                      onPressed: () {
+                        showTextContentDialog(
+                          context,
+                          requestData.requestText,
+                          snapshot.data!,
+                        );
+                      }),
+                ),
+              );
+            }
+            return Container(
+              height: 120,
+              padding: const EdgeInsets.all(15),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.only(top: 20),
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            actionButton(
+              buttonBackgroundColor: Colors.redAccent,
+              textColor: Colors.white,
+              onPressed: () {
+                requestsProvider
+                    .acceptChannelRequest(
+                        channelRequestData: requestData,
+                        channelId: widget.channelModel.groupId)
+                    .whenComplete(() {
+                  showSnackbar(context, 'User successfully added to channel');
+                  refreshData();
+                });
+              },
+              title: 'Approve',
+            ),
+            const SizedBox(width: 20),
+            actionButton(
+              buttonBackgroundColor: Colors.grey,
+              textColor: Colors.black,
+              onPressed: () {},
+              title: 'Decline',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // building the action buttons
+  Widget actionButton({
+    required Color buttonBackgroundColor,
+    required Color textColor,
+    required VoidCallback onPressed,
+    required String title,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: buttonBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      ),
+      child: Text(
+        title,
+        style: TextStyle(color: textColor),
+      ),
+    );
   }
 }
