@@ -1,0 +1,3 @@
+1. implementing the google sign in authentication
+2. checking the database and seeing if the required user is the admin for dellenhauer
+3. when join access required is changed to false, then all the requests will automatically get updated with status as accepted.

@@ -138,7 +138,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'All Items',
+                'All Channels',
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.w800,
@@ -160,6 +160,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
               child: hasData == false
                   ? emptyPage(FontAwesomeIcons.peopleGroup, 'No Channel Found!')
                   : RefreshIndicator(
+                      color: Colors.redAccent,
                       child: ListView.builder(
                         itemCount: _data.length + 1,
                         itemBuilder: (context, index) {
@@ -379,7 +380,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            channelModel.membersId.length.toString(),
+                            channelModel.moderatorsId.length.toString(),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,

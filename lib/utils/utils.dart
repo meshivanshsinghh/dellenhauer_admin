@@ -40,3 +40,35 @@ showContentPreview(context, imageUrl) {
         );
       });
 }
+
+void deletingUser(BuildContext context, String title, String content,
+    ElevatedButton button1, ElevatedButton button2) {
+  showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: const EdgeInsets.all(20),
+          elevation: 0,
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: Text(
+            content,
+            style: TextStyle(
+              color: Colors.grey[900],
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          actions: [
+            button1,
+            button2,
+          ],
+        );
+      });
+}
