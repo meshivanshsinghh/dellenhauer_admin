@@ -61,7 +61,7 @@ class _SignInPageState extends State<SignInPage> {
               'Enter the admin password to login',
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w300,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 50),

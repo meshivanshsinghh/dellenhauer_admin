@@ -1,3 +1,8 @@
 1. implementing the google sign in authentication
 2. checking the database and seeing if the required user is the admin for dellenhauer
 3. when join access required is changed to false, then all the requests will automatically get updated with status as accepted.
+4. deleting a channel
+5. adding users and moderators in channel
+6. editing user data
+7. adding related channel functionality in channels
+8. showcasing new channel requests

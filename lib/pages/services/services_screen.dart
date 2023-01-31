@@ -1,5 +1,6 @@
 import 'package:dellenhauer_admin/pages/services/services_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -80,13 +81,20 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                     onPressed: () {
-                      serviceProvider
-                          .addNewService(
-                        serviceName: _serviceController.text.trim(),
-                      )
-                          .whenComplete(() {
-                        _serviceController.clear();
-                      });
+                      if (_serviceController.text.trim().isNotEmpty) {
+                        serviceProvider
+                            .addNewService(
+                          serviceName: _serviceController.text.trim(),
+                        )
+                            .whenComplete(() {
+                          showSnackbar(context, 'Service added successfully');
+                          setState(() {
+                            _serviceController.clear();
+                          });
+                        });
+                      } else {
+                        showSnackbar(context, 'Please fill out all field');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,

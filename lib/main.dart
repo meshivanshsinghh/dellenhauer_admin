@@ -1,4 +1,6 @@
+import 'package:dellenhauer_admin/pages/awards/awards_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
+import 'package:dellenhauer_admin/pages/courses/courses_provider.dart';
 import 'package:dellenhauer_admin/pages/home_page.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_provider.dart';
@@ -42,6 +44,9 @@ class MyApp extends StatelessWidget {
             create: (_) => ChannelProvider()),
         ChangeNotifierProvider<ServicesProvider>(
             create: (_) => ServicesProvider()),
+        ChangeNotifierProvider<CoursesProvider>(
+            create: (_) => CoursesProvider()),
+        ChangeNotifierProvider<AwardsProvider>(create: (_) => AwardsProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -63,7 +63,7 @@ class ServicesProvider extends ChangeNotifier {
 
   // adding a new service to our database
   Future<void> addNewService({required String serviceName}) async {
-    DocumentReference a = await firebaseFirestore
+    DocumentReference a = firebaseFirestore
         .collection('admin')
         .doc('services')
         .collection('serviceCollection')
@@ -79,5 +79,9 @@ class ServicesProvider extends ChangeNotifier {
           isActive: true,
           name: serviceName,
         ).toJson());
+    // updating the count
+    // await firebaseFirestore.collection('admin').doc('services').update({
+    //   'total_count':
+    // });
   }
 }

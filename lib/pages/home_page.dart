@@ -1,4 +1,6 @@
+import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
+import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_screen.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
@@ -29,6 +31,8 @@ class _HomePageState extends State<HomePage> {
     FontAwesomeIcons.solidBell,
     FontAwesomeIcons.userPlus,
     FontAwesomeIcons.briefcase,
+    FontAwesomeIcons.book,
+    FontAwesomeIcons.trophy,
     FontAwesomeIcons.gear,
   ];
   final titles = [
@@ -38,6 +42,8 @@ class _HomePageState extends State<HomePage> {
     'Push Notifications',
     'Requests',
     'Services',
+    'Courses',
+    'Awards',
     'Settings'
   ];
 
@@ -71,6 +77,8 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[4], icons[4]) as Tab,
                       tab(titles[5], icons[5]) as Tab,
                       tab(titles[6], icons[6]) as Tab,
+                      tab(titles[7], icons[7]) as Tab,
+                      tab(titles[8], icons[8]) as Tab,
                     ],
                     contents: const [
                       OverviewScreen(),
@@ -79,6 +87,8 @@ class _HomePageState extends State<HomePage> {
                       PushNotificationScreen(),
                       RequestsScreenList(),
                       ServicesScreen(),
+                      CoursesScreen(),
+                      AwardsScreen(),
                       SettingsScreen(),
                     ],
                   ),
