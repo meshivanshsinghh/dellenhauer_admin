@@ -2,11 +2,15 @@ import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_screen.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
+import 'package:dellenhauer_admin/pages/services/services_screen.dart';
 import 'package:dellenhauer_admin/pages/settings/settings_screen.dart';
+import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/pages/users/users_screen.dart';
+import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -68,14 +72,14 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[5], icons[5]) as Tab,
                       tab(titles[6], icons[6]) as Tab,
                     ],
-                    contents: [
-                      const RequestsScreenList(),
-                      const ChannelsScreen(),
-                      const UserScreen(),
-                      const PushNotificationScreen(),
-                      const OverviewScreen(),
-                      Container(),
-                      const SettingsScreen(),
+                    contents: const [
+                      OverviewScreen(),
+                      ChannelsScreen(),
+                      UserScreen(),
+                      PushNotificationScreen(),
+                      RequestsScreenList(),
+                      ServicesScreen(),
+                      SettingsScreen(),
                     ],
                   ),
                 ),
@@ -162,7 +166,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 child: TextButton.icon(
-                  onPressed: () {},
+                  onPressed: handleLogout,
                   icon: const Icon(Icons.logout, color: Colors.white),
                   label: const Text(
                     'Logout',
@@ -199,5 +203,12 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ));
+  }
+
+  Future handleLogout() async {
+    final SharedPreferences s = await SharedPreferences.getInstance();
+    await s
+        .clear()
+        .then((value) => {nextScreenCloseOther(context, const SignInPage())});
   }
 }

@@ -141,7 +141,9 @@ class _UserScreenState extends State<UserScreen> {
                               child: const SizedBox(
                                 width: 32,
                                 height: 32,
-                                child: CircularProgressIndicator(),
+                                child: CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                ),
                               ),
                             ),
                           );

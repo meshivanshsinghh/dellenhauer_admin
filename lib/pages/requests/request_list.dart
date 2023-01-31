@@ -373,7 +373,16 @@ class _RequestListScreenState extends State<RequestListScreen> {
             actionButton(
               buttonBackgroundColor: Colors.grey,
               textColor: Colors.black,
-              onPressed: () {},
+              onPressed: () {
+                requestsProvider
+                    .declineChannelRequest(
+                        channelRequestdata: requestData,
+                        channelId: widget.channelModel.groupId)
+                    .whenComplete(() {
+                  showSnackbar(context, 'User successfully removed from list');
+                  refreshData();
+                });
+              },
               title: 'Decline',
             ),
           ],

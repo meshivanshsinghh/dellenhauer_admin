@@ -208,4 +208,28 @@ class RequestsProvider extends ChangeNotifier {
 
   */
 
+  Future<void> declineChannelRequest(
+      {required ChannelRequestModel channelRequestdata,
+      required String channelId}) async {
+    await firebaseFirestoree
+        .collection('channels')
+        .doc(channelId)
+        .collection('requests')
+        .doc(channelRequestdata.requestId)
+        .delete();
+    QuerySnapshot snap = await firebaseFirestoree
+        .collection('users')
+        .doc(channelRequestdata.userId)
+        .collection('channelRequests')
+        .where('channelId', isEqualTo: channelId)
+        .get();
+    if (snap.docs.isNotEmpty) {
+      await firebaseFirestoree
+          .collection('users')
+          .doc(channelRequestdata.userId)
+          .collection('channelRequests')
+          .doc(snap.docs[0].id)
+          .delete();
+    }
+  }
 }

@@ -2,6 +2,7 @@ import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/home_page.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_provider.dart';
+import 'package:dellenhauer_admin/pages/services/services_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -39,6 +40,8 @@ class MyApp extends StatelessWidget {
             create: (_) => RequestsProvider()),
         ChangeNotifierProvider<ChannelProvider>(
             create: (_) => ChannelProvider()),
+        ChangeNotifierProvider<ServicesProvider>(
+            create: (_) => ServicesProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

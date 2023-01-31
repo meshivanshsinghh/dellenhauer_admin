@@ -1,5 +1,6 @@
 import 'package:dellenhauer_admin/pages/home_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
+import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -71,33 +72,9 @@ class _SignInPageState extends State<SignInPage> {
                 child: TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'Enter password',
-                    focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red)),
-                    enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red)),
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.red,
-                      ),
-                    ),
-                    labelText: 'Password',
-                    contentPadding: const EdgeInsets.only(left: 10, right: 0),
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: CircleAvatar(
-                        radius: 15,
-                        backgroundColor: Colors.grey[300],
-                        child: IconButton(
-                          onPressed: () {
-                            _passwordController.clear();
-                          },
-                          icon: const Icon(Icons.close, size: 15),
-                        ),
-                      ),
-                    ),
-                  ),
+                  cursorColor: Colors.redAccent,
+                  decoration: inputDecoration(
+                      'Enter password', 'Password', _passwordController),
                   validator: (String? value) {
                     String? adminPassword = adminProvider.adminPassword;
                     if (value!.isEmpty) {
