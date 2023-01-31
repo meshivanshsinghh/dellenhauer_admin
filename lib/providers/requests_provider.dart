@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/pages/requests/requests_model.dart';
+import 'package:dellenhauer_admin/model/requests/requests_model.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 

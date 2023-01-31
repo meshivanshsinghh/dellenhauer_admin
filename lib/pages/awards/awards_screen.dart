@@ -1,5 +1,5 @@
-import 'package:dellenhauer_admin/pages/awards/awards_model.dart';
-import 'package:dellenhauer_admin/pages/awards/awards_provider.dart';
+import 'package:dellenhauer_admin/model/awards/awards_model.dart';
+import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';

@@ -1,10 +1,10 @@
-import 'package:dellenhauer_admin/pages/awards/awards_provider.dart';
-import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
-import 'package:dellenhauer_admin/pages/courses/courses_provider.dart';
+import 'package:dellenhauer_admin/providers/awards_provider.dart';
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
+import 'package:dellenhauer_admin/providers/courses_provider.dart';
 import 'package:dellenhauer_admin/pages/home_page.dart';
-import 'package:dellenhauer_admin/pages/overview/overview_provider.dart';
-import 'package:dellenhauer_admin/pages/requests/requests_provider.dart';
-import 'package:dellenhauer_admin/pages/services/services_provider.dart';
+import 'package:dellenhauer_admin/providers/overview_provider.dart';
+import 'package:dellenhauer_admin/providers/requests_provider.dart';
+import 'package:dellenhauer_admin/providers/services_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
 import 'package:firebase_core/firebase_core.dart';

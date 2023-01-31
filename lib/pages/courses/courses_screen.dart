@@ -1,5 +1,5 @@
-import 'package:dellenhauer_admin/pages/courses/courses_model.dart';
-import 'package:dellenhauer_admin/pages/courses/courses_provider.dart';
+import 'package:dellenhauer_admin/model/courses/courses_model.dart';
+import 'package:dellenhauer_admin/providers/courses_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';

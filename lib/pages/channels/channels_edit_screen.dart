@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/pages/channels/channels_provider.dart';
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/users_list_screen.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';

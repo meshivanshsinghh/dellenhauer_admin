@@ -1,4 +1,4 @@
-import 'package:dellenhauer_admin/pages/services/services_provider.dart';
+import 'package:dellenhauer_admin/providers/services_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
