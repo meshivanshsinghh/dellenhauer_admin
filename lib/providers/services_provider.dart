@@ -73,15 +73,11 @@ class ServicesProvider extends ChangeNotifier {
         .collection('admin')
         .doc('services')
         .collection('serviceCollection')
-        .doc()
+        .doc(a.id)
         .set(ServicesModel(
           id: a.id,
           isActive: true,
           name: serviceName,
         ).toJson());
-    // updating the count
-    // await firebaseFirestore.collection('admin').doc('services').update({
-    //   'total_count':
-    // });
   }
 }

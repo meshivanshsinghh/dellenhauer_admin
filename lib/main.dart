@@ -7,6 +7,7 @@ import 'package:dellenhauer_admin/providers/requests_provider.dart';
 import 'package:dellenhauer_admin/providers/services_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
+import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<CoursesProvider>(
             create: (_) => CoursesProvider()),
         ChangeNotifierProvider<AwardsProvider>(create: (_) => AwardsProvider()),
+        ChangeNotifierProvider<UsersProvider>(create: (_) => UsersProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

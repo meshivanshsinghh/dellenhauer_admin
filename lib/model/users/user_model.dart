@@ -1,3 +1,6 @@
+import 'package:dellenhauer_admin/model/awards/awards_model.dart';
+import 'package:dellenhauer_admin/model/courses/courses_model.dart';
+
 class CountryModel {
   String? country;
   String? city;
@@ -41,12 +44,16 @@ class UserModel {
   List<String>? servicesOffering;
   String? fcmToken;
   String? websiteUrl;
+  List<CoursesModel>? coursesModel;
   String? invitedBy;
   String? invitedTimestamp;
+  List<AwardsModel>? awardsModel;
   bool? isTyping;
 
   UserModel(
       {this.bio,
+      this.awardsModel,
+      this.coursesModel,
       this.countryModel,
       this.createdAt,
       this.isOnline,
@@ -84,6 +91,22 @@ class UserModel {
     invitedTimestamp = map['invited_timestamp'];
     isTyping = map['isTyping'] ?? false;
     phoneNumber = map['phoneNumber'];
+    if (map['awards'] != null) {
+      awardsModel = [];
+      map['awards'].forEach((value) {
+        awardsModel!.add(AwardsModel.fromMap(value));
+      });
+    } else {
+      awardsModel = [];
+    }
+    if (map['courses'] != null) {
+      coursesModel = [];
+      map['courses'].forEach((value) {
+        coursesModel!.add(CoursesModel.fromMap(value));
+      });
+    } else {
+      coursesModel = [];
+    }
     isOnline = map['isOnline'] ?? false;
     bio = map['bio'];
     websiteUrl = map['websiteUrl'];
@@ -131,8 +154,14 @@ class UserModel {
       'is_premium_user': isPremiumUser ?? false,
       'phoneNumber': phoneNumber,
       'bio': bio,
+      'awards': awardsModel != null
+          ? awardsModel!.map((e) => e.toMap()).toList()
+          : null,
+      'courses': coursesModel != null
+          ? coursesModel!.map((e) => e.toMap()).toList()
+          : null,
       'postalCode': postalCode,
-      'countryModel': countryModel!.toJson(),
+      'countryModel': countryModel,
       'isVerified': isVerified ?? false,
       'createdAt': createdAt,
       'profilePic': profilePic,

@@ -28,7 +28,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         TextPosition(offset: _descriptionController.text.length));
 
     return Container(
-      margin: const EdgeInsets.all(30),
+      margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
       padding: EdgeInsets.only(
         left: w * 0.05,
         right: w * 0.20,

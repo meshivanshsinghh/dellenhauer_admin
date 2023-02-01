@@ -25,6 +25,24 @@ class CoursesProvider extends ChangeNotifier {
     });
   }
 
+  // future builder
+  Future<List<CoursesModel>> getAwardsFuture() async {
+    List<CoursesModel> courses = [];
+    await firebaseFirestore
+        .collection('admin')
+        .doc('courses')
+        .collection('coursesCollection')
+        .get()
+        .then((value) {
+      for (var document in value.docs) {
+        if (document.data()['isActive'] == true) {
+          courses.add(CoursesModel.fromMap(document.data()));
+        }
+      }
+    });
+    return courses;
+  }
+
   // add new course to list
   Future<void> addNewCourse(
       {required String title, required String description}) async {

@@ -27,7 +27,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
     double w = MediaQuery.of(context).size.width;
     overviewProvider = Provider.of<OverviewProvider>(context, listen: true);
     return Container(
-        margin: const EdgeInsets.all(30),
+        margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
         padding: EdgeInsets.only(left: w * 0.05),
         decoration: BoxDecoration(
             color: Colors.white,

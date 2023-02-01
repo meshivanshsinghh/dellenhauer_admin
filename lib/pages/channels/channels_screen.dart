@@ -113,7 +113,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return Container(
-      margin: const EdgeInsets.all(30),
+      margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
       padding: EdgeInsets.only(
         left: w * 0.05,
         right: w * 0.20,
@@ -442,7 +442,32 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           color: Colors.white,
                         ),
                       ),
-                      onTap: () => showSnackbar(context, 'Editing'),
+                      onTap: () {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                  title: const Text('Delete?'),
+                                  content: const Text(
+                                    'Are you sure you want to delete this channel from database?',
+                                  ),
+                                  actions: [
+                                    ElevatedButton(
+                                        onPressed: () {},
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                        child: const Text('YES')),
+                                    ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                        child: const Text('NO')),
+                                  ]);
+                            });
+                      },
                     ),
                   ],
                 )

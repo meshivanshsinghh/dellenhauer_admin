@@ -25,6 +25,24 @@ class AwardsProvider extends ChangeNotifier {
     });
   }
 
+  // future builder
+  Future<List<AwardsModel>> getAwardsFuture() async {
+    List<AwardsModel> awards = [];
+    await firebaseFirestore
+        .collection('admin')
+        .doc('awards')
+        .collection('awardsCollection')
+        .get()
+        .then((value) {
+      for (var document in value.docs) {
+        if (document.data()['isActive'] == true) {
+          awards.add(AwardsModel.fromMap(document.data()));
+        }
+      }
+    });
+    return awards;
+  }
+
   // add new award to list
   Future<void> addNewAward(
       {required String title, required String description}) async {

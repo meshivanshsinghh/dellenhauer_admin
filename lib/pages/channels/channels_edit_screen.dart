@@ -49,6 +49,13 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _channelNameController.dispose();
+    _channelDescriptionController.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     channelProvider = Provider.of<ChannelProvider>(context, listen: true);

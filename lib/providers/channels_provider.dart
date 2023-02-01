@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class ChannelProvider extends ChangeNotifier {
@@ -92,5 +93,12 @@ class ChannelProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     });
+  }
+
+  // deleting a channel from databse
+  Future<void> deleteChannelFromDatabase({
+    required String channelId,
+  }) async {
+    await firebaseFirestore.collection('channels').doc(channelId).delete();
   }
 }
