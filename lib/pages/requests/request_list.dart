@@ -39,7 +39,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
       requestsProvider.getChannelRequestList(
         orderBy: orderBy,
         descending: descending,
-        channelId: widget.channelModel.groupId,
+        channelId: widget.channelModel.groupId!,
       );
     });
   }
@@ -53,7 +53,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
         requestsProvider.getChannelRequestList(
           orderBy: orderBy,
           descending: descending,
-          channelId: widget.channelModel.groupId,
+          channelId: widget.channelModel.groupId!,
         );
       }
     }
@@ -67,7 +67,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
     requestsProvider.getChannelRequestList(
       orderBy: orderBy,
       descending: descending,
-      channelId: widget.channelModel.groupId,
+      channelId: widget.channelModel.groupId!,
     );
     requestsProvider.notifyListeners();
   }
@@ -87,7 +87,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
         preferredSize: const Size.fromHeight(60),
         child: Center(
             child: AppBar(
-          title: Text(widget.channelModel.channelName),
+          title: Text(widget.channelModel.channelName!),
         )),
       ),
       body: Container(
@@ -360,7 +360,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                 requestsProvider
                     .acceptChannelRequest(
                         channelRequestData: requestData,
-                        channelId: widget.channelModel.groupId)
+                        channelId: widget.channelModel.groupId!)
                     .whenComplete(() {
                   showSnackbar(context, 'User successfully added to channel');
                   refreshData();
@@ -376,7 +376,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                 requestsProvider
                     .declineChannelRequest(
                         channelRequestdata: requestData,
-                        channelId: widget.channelModel.groupId)
+                        channelId: widget.channelModel.groupId!)
                     .whenComplete(() {
                   showSnackbar(context, 'User successfully removed from list');
                   refreshData();

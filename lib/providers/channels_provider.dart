@@ -8,11 +8,65 @@ class ChannelProvider extends ChangeNotifier {
   BuildContext? context;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
-
+  DocumentSnapshot? _lastVisible;
+  DocumentSnapshot? get lastVisible => _lastVisible;
+  bool _hasData = false;
+  bool get hasData => _hasData;
+  List<DocumentSnapshot> _channelData = [];
+  List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
   void attachContext(BuildContext context) {
     this.context = context;
+  }
+
+  void setLastVisible({DocumentSnapshot? documentSnapshot}) {
+    _lastVisible = documentSnapshot;
+    notifyListeners();
+  }
+
+  Future<void> getChannelData({
+    required String orderBy,
+    required bool descending,
+  }) async {
+    QuerySnapshot data;
+    if (_lastVisible == null) {
+      data = await firebaseFirestore
+          .collection('channels')
+          .orderBy(orderBy, descending: descending)
+          .limit(10)
+          .get();
+    } else {
+      data = await firebaseFirestore
+          .collection('channels')
+          .orderBy(orderBy, descending: descending)
+          .startAfter([_lastVisible![orderBy]])
+          .limit(10)
+          .get();
+    }
+    if (data.docs.isNotEmpty) {
+      _lastVisible = data.docs[data.docs.length - 1];
+      _isLoading = false;
+      _hasData = true;
+      _channelData.addAll(data.docs);
+      notifyListeners();
+    } else {
+      if (_lastVisible == null) {
+        _isLoading = false;
+        _hasData = false;
+        notifyListeners();
+      } else {
+        _isLoading = false;
+        _hasData = true;
+        showSnackbar(context!, 'No more channels available');
+        notifyListeners();
+      }
+    }
+  }
+
+  void setLoading({bool isLoading = false}) {
+    _isLoading = isLoading;
+    notifyListeners();
   }
 
   // getting user model from list of users
@@ -32,9 +86,9 @@ class ChannelProvider extends ChangeNotifier {
       ChannelModel channelData = ChannelModel.fromMap(value.data() as dynamic);
 
       if (isModerator) {
-        id.addAll(channelData.moderatorsId);
+        id.addAll(channelData.moderatorsId!);
       } else {
-        id.addAll(channelData.membersId);
+        id.addAll(channelData.membersId!);
       }
     });
 

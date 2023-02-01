@@ -1,12 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_edit_screen.dart';
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 class ChannelsScreen extends StatefulWidget {
   const ChannelsScreen({super.key});
@@ -16,78 +17,34 @@ class ChannelsScreen extends StatefulWidget {
 }
 
 class _ChannelsScreenState extends State<ChannelsScreen> {
-  String? _sortByText;
-
+  String? sortByText;
+  late ChannelProvider channelProvider;
   ScrollController? scrollController;
-  late bool _descending;
-  late String _orderBy;
-  bool? hasData;
-  late bool _isLoading;
-  DocumentSnapshot? _lastVisible;
-  final List<DocumentSnapshot> _data = [];
-  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  late bool descending;
+  late String orderBy;
+
   @override
   void initState() {
     super.initState();
-
-    scrollController = ScrollController()..addListener(_scrollListener);
-    _isLoading = true;
-    _sortByText = 'Newest First';
-    _orderBy = 'created_timestamp';
-    _descending = true;
-    getData();
+    sortByText = 'Newest First';
+    orderBy = 'created_timestamp';
+    descending = true;
+    Future.delayed(Duration.zero, () {
+      scrollController = ScrollController()..addListener(_scrollListener);
+      channelProvider = Provider.of<ChannelProvider>(context, listen: false);
+      channelProvider.attachContext(context);
+      channelProvider.setLoading(isLoading: true);
+      channelProvider.getChannelData(orderBy: orderBy, descending: descending);
+    });
   }
 
   void refreshData() {
-    setState(() {
-      _isLoading = true;
-      _lastVisible = null;
-      _data.clear();
-    });
-    getData();
-  }
-
-  Future<void> getData() async {
-    QuerySnapshot data;
-    if (_lastVisible == null) {
-      data = await firebaseFirestore
-          .collection('channels')
-          .orderBy(_orderBy, descending: _descending)
-          .limit(10)
-          .get();
-    } else {
-      data = await firebaseFirestore
-          .collection('channels')
-          .orderBy(_orderBy, descending: _descending)
-          .startAfter([_lastVisible![_orderBy]])
-          .limit(10)
-          .get();
-    }
-    // is data is not empty
-    if (data.docs.isNotEmpty) {
-      _lastVisible = data.docs[data.docs.length - 1];
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          hasData = true;
-          _data.addAll(data.docs);
-        });
-      }
-    } else {
-      if (_lastVisible == null) {
-        setState(() {
-          _isLoading = false;
-          hasData = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-          hasData = true;
-        });
-        // ignore: use_build_context_synchronously
-        showSnackbar(context, 'No more channels available');
-      }
-    }
+    channelProvider = Provider.of<ChannelProvider>(context, listen: false);
+    channelProvider.setLastVisible(documentSnapshot: null);
+    channelProvider.setLoading(isLoading: true);
+    channelProvider.channelData.clear();
+    channelProvider.getChannelData(descending: descending, orderBy: orderBy);
+    channelProvider.notifyListeners();
   }
 
   @override
@@ -98,13 +55,13 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
 
   // scroll listener
   void _scrollListener() {
-    if (!_isLoading) {
+    channelProvider = Provider.of<ChannelProvider>(context, listen: true);
+    if (!channelProvider.isLoading) {
       if (scrollController!.position.pixels ==
           scrollController!.position.maxScrollExtent) {
-        setState(() {
-          _isLoading = true;
-          getData();
-        });
+        channelProvider.setLoading(isLoading: true);
+        channelProvider.getChannelData(
+            orderBy: orderBy, descending: descending);
       }
     }
   }
@@ -112,6 +69,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
+    channelProvider = Provider.of<ChannelProvider>(context, listen: true);
     return Container(
       margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
       padding: EdgeInsets.only(
@@ -157,34 +115,42 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           ),
           // displaying content here
           Expanded(
-              child: hasData == false
-                  ? emptyPage(FontAwesomeIcons.peopleGroup, 'No Channel Found!')
-                  : RefreshIndicator(
+              child: channelProvider.isLoading == true
+                  ? const Center(
+                      child: CircularProgressIndicator(
                       color: Colors.redAccent,
-                      child: ListView.builder(
-                        itemCount: _data.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index < _data.length) {
-                            final ChannelModel d = ChannelModel.fromMap(
-                                _data[index].data() as dynamic);
-                            return buildContentList(d);
-                          }
-                          return Center(
-                            child: Opacity(
-                              opacity: _isLoading ? 1.0 : 0.0,
-                              child: const SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: CircularProgressIndicator(
-                                    color: Colors.redAccent),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      onRefresh: () async {
-                        refreshData();
-                      }))
+                    ))
+                  : channelProvider.hasData == false
+                      ? emptyPage(
+                          FontAwesomeIcons.peopleGroup, 'No Channel Found!')
+                      : RefreshIndicator(
+                          color: Colors.redAccent,
+                          child: ListView.builder(
+                            itemCount: channelProvider.channelData.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index < channelProvider.channelData.length) {
+                                final ChannelModel d = ChannelModel.fromMap(
+                                    channelProvider.channelData[index].data()
+                                        as dynamic);
+                                return buildContentList(d);
+                              }
+                              return Center(
+                                child: Opacity(
+                                  opacity:
+                                      channelProvider.isLoading ? 1.0 : 0.0,
+                                  child: const SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.redAccent),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          onRefresh: () async {
+                            refreshData();
+                          }))
         ],
       ),
     );
@@ -213,7 +179,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              'Sort By - $_sortByText',
+              'Sort By - $sortByText',
               style: TextStyle(
                 color: Colors.grey[900],
                 fontWeight: FontWeight.w500,
@@ -232,24 +198,18 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       onSelected: (dynamic value) {
         if (value == 'new') {
           setState(() {
-            _sortByText = 'Newest First';
-            _orderBy = 'created_timestamp';
-            _descending = true;
+            sortByText = 'Newest First';
+            orderBy = 'created_timestamp';
+            descending = true;
           });
         } else if (value == 'old') {
           setState(() {
-            _sortByText = 'Oldest First';
-            _orderBy = 'created_timestamp';
-            _descending = false;
+            sortByText = 'Oldest First';
+            orderBy = 'created_timestamp';
+            descending = false;
           });
         }
-        // else if (value == 'users') {
-        //   setState(() {
-        //     _sortByText = 'Most Users';
-        //     _orderBy = 'members_id';
-        //   });
-        // }
-        // refreshing data
+
         refreshData();
       },
     );
@@ -272,7 +232,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             onTap: () =>
                 showImageContentDialog(context, channelModel.channelPhoto),
             child: CachedNetworkImage(
-              imageUrl: channelModel.channelPhoto,
+              imageUrl: channelModel.channelPhoto!,
               placeholder: (context, url) {
                 return Container(
                   height: 130,
@@ -323,7 +283,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  channelModel.channelName,
+                  channelModel.channelName!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -352,7 +312,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            channelModel.membersId.length.toString(),
+                            channelModel.membersId!.length.toString(),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -381,7 +341,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            channelModel.moderatorsId.length.toString(),
+                            channelModel.moderatorsId!.length.toString(),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -407,7 +367,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                         ),
                       ),
                       onTap: () =>
-                          handlePreview(context, channelModel.channelPhoto),
+                          handlePreview(context, channelModel.channelPhoto!),
                     ),
                     const SizedBox(width: 10),
                     InkWell(
@@ -453,7 +413,18 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                   ),
                                   actions: [
                                     ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          channelProvider
+                                              .deleteChannelFromDatabase(
+                                                  channelId:
+                                                      channelModel.groupId!)
+                                              .whenComplete(() {
+                                            Navigator.of(context).pop();
+                                            showSnackbar(context,
+                                                'Channel delete successfully from database');
+                                            setState(() {});
+                                          });
+                                        },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.redAccent,
                                         ),
@@ -462,7 +433,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                         onPressed: () =>
                                             Navigator.of(context).pop(),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.redAccent,
+                                          backgroundColor: Colors.grey,
                                         ),
                                         child: const Text('NO')),
                                   ]);

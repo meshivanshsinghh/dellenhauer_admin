@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
+
 enum ChannelEnum {
   public,
   private,
@@ -18,38 +20,40 @@ extension ConvertMessage on String {
 }
 
 class ChannelModel {
-  final String channelName;
-  final String channelDescription;
-  final bool channelNotification;
-  final String channelPhoto;
-  final bool channelAutoJoin;
-  final bool channelReadOnly;
-  final String createdAt;
-  final bool joinAccessRequired;
-  final List<String> membersId;
-  final List<String> moderatorsId;
-  final String groupId;
-  final ChannelEnum visibility;
+  String? channelName;
+  String? channelDescription;
+  bool? channelNotification;
+  String? channelPhoto;
+  bool? channelAutoJoin;
+  bool? channelReadOnly;
+  String? createdAt;
+  bool? joinAccessRequired;
+  List<String>? membersId;
+  List<String>? moderatorsId;
+  String? groupId;
+  ChannelEnum? visibility;
+  List<RelatedChannel>? relatedChannel;
 
   // for last messages
-  final DateTime timeSent;
-  final String lastMessage;
+  DateTime? timeSent;
+  String? lastMessage;
 
   ChannelModel({
-    required this.channelName,
-    required this.channelDescription,
-    required this.channelNotification,
-    required this.channelPhoto,
-    required this.channelAutoJoin,
-    required this.channelReadOnly,
-    required this.createdAt,
-    required this.joinAccessRequired,
-    required this.groupId,
-    required this.lastMessage,
-    required this.membersId,
-    required this.moderatorsId,
-    required this.timeSent,
-    required this.visibility,
+    this.channelName,
+    this.channelDescription,
+    this.channelNotification,
+    this.channelPhoto,
+    this.relatedChannel,
+    this.channelAutoJoin,
+    this.channelReadOnly,
+    this.createdAt,
+    this.joinAccessRequired,
+    this.groupId,
+    this.lastMessage,
+    this.membersId,
+    this.moderatorsId,
+    this.timeSent,
+    this.visibility,
   });
 
   // to map
@@ -62,33 +66,80 @@ class ChannelModel {
       'channel_autojoin': channelAutoJoin,
       'channel_readonly': channelReadOnly,
       'created_timestamp': createdAt,
+      'related_channels': relatedChannel!.isNotEmpty
+          ? relatedChannel!.map((e) => e.toMap()).toList()
+          : null,
       'join_access_required': joinAccessRequired,
       'members_id': membersId,
       'moderators_id': moderatorsId,
       'groupId': groupId,
       'visibility': visibility,
-      'timeSent': timeSent.millisecondsSinceEpoch,
+      'timeSent': timeSent!.millisecondsSinceEpoch,
       'lastMessage': lastMessage,
     };
   }
 
   // from map
-  factory ChannelModel.fromMap(Map<String, dynamic> map) {
-    return ChannelModel(
-        channelName: map['channel_name'] ?? '',
-        channelDescription: map['channel_description'] ?? '',
-        channelNotification: map['channel_notification'] ?? false,
-        channelPhoto: map['channel_photo'] ?? '',
-        channelAutoJoin: map['channel_autojoin'] ?? false,
-        channelReadOnly: map['channel_readonly'] ?? false,
-        createdAt: map['created_timestamp'] ?? '',
-        joinAccessRequired: map['join_access_required'] ?? false,
-        groupId: map['groupId'] ?? '',
-        lastMessage: map['lastMessage'] ?? '',
-        membersId: List<String>.from(map['members_id']),
-        moderatorsId: List<String>.from(map['moderators_id']),
-        timeSent: DateTime.fromMillisecondsSinceEpoch(map['timeSent']),
-        visibility: (map['visibility'] as String).toEnum());
+  ChannelModel.fromMap(Map<String, dynamic> map) {
+    if (map.isEmpty) {
+      return;
+    }
+
+    channelName = map['channel_name'];
+    channelDescription = map['channel_description'];
+    if (map['channel_notification'] != null) {
+      channelNotification = map['channel_notification'];
+    } else {
+      channelNotification = false;
+    }
+    channelPhoto = map['channel_photo'];
+    if (map['related_channels'] != null) {
+      relatedChannel = [];
+      map['related_channels'].forEach((value) {
+        relatedChannel!.add(RelatedChannel.fromJson(value));
+      });
+    }
+    if (map['channel_autojoin'] != null) {
+      channelAutoJoin = map['channel_autojoin'];
+    } else {
+      channelAutoJoin = false;
+    }
+
+    if (map['channel_readonly'] != null) {
+      channelReadOnly = map['channel_readonly'];
+    } else {
+      channelReadOnly = false;
+    }
+
+    createdAt = map['created_timestamp'];
+
+    if (map['join_access_required'] != null) {
+      joinAccessRequired = map['join_access_required'];
+    } else {
+      joinAccessRequired = false;
+    }
+
+    groupId = map['groupId'];
+    lastMessage = map['lastMessage'];
+    if (map['members_id'] != null) {
+      membersId = [];
+      map['members_id'].forEach((value) {
+        membersId!.add(value);
+      });
+    } else {
+      membersId = [];
+    }
+    if (map['moderators_id'] != null) {
+      moderatorsId = [];
+      map['moderators_id'].forEach((value) {
+        moderatorsId!.add(value);
+      });
+    } else {
+      moderatorsId = [];
+    }
+
+    timeSent = DateTime.fromMillisecondsSinceEpoch(map['timeSent']);
+    visibility = (map['visibility'] as String).toEnum();
   }
 }
 

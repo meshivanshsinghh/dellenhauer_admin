@@ -154,10 +154,10 @@ class UserModel {
       'is_premium_user': isPremiumUser ?? false,
       'phoneNumber': phoneNumber,
       'bio': bio,
-      'awards': awardsModel != null
+      'awards': awardsModel!.isNotEmpty
           ? awardsModel!.map((e) => e.toMap()).toList()
           : null,
-      'courses': coursesModel != null
+      'courses': coursesModel!.isNotEmpty
           ? coursesModel!.map((e) => e.toMap()).toList()
           : null,
       'postalCode': postalCode,

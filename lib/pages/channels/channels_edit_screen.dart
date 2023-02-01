@@ -39,10 +39,10 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
             TextEditingController(text: widget.channelModel.channelName);
         _channelDescriptionController =
             TextEditingController(text: widget.channelModel.channelDescription);
-        _isAutoJoinSwitched = widget.channelModel.channelAutoJoin;
-        _isReadOnly = widget.channelModel.channelReadOnly;
-        _joinAccessRequired = widget.channelModel.joinAccessRequired;
-        _visibility = widget.channelModel.visibility.name;
+        _isAutoJoinSwitched = widget.channelModel.channelAutoJoin!;
+        _isReadOnly = widget.channelModel.channelReadOnly!;
+        _joinAccessRequired = widget.channelModel.joinAccessRequired!;
+        _visibility = widget.channelModel.visibility!.name;
       });
       channelProvider = Provider.of<ChannelProvider>(context, listen: false);
     }
@@ -96,7 +96,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CachedNetworkImage(
-                imageUrl: widget.channelModel.channelPhoto,
+                imageUrl: widget.channelModel.channelPhoto!,
                 placeholder: (context, url) {
                   return Container(
                     height: 150,
@@ -174,7 +174,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                     context,
                     UserListScreen(
                       isModerator: true,
-                      channelId: widget.channelModel.groupId,
+                      channelId: widget.channelModel.groupId!,
                     ),
                   );
                 },
@@ -188,7 +188,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                     context,
                     UserListScreen(
                       isModerator: false,
-                      channelId: widget.channelModel.groupId,
+                      channelId: widget.channelModel.groupId!,
                     ),
                   );
                 },
@@ -220,7 +220,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                       readOnly: _isReadOnly,
                       joinAccessRequired: _joinAccessRequired,
                       visibility: _visibility!,
-                      channelId: widget.channelModel.groupId,
+                      channelId: widget.channelModel.groupId!,
                     )
                         .whenComplete(() {
                       showSnackbar(context, 'Updated successfully');
@@ -258,7 +258,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           ),
         ),
         title: Text(
-            '$title: ${isUser ? widget.channelModel.membersId.length : widget.channelModel.moderatorsId.length}'),
+            '$title: ${isUser ? widget.channelModel.membersId!.length : widget.channelModel.moderatorsId!.length}'),
         trailing: IconButton(
           icon: const Icon(FontAwesomeIcons.arrowRight),
           onPressed: () {
@@ -267,7 +267,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                 context,
                 UserListScreen(
                   isModerator: false,
-                  channelId: widget.channelModel.groupId,
+                  channelId: widget.channelModel.groupId!,
                 ),
               );
             } else {
@@ -275,7 +275,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                 context,
                 UserListScreen(
                   isModerator: true,
-                  channelId: widget.channelModel.groupId,
+                  channelId: widget.channelModel.groupId!,
                 ),
               );
             }

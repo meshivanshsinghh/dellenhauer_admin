@@ -252,7 +252,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
       margin: const EdgeInsets.only(top: 20),
       child: ListTile(
         leading: CachedNetworkImage(
-          imageUrl: channelData.channelPhoto,
+          imageUrl: channelData.channelPhoto!,
           placeholder: (context, url) {
             return Container(
               height: 60,
@@ -297,11 +297,11 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
           },
         ),
         title: SelectableText(
-          channelData.channelName,
+          channelData.channelName!,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: SelectableText(
-            'UID: ${channelData.groupId} \nMembers: ${channelData.membersId.length} Moderators: ${channelData.moderatorsId.length}'),
+            'UID: ${channelData.groupId} \nMembers: ${channelData.membersId!.length} Moderators: ${channelData.moderatorsId!.length}'),
         isThreeLine: true,
         trailing: InkWell(
           child: CircleAvatar(
