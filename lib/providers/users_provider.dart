@@ -26,12 +26,8 @@ class UsersProvider extends ChangeNotifier {
   }
 
   void setselectedUserAwards(AwardsModel awardsModel) {
-    if (_selectedCourses.any((element) => element.id == awardsModel.id)) {
-      showSnackbar(context!, 'Award already present in user list');
-    } else {
-      _selectedUserAwards.add(awardsModel);
-      notifyListeners();
-    }
+    _selectedUserAwards.add(awardsModel);
+    notifyListeners();
   }
 
   void setSelectedCourses(CoursesModel coursesModel) {
@@ -108,14 +104,20 @@ class UsersProvider extends ChangeNotifier {
   }
 
   // getting userdata form userId
-  Future<UserModel> getUserDataFromId(String userId) async {
-    UserModel? userData;
-    await firebaseFirestore.collection('users').doc(userId).get().then((value) {
-      if (value.exists) {
+  Future<UserModel?> getUserDataFromId(String userId) async {
+    try {
+      UserModel? userData;
+      await firebaseFirestore
+          .collection('users')
+          .doc(userId)
+          .get()
+          .then((value) {
         userData = UserModel.fromJson(value.data() as dynamic);
-      }
-    });
-    return userData!;
+      });
+      return userData;
+    } catch (e) {
+      return null;
+    }
   }
 
   // adding awards data to usermodel

@@ -35,14 +35,34 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   List<AwardsModel> awardsModel = [];
   List<CoursesModel> coursesModel = [];
   final TextEditingController _websiteUrl = TextEditingController();
-
+  late UserModel currentUser;
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration.zero, () {
+    Future.delayed(Duration.zero, () async {
       userProvider = Provider.of<UsersProvider>(context, listen: false);
       userProvider.attachContext(context);
+      userProvider.selectedCourses.clear();
+      userProvider.selectedUserAwards.clear();
+      await userProvider.getUserDataFromId(widget.userId).then((value) {
+        setState(() {
+          currentUser = value!;
+        });
+      });
+      setData();
     });
+  }
+
+  setData() {
+    if (mounted) {
+      setState(() {
+        _isPremiumUser = currentUser.isPremiumUser!;
+        _isVerified = currentUser.isVerified!;
+        _isVerified = currentUser.isVerified!;
+      });
+      userProvider.selectedCourses.addAll(currentUser.coursesModel!);
+      userProvider.selectedUserAwards.addAll(currentUser.awardsModel!);
+    }
   }
 
   void toggleSwitch(bool value, String type) {
@@ -107,12 +127,10 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           ),
           child:
               // getting the userdata in futurebuilder
-              FutureBuilder<UserModel>(
+              FutureBuilder<UserModel?>(
             future: userProvider.getUserDataFromId(widget.userId),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
-                _isPremiumUser = snapshot.data!.isPremiumUser!;
-                _isVerified = snapshot.data!.isVerified!;
                 // setting up data
                 return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -444,7 +462,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   }
 
   Widget loadInvitedUserWidget(String userId) {
-    return FutureBuilder<UserModel>(
+    return FutureBuilder<UserModel?>(
         future: userProvider.getUserDataFromId(userId),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -528,6 +546,9 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                 ));
           } else if (snapshot.hasError) {
             return emptyPage(FontAwesomeIcons.circleXmark, 'Error!');
+          } else if (snapshot.data == null) {
+            return emptyPage(
+                FontAwesomeIcons.solidUser, 'Not invited by any user');
           }
           return const SizedBox(
             width: double.infinity,
