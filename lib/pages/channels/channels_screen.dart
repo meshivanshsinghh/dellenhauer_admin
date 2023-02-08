@@ -277,172 +277,174 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 15, left: 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  channelModel.channelName!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 15, left: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    channelModel.channelName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    // members
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            FontAwesomeIcons.solidUser,
-                            size: 12,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            channelModel.membersId!.length.toString(),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // moderators
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            FontAwesomeIcons.userSecret,
-                            size: 12,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            channelModel.moderatorsId!.length.toString(),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      child: Container(
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      // members
+                      Container(
                         padding: const EdgeInsets.all(10),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
-                          Icons.remove_red_eye,
-                          size: 15,
-                          color: Colors.grey,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              FontAwesomeIcons.solidUser,
+                              size: 12,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              channelModel.membersId!.length.toString(),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )
+                          ],
                         ),
                       ),
-                      onTap: () =>
-                          handlePreview(context, channelModel.channelPhoto!),
-                    ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      child: Container(
+                      const SizedBox(width: 10),
+                      // moderators
+                      Container(
                         padding: const EdgeInsets.all(10),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
-                          Icons.edit,
-                          size: 15,
-                          color: Colors.grey,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              FontAwesomeIcons.userSecret,
+                              size: 12,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              channelModel.moderatorsId!.length.toString(),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      onTap: () => nextScreen(context,
-                          ChannelEditScreen(channelModel: channelModel)),
-                    ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent,
-                          borderRadius: BorderRadius.circular(10),
+                      const SizedBox(width: 10),
+                      InkWell(
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.remove_red_eye,
+                            size: 15,
+                            color: Colors.grey,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.delete,
-                          size: 15,
-                          color: Colors.white,
-                        ),
+                        onTap: () =>
+                            handlePreview(context, channelModel.channelPhoto!),
                       ),
-                      onTap: () {
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                  title: const Text('Delete?'),
-                                  content: const Text(
-                                    'Are you sure you want to delete this channel from database?',
-                                  ),
-                                  actions: [
-                                    ElevatedButton(
-                                        onPressed: () {
-                                          channelProvider
-                                              .deleteChannelFromDatabase(
-                                                  channelId:
-                                                      channelModel.groupId!)
-                                              .whenComplete(() {
-                                            Navigator.of(context).pop();
-                                            showSnackbar(context,
-                                                'Channel delete successfully from database');
-                                            setState(() {});
-                                          });
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                        child: const Text('YES')),
-                                    ElevatedButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.grey,
-                                        ),
-                                        child: const Text('NO')),
-                                  ]);
-                            });
-                      },
-                    ),
-                  ],
-                )
-              ],
+                      const SizedBox(width: 10),
+                      InkWell(
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            size: 15,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        onTap: () => nextScreen(context,
+                            ChannelEditScreen(channelModel: channelModel)),
+                      ),
+                      const SizedBox(width: 10),
+                      InkWell(
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.delete,
+                            size: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                    title: const Text('Delete?'),
+                                    content: const Text(
+                                      'Are you sure you want to delete this channel from database?',
+                                    ),
+                                    actions: [
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            channelProvider
+                                                .deleteChannelFromDatabase(
+                                                    channelId:
+                                                        channelModel.groupId!)
+                                                .whenComplete(() {
+                                              Navigator.of(context).pop();
+                                              showSnackbar(context,
+                                                  'Channel delete successfully from database');
+                                              setState(() {});
+                                            });
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                          child: const Text('YES')),
+                                      ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.grey,
+                                          ),
+                                          child: const Text('NO')),
+                                    ]);
+                              });
+                        },
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
           )
         ],

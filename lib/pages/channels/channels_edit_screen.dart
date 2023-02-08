@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
+import 'package:dellenhauer_admin/pages/channels/channels_list_selection_screen.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/users_list_screen.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
@@ -17,34 +19,43 @@ class ChannelEditScreen extends StatefulWidget {
 }
 
 class _ChannelEditScreenState extends State<ChannelEditScreen> {
-  late TextEditingController _channelNameController;
-  late TextEditingController _channelDescriptionController;
+  late ChannelProvider channelProvider;
+  final TextEditingController _channelNameController = TextEditingController();
+  final TextEditingController _channelDescriptionController =
+      TextEditingController();
   late bool _isAutoJoinSwitched;
   late bool _isReadOnly;
   late bool _joinAccessRequired;
-  late ChannelProvider channelProvider;
   String? _visibility;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    Future.delayed(Duration.zero, () async {
+      channelProvider = Provider.of<ChannelProvider>(context, listen: false);
+      channelProvider.attachContext(context);
+      channelProvider.relatedChannels.clear();
+    });
     getData();
   }
 
   getData() {
+    channelProvider = Provider.of<ChannelProvider>(context, listen: false);
     if (mounted) {
       setState(() {
-        _channelNameController =
-            TextEditingController(text: widget.channelModel.channelName);
-        _channelDescriptionController =
-            TextEditingController(text: widget.channelModel.channelDescription);
+        _channelNameController.text = widget.channelModel.channelName!;
+        _channelDescriptionController.text =
+            widget.channelModel.channelDescription!;
         _isAutoJoinSwitched = widget.channelModel.channelAutoJoin!;
         _isReadOnly = widget.channelModel.channelReadOnly!;
         _joinAccessRequired = widget.channelModel.joinAccessRequired!;
         _visibility = widget.channelModel.visibility!.name;
       });
-      channelProvider = Provider.of<ChannelProvider>(context, listen: false);
+      if (widget.channelModel.relatedChannel != null) {
+        channelProvider.relatedChannels
+            .addAll(widget.channelModel.relatedChannel!);
+      }
     }
   }
 
@@ -194,8 +205,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                 },
                 true,
               ),
-              const SizedBox(height: 20),
-
+              relatedChannelWidget(channelProvider.relatedChannels),
               // visibility dropdown
               visibilityDropDown(),
               Container(
@@ -214,6 +224,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                   onPressed: () {
                     channelProvider
                         .updateChannelData(
+                      relatedChannels: channelProvider.relatedChannels,
                       channelName: _channelNameController.text,
                       channelDescription: _channelDescriptionController.text,
                       autoJoin: _isAutoJoinSwitched,
@@ -405,6 +416,88 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget relatedChannelWidget(List<RelatedChannel> initialData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Related Channels'),
+            IconButton(
+                icon: const Icon(
+                  FontAwesomeIcons.circlePlus,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
+                onPressed: () {
+                  showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) {
+                        return const ChannelListSelectionScreen();
+                      });
+                })
+          ],
+        ),
+        Container(
+          width: double.infinity,
+          height: 150,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey, width: 1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 10, left: 10),
+            child: Wrap(
+              children: [
+                ...channelProvider.relatedChannels.map(
+                  (e) => singleCardWidget(
+                    title: e.relatedChannelName!,
+                    onDelete: () {
+                      channelProvider.removeRelatedChannel(e.relatedChannelId!);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget singleCardWidget(
+      {required String title, required VoidCallback onDelete}) {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 50, maxWidth: 200),
+      margin: const EdgeInsets.only(right: 10, bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              overflow: TextOverflow.clip,
+              maxLines: 1,
+            ),
+          ),
+          IconButton(
+            onPressed: onDelete,
+            icon: const Icon(FontAwesomeIcons.circleXmark, size: 15),
+          )
+        ],
+      ),
     );
   }
 }

@@ -8,3 +8,5 @@
 8. showcasing new channel requests
 9. add dipose method
 10. add new channel option
+
+11. deleting a user should delete it from all user chats

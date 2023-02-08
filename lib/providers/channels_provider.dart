@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +16,25 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  List<RelatedChannel> _relatedChannels = [];
+  List<RelatedChannel> get relatedChannels => _relatedChannels;
 
   void attachContext(BuildContext context) {
     this.context = context;
+  }
+
+  void setRelatedChannel(RelatedChannel relatedChannel) {
+    _relatedChannels.add(relatedChannel);
+    notifyListeners();
+  }
+
+  void removeRelatedChannel(String relatedChannelId) {
+    for (var d in _relatedChannels) {
+      if (d.relatedChannelId == relatedChannelId) {
+        _relatedChannels.remove(d);
+      }
+    }
+    notifyListeners();
   }
 
   void setLastVisible({DocumentSnapshot? documentSnapshot}) {
@@ -107,6 +124,98 @@ class ChannelProvider extends ChangeNotifier {
     return userData;
   }
 
+  Stream<List<UserModel>> getUserStream({
+    required String groupId,
+    required bool isModerator,
+  }) {
+    return firebaseFirestore
+        .collection('channels')
+        .doc(groupId)
+        .snapshots()
+        .asyncMap((event) async {
+      ChannelModel channelData = ChannelModel.fromMap(event.data() as dynamic);
+
+      if (isModerator) {
+        List<UserModel> moderatorList = [];
+        for (var id in channelData.moderatorsId!) {
+          await firebaseFirestore
+              .collection('users')
+              .doc(id)
+              .get()
+              .then((value) {
+            if (value.exists) {
+              moderatorList.add(UserModel.fromJson(value.data() as dynamic));
+            }
+          });
+        }
+        return moderatorList;
+      } else {
+        List<UserModel> membersList = [];
+        for (var id in channelData.membersId!) {
+          await firebaseFirestore
+              .collection('users')
+              .doc(id)
+              .get()
+              .then((value) {
+            if (value.exists) {
+              membersList.add(UserModel.fromJson(value.data() as dynamic));
+            }
+          });
+        }
+        return membersList;
+      }
+    });
+  }
+
+  Future<List<ChannelModel>> getChannelList() async {
+    List<ChannelModel> channels = [];
+    await firebaseFirestore.collection('channels').get().then((value) {
+      for (var document in value.docs) {
+        if (document.exists) {
+          channels.add(ChannelModel.fromMap(document.data()));
+        }
+      }
+    });
+    return channels;
+  }
+
+  Future<List<UserModel>> getUserList() async {
+    List<UserModel> users = [];
+    await firebaseFirestore.collection('users').get().then((value) {
+      for (var document in value.docs) {
+        if (document.exists) {
+          users.add(UserModel.fromJson(document.data()));
+        }
+      }
+    });
+    return users;
+  }
+
+  Future<void> addUserToChannel(
+      {required String userId,
+      required bool isModerator,
+      required String channelId}) async {
+    DocumentSnapshot documentSnapshot =
+        await firebaseFirestore.collection('channels').doc(channelId).get();
+    if (documentSnapshot.exists) {
+      ChannelModel channelData =
+          ChannelModel.fromMap(documentSnapshot.data() as dynamic);
+      if (isModerator) {
+        if (!channelData.moderatorsId!.contains(userId)) {
+          await firebaseFirestore.collection('channels').doc(channelId).update({
+            'moderators_id': FieldValue.arrayUnion([userId])
+          });
+        }
+      } else {
+        if (!channelData.membersId!.contains(userId)) {
+          await firebaseFirestore.collection('channels').doc(channelId).update({
+            'members_id': FieldValue.arrayUnion([userId])
+          });
+        }
+      }
+    }
+  }
+
   // removing id from collection
   Future<void> removeUserFromChannel(
       {required String userId,
@@ -133,6 +242,7 @@ class ChannelProvider extends ChangeNotifier {
     required bool joinAccessRequired,
     required String visibility,
     required String channelId,
+    required List<RelatedChannel> relatedChannels,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -140,6 +250,7 @@ class ChannelProvider extends ChangeNotifier {
       'channel_name': channelName,
       'channel_description': channelDescription,
       'channel_autojoin': autoJoin,
+      'related_channels': relatedChannels.map((e) => e.toMap()).toList(),
       'channel_readonly': readOnly,
       'join_access_required': joinAccessRequired,
       'visibility': visibility,
