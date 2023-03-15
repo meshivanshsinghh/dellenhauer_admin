@@ -419,7 +419,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
     );
   }
 
-  Widget relatedChannelWidget(List<RelatedChannel> initialData) {
+  Widget relatedChannelWidget(List<String> initialData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -457,9 +457,9 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
               children: [
                 ...channelProvider.relatedChannels.map(
                   (e) => singleCardWidget(
-                    title: e.relatedChannelName!,
+                    title: e,
                     onDelete: () {
-                      channelProvider.removeRelatedChannel(e.relatedChannelId!);
+                      channelProvider.removeRelatedChannel(e);
                     },
                   ),
                 ),

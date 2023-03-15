@@ -131,10 +131,7 @@ class _ChannelListSelectionScreenState
         trailing: IconButton(
           icon: const Icon(FontAwesomeIcons.circlePlus),
           onPressed: () {
-            channelProvider.setRelatedChannel(RelatedChannel(
-              relatedChannelId: channelModel.groupId,
-              relatedChannelName: channelModel.channelName,
-            ));
+            channelProvider.setRelatedChannel(channelModel.groupId!);
           },
         ),
       ),

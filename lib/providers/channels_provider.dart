@@ -16,21 +16,21 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  List<RelatedChannel> _relatedChannels = [];
-  List<RelatedChannel> get relatedChannels => _relatedChannels;
+  List<String> _relatedChannels = [];
+  List<String> get relatedChannels => _relatedChannels;
 
   void attachContext(BuildContext context) {
     this.context = context;
   }
 
-  void setRelatedChannel(RelatedChannel relatedChannel) {
-    _relatedChannels.add(relatedChannel);
+  void setRelatedChannel(String relatedChannelId) {
+    _relatedChannels.add(relatedChannelId);
     notifyListeners();
   }
 
   void removeRelatedChannel(String relatedChannelId) {
     for (var d in _relatedChannels) {
-      if (d.relatedChannelId == relatedChannelId) {
+      if (d == relatedChannelId) {
         _relatedChannels.remove(d);
       }
     }
@@ -242,7 +242,7 @@ class ChannelProvider extends ChangeNotifier {
     required bool joinAccessRequired,
     required String visibility,
     required String channelId,
-    required List<RelatedChannel> relatedChannels,
+    required List<String> relatedChannels,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -250,7 +250,7 @@ class ChannelProvider extends ChangeNotifier {
       'channel_name': channelName,
       'channel_description': channelDescription,
       'channel_autojoin': autoJoin,
-      'related_channels': relatedChannels.map((e) => e.toMap()).toList(),
+      'related_channels': FieldValue.arrayUnion([relatedChannels]),
       'channel_readonly': readOnly,
       'join_access_required': joinAccessRequired,
       'visibility': visibility,

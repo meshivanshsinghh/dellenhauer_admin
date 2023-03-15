@@ -38,14 +38,9 @@ class OverviewProvider extends ChangeNotifier {
 
   // get channel data
   Future getChannelCount() async {
-    try {
-      QuerySnapshot query =
-          await firebaseFirestore.collection('channels').get();
-      _channelCount = query.docs.length;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
+    QuerySnapshot query = await firebaseFirestore.collection('channels').get();
+    _channelCount = query.docs.length;
+    notifyListeners();
   }
 
   // getting services data

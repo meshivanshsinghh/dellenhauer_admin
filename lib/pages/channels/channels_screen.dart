@@ -132,6 +132,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                 final ChannelModel d = ChannelModel.fromMap(
                                     channelProvider.channelData[index].data()
                                         as dynamic);
+
                                 return buildContentList(d);
                               }
                               return Center(

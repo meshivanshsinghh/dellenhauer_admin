@@ -32,7 +32,7 @@ class ChannelModel {
   List<String>? moderatorsId;
   String? groupId;
   ChannelEnum? visibility;
-  List<RelatedChannel>? relatedChannel;
+  List<String>? relatedChannel;
 
   // for last messages
   DateTime? timeSent;
@@ -66,9 +66,7 @@ class ChannelModel {
       'channel_autojoin': channelAutoJoin,
       'channel_readonly': channelReadOnly,
       'created_timestamp': createdAt,
-      'related_channels': relatedChannel!.isNotEmpty
-          ? relatedChannel!.map((e) => e.toMap()).toList()
-          : null,
+      'related_channels': relatedChannel,
       'join_access_required': joinAccessRequired,
       'members_id': membersId,
       'moderators_id': moderatorsId,
@@ -93,12 +91,7 @@ class ChannelModel {
       channelNotification = false;
     }
     channelPhoto = map['channel_photo'];
-    if (map['related_channels'] != null) {
-      relatedChannel = [];
-      map['related_channels'].forEach((value) {
-        relatedChannel!.add(RelatedChannel.fromJson(value));
-      });
-    }
+
     if (map['channel_autojoin'] != null) {
       channelAutoJoin = map['channel_autojoin'];
     } else {
@@ -136,6 +129,14 @@ class ChannelModel {
       });
     } else {
       moderatorsId = [];
+    }
+    if (map['related_channels'] != null) {
+      relatedChannel = [];
+      map['related_channels'].forEach((value) {
+        relatedChannel!.add(value);
+      });
+    } else {
+      relatedChannel = [];
     }
 
     timeSent = DateTime.fromMillisecondsSinceEpoch(map['timeSent']);
