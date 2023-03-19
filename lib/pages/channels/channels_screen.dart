@@ -126,6 +126,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       : RefreshIndicator(
                           color: Colors.redAccent,
                           child: ListView.builder(
+                            controller: scrollController,
                             itemCount: channelProvider.channelData.length + 1,
                             itemBuilder: (context, index) {
                               if (index < channelProvider.channelData.length) {

@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/providers/courses_provider.dart';
@@ -49,6 +50,8 @@ class MyApp extends StatelessWidget {
             create: (_) => CoursesProvider()),
         ChangeNotifierProvider<AwardsProvider>(create: (_) => AwardsProvider()),
         ChangeNotifierProvider<UsersProvider>(create: (_) => UsersProvider()),
+        ChangeNotifierProvider<PushNotificationProvider>(
+            create: (_) => PushNotificationProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
