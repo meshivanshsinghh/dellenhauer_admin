@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
-import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -119,7 +119,7 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
                                 trailing: IconButton(
                                     icon: const Icon(
                                       FontAwesomeIcons.circlePlus,
-                                      color: Colors.redAccent,
+                                      color: kPrimaryColor,
                                     ),
                                     onPressed: () {
                                       // adding user to moderators collection
@@ -142,7 +142,7 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
                       return emptyPage(FontAwesomeIcons.circleXmark, "Error!");
                     }
                     return const Center(
-                      child: CircularProgressIndicator(color: Colors.redAccent),
+                      child: CircularProgressIndicator(color: kPrimaryColor),
                     );
                   })
             ],

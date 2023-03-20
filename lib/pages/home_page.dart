@@ -2,12 +2,13 @@ import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs.dart';
+import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_logs.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
 import 'package:dellenhauer_admin/pages/services/services_screen.dart';
 import 'package:dellenhauer_admin/pages/settings/settings_screen.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/pages/users/users_screen.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
@@ -63,8 +64,8 @@ class _HomePageState extends State<HomePage> {
                     tabsElevation: 0.5,
                     tabsShadowColor: Colors.grey[500],
                     tabsWidth: 200,
-                    indicatorColor: Colors.red,
-                    selectedTabBackgroundColor: Colors.red.withOpacity(0.1),
+                    indicatorColor: kPrimaryColor,
+                    selectedTabBackgroundColor: kPrimaryColor.withOpacity(0.1),
                     indicatorWidth: 5,
                     disabledChangePageFromContentView: true,
                     initialIndex: pageIndex,
@@ -81,10 +82,10 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[8], icons[8]) as Tab,
                     ],
                     contents: const [
-                      PushNotificationLogsScreen(),
+                      OverviewScreen(),
                       ChannelsScreen(),
                       UserScreen(),
-                      OverviewScreen(),
+                      PushNotificationLogsScreen(),
                       RequestsScreenList(),
                       ServicesScreen(),
                       CoursesScreen(),
@@ -146,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Colors.red,
+                    color: kPrimaryColor,
                   ),
                   children: [
                     TextSpan(
@@ -165,7 +166,7 @@ class _HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.only(
                     left: 15, right: 15, top: 5, bottom: 5),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: kPrimaryColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -193,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                 margin: const EdgeInsets.all(5),
                 padding: const EdgeInsets.only(left: 10, right: 20),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red),
+                  border: Border.all(color: kPrimaryColor),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton.icon(
@@ -204,7 +205,7 @@ class _HomePageState extends State<HomePage> {
                     'Signed as admin',
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      color: Colors.red,
+                      color: kPrimaryColor,
                       fontSize: 16,
                     ),
                   ),

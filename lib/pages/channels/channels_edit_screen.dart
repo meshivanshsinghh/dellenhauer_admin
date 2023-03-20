@@ -1,6 +1,7 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_list_selection_screen.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/users_list_screen.dart';
@@ -219,7 +220,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: kPrimaryColor,
                   ),
                   onPressed: () {
                     channelProvider
@@ -241,7 +242,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                   child: channelProvider.isLoading == true
                       ? const Center(
                           child: CircularProgressIndicator(
-                          color: Colors.redAccent,
+                          color: kPrimaryColor,
                         ))
                       : const Text('Save'),
                 ),
@@ -324,7 +325,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           ),
           Switch(
             value: value,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
             onChanged: onChanged,
           ),
         ],
@@ -350,7 +351,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
         TextFormField(
           maxLines: controller == _channelDescriptionController ? 4 : 1,
           controller: controller,
-          cursorColor: Colors.redAccent,
+          cursorColor: kPrimaryColor,
           decoration: InputDecoration(
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -430,7 +431,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
             IconButton(
                 icon: const Icon(
                   FontAwesomeIcons.circlePlus,
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                   size: 20,
                 ),
                 onPressed: () {

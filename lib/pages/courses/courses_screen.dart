@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/providers/courses_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
@@ -58,8 +60,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15)),
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
           ),
           // text field to add new course
           Wrap(
@@ -70,7 +71,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   controller: _titleController,
                   decoration: inputDecoration(
                       'Title', 'Enter new title...', _titleController),
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   onChanged: (value) {
                     setState(() {
                       _titleController.text = value;
@@ -84,7 +85,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   controller: _descriptionController,
                   decoration: inputDecoration('Description',
                       'Enter new description...', _descriptionController),
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   onChanged: (value) {
                     setState(() {
                       _descriptionController.text = value;
@@ -117,7 +118,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: kPrimaryColor,
                     ),
                     child: const Text('Add')),
               ),
@@ -158,7 +159,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   );
                 }
                 return const Center(
-                  child: CircularProgressIndicator(color: Colors.redAccent),
+                  child: CircularProgressIndicator(color: kPrimaryColor),
                 );
               })
         ],
@@ -184,7 +185,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
           )
         ],
       ),

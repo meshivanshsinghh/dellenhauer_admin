@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/users/users_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -106,7 +107,7 @@ class _UserScreenState extends State<UserScreen> {
                     height: 3,
                     width: 50,
                     decoration: BoxDecoration(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                         borderRadius: BorderRadius.circular(15)),
                   ),
                   const SizedBox(height: 10),
@@ -127,13 +128,13 @@ class _UserScreenState extends State<UserScreen> {
               child: usersProvider.isLoading == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                       ),
                     )
                   : usersProvider.hasData == false
                       ? emptyPage(FontAwesomeIcons.solidUser, 'No User Found!')
                       : RefreshIndicator(
-                          color: Colors.redAccent,
+                          color: kPrimaryColor,
                           child: ListView.builder(
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
@@ -153,7 +154,7 @@ class _UserScreenState extends State<UserScreen> {
                                     width: 32,
                                     height: 32,
                                     child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
+                                      color: kPrimaryColor,
                                     ),
                                   ),
                                 ),
@@ -283,7 +284,7 @@ class _UserScreenState extends State<UserScreen> {
           IconButton(
               icon: const Icon(
                 FontAwesomeIcons.trash,
-                color: Colors.redAccent,
+                color: kPrimaryColor,
                 size: 18,
               ),
               onPressed: () {
@@ -303,7 +304,7 @@ class _UserScreenState extends State<UserScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent),
+                        backgroundColor: kPrimaryColor),
                     child: const Text('YES'),
                   ),
                   ElevatedButton(

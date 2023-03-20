@@ -1,6 +1,7 @@
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/providers/courses_provider.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -51,7 +52,7 @@ class _UsersCoursesListState extends State<UsersCoursesList> {
                 );
               }
               return const Center(
-                child: CircularProgressIndicator(color: Colors.redAccent),
+                child: CircularProgressIndicator(color: kPrimaryColor),
               );
             },
           ),
@@ -60,7 +61,7 @@ class _UsersCoursesListState extends State<UsersCoursesList> {
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: kPrimaryColor,
             ),
             child: const Text('Close'),
           ),

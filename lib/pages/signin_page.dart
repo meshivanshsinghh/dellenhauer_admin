@@ -1,5 +1,6 @@
 import 'package:dellenhauer_admin/pages/home_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +73,7 @@ class _SignInPageState extends State<SignInPage> {
                 child: TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   decoration: inputDecoration(
                       'Enter password', 'Password', _passwordController),
                   validator: (String? value) {
@@ -98,7 +99,7 @@ class _SignInPageState extends State<SignInPage> {
               height: 45,
               width: 200,
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: kPrimaryColor,
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(

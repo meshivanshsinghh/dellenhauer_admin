@@ -5,6 +5,7 @@ import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
 import 'package:dellenhauer_admin/pages/users/users_courses_list.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
@@ -246,7 +247,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                           style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30)),
-                              backgroundColor: Colors.redAccent),
+                              backgroundColor: kPrimaryColor),
                           child: const Text('Save'),
                         ),
                       )
@@ -260,7 +261,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
               }
               return const Center(
                 child: CircularProgressIndicator(
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                 ),
               );
             },
@@ -289,7 +290,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           enabled: isFieldActive,
           maxLines: controller == _bioController ? 4 : 1,
           controller: controller,
-          cursorColor: Colors.redAccent,
+          cursorColor: kPrimaryColor,
           decoration: InputDecoration(
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -326,7 +327,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           ),
           Switch(
             value: value,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
             onChanged: onChanged,
           ),
         ],
@@ -345,7 +346,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
             IconButton(
                 icon: const Icon(
                   FontAwesomeIcons.circlePlus,
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                   size: 20,
                 ),
                 onPressed: () {
@@ -395,7 +396,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
             IconButton(
                 icon: const Icon(
                   FontAwesomeIcons.circlePlus,
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                   size: 20,
                 ),
                 onPressed: () {

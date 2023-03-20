@@ -12,6 +12,8 @@ class OverviewProvider extends ChangeNotifier {
   int get servicesCount => _servicesCount;
   int _requestCount = 0;
   int get requestCount => _requestCount;
+  int _notificationCount = 0;
+  int get notificationCount => _notificationCount;
 
   void attachContext(BuildContext context) {
     this.context = context;
@@ -23,6 +25,7 @@ class OverviewProvider extends ChangeNotifier {
     await getChannelCount();
     await getServicesCount();
     await getRequestCount();
+    await getNotificationCount();
   }
 
   // getting user data
@@ -40,6 +43,13 @@ class OverviewProvider extends ChangeNotifier {
   Future getChannelCount() async {
     QuerySnapshot query = await firebaseFirestore.collection('channels').get();
     _channelCount = query.docs.length;
+    notifyListeners();
+  }
+
+  Future getNotificationCount() async {
+    QuerySnapshot query =
+        await firebaseFirestore.collection('notifications').get();
+    _notificationCount = query.docs.length;
     notifyListeners();
   }
 

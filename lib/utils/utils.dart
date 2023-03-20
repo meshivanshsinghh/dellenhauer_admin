@@ -1,4 +1,5 @@
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:flutter/material.dart';
 
 void showSnackbar(BuildContext context, String content) {
@@ -29,7 +30,7 @@ showImageContentDialog(context, imageUrl) {
                   left: 10,
                   child: InkWell(
                     child: const CircleAvatar(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: kPrimaryColor,
                       child: Icon(Icons.close, color: Colors.white),
                     ),
                     onTap: () {

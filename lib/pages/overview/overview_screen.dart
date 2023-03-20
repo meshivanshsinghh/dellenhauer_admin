@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/providers/overview_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -48,14 +50,14 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   overviewProvider.servicesCount == 0
               ? const Center(
                   child: CircularProgressIndicator(
-                    color: Colors.redAccent,
+                    color: kPrimaryColor,
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: () async {
                     overviewProvider.loadData(reload: true);
                   },
-                  color: Colors.red,
+                  color: kPrimaryColor,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     scrollDirection: Axis.vertical,
@@ -87,6 +89,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
                                 'TOTAL SERVICES',
                                 overviewProvider.servicesCount,
                                 FontAwesomeIcons.briefcase),
+                            card(
+                                'TOTAL NOTIFICATIONS',
+                                overviewProvider.servicesCount,
+                                FontAwesomeIcons.bell),
                           ],
                         ),
                       ],
@@ -130,7 +136,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             height: 2,
             width: 30,
             decoration: BoxDecoration(
-              color: Colors.red,
+              color: kPrimaryColor,
               borderRadius: BorderRadius.circular(15),
             ),
           ),
@@ -139,7 +145,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, size: 30, color: Colors.redAccent),
+              Icon(icon, size: 30, color: kPrimaryColor),
               const SizedBox(width: 20),
               Text(
                 number.toString(),

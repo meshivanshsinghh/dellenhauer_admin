@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_edit_screen.dart';
@@ -110,21 +111,20 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15)),
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
           ),
           // displaying content here
           Expanded(
               child: channelProvider.isLoading == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                      color: Colors.redAccent,
+                      color: kPrimaryColor,
                     ))
                   : channelProvider.hasData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
                       : RefreshIndicator(
-                          color: Colors.redAccent,
+                          color: kPrimaryColor,
                           child: ListView.builder(
                             controller: scrollController,
                             itemCount: channelProvider.channelData.length + 1,
@@ -144,7 +144,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                     width: 32,
                                     height: 32,
                                     child: CircularProgressIndicator(
-                                        color: Colors.redAccent),
+                                        color: kPrimaryColor),
                                   ),
                                 ),
                               );
@@ -396,7 +396,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           padding: const EdgeInsets.all(10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: Colors.redAccent,
+                            color: kPrimaryColor,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -429,7 +429,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                             });
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.redAccent,
+                                            backgroundColor: kPrimaryColor,
                                           ),
                                           child: const Text('YES')),
                                       ElevatedButton(

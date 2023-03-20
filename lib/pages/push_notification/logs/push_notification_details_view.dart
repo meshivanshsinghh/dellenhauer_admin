@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
@@ -219,7 +221,7 @@ class _PushNotificationDetailsViewState
                               height: 30,
                               width: 30,
                               child: CircularProgressIndicator(
-                                color: Colors.redAccent,
+                                color: kPrimaryColor,
                               ),
                             ),
                           );

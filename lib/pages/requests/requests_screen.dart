@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/pages/requests/request_list.dart';
@@ -118,7 +120,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
                     height: 3,
                     width: 50,
                     decoration: BoxDecoration(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                         borderRadius: BorderRadius.circular(15)),
                   ),
                   const SizedBox(height: 10),
@@ -142,7 +144,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
               child: requestsProvider.isLoadingChannelList == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                       ),
                     )
                   : requestsProvider.hasChannelData == false
@@ -152,7 +154,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
                           onRefresh: () async {
                             refreshData();
                           },
-                          color: Colors.red,
+                          color: kPrimaryColor,
                           child: ListView.builder(
                             itemCount: requestsProvider.channelData.length + 1,
                             itemBuilder: (context, index) {
@@ -171,7 +173,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
                                     width: 32,
                                     height: 32,
                                     child: CircularProgressIndicator(
-                                        color: Colors.redAccent),
+                                        color: kPrimaryColor),
                                   ),
                                 ),
                               );

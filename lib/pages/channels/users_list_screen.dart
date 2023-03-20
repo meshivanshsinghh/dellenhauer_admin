@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/channels/user_list_add_dialog.dart';
@@ -40,7 +41,7 @@ class _UserListScreenState extends State<UserListScreen> {
                   TextButton(
                     child: Text(
                       widget.isModerator ? 'Add Moderators' : 'Add Users',
-                      style: const TextStyle(color: Colors.redAccent),
+                      style: const TextStyle(color: kPrimaryColor),
                     ),
                     onPressed: () {
                       showDialog(
@@ -97,7 +98,7 @@ class _UserListScreenState extends State<UserListScreen> {
               );
             }
             return const Center(
-                child: CircularProgressIndicator(color: Colors.redAccent));
+                child: CircularProgressIndicator(color: kPrimaryColor));
           },
         ),
       ),
@@ -161,7 +162,7 @@ class _UserListScreenState extends State<UserListScreen> {
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       trailing: IconButton(
-        icon: const Icon(FontAwesomeIcons.trash, color: Colors.redAccent),
+        icon: const Icon(FontAwesomeIcons.trash, color: kPrimaryColor),
         onPressed: () {
           deletingUser(
               context,
@@ -169,7 +170,7 @@ class _UserListScreenState extends State<UserListScreen> {
               'Want to remove this ${widget.isModerator ? 'moderator' : 'user'} from channel',
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: kPrimaryColor,
                 ),
                 onPressed: () {
                   channelProvider
@@ -195,7 +196,7 @@ class _UserListScreenState extends State<UserListScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: kPrimaryColor,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text(

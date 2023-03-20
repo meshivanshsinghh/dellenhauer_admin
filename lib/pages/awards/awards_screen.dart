@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
@@ -58,8 +60,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15)),
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
           ),
           // text field to add new course
           Wrap(
@@ -70,7 +71,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
                   controller: _titleController,
                   decoration: inputDecoration(
                       'Title', 'Enter new title...', _titleController),
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   onChanged: (value) {
                     setState(() {
                       _titleController.text = value;
@@ -84,7 +85,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
                   controller: _descriptionController,
                   decoration: inputDecoration('Description',
                       'Enter new description...', _descriptionController),
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   onChanged: (value) {
                     setState(() {
                       _descriptionController.text = value;
@@ -116,7 +117,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: kPrimaryColor,
                     ),
                     child: const Text('Add')),
               ),
@@ -157,7 +158,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
                   );
                 }
                 return const Center(
-                  child: CircularProgressIndicator(color: Colors.redAccent),
+                  child: CircularProgressIndicator(color: kPrimaryColor),
                 );
               })
         ],
@@ -183,7 +184,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
           )
         ],
       ),

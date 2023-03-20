@@ -1,5 +1,7 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_details_view.dart';
+import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_details_view.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
@@ -25,7 +27,7 @@ class _PushNotificationLogsScreenState
   late String orderBy;
 
   final colorsCustom = [
-    Colors.redAccent,
+    kPrimaryColor,
     Colors.blueAccent,
     Colors.purpleAccent,
     Colors.black,
@@ -117,7 +119,7 @@ class _PushNotificationLogsScreenState
               height: 3,
               width: 50,
               decoration: BoxDecoration(
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                   borderRadius: BorderRadius.circular(15)),
             ),
             // displaying content
@@ -140,7 +142,7 @@ class _PushNotificationLogsScreenState
                 },
                 child: notificationProvider.isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: Colors.red),
+                        child: CircularProgressIndicator(color: kPrimaryColor),
                       )
                     : notificationProvider.hasData == false
                         ? emptyPage(
@@ -240,7 +242,7 @@ class _PushNotificationLogsScreenState
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                     backgroundColor:
-                                                        Colors.redAccent),
+                                                        kPrimaryColor),
                                                 child: const Text('YES'),
                                               ),
                                               ElevatedButton(
@@ -255,7 +257,7 @@ class _PushNotificationLogsScreenState
                                           },
                                           icon: const Icon(
                                             FontAwesomeIcons.trash,
-                                            color: Colors.redAccent,
+                                            color: kPrimaryColor,
                                             size: 20,
                                           ),
                                         ),
