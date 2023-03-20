@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
+import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:flutter/material.dart';
 
 class PushNotificationProvider extends ChangeNotifier {
@@ -41,14 +43,14 @@ class PushNotificationProvider extends ChangeNotifier {
         data = await firebaseFirestore
             .collection('notifications')
             .orderBy(orderBy, descending: descending)
-            .limit(10)
+            .limit(20)
             .get();
       } else {
         data = await firebaseFirestore
             .collection('notifications')
             .where('target', isEqualTo: orderBy)
             .orderBy('notificationSendTimestamp', descending: descending)
-            .limit(10)
+            .limit(20)
             .get();
       }
     } else {
@@ -57,7 +59,7 @@ class PushNotificationProvider extends ChangeNotifier {
             .collection('notifications')
             .orderBy(orderBy, descending: descending)
             .startAfter([_lastVisible![orderBy]])
-            .limit(10)
+            .limit(20)
             .get();
       } else {
         final Map<String, dynamic>? dataMap = _lastVisible!.data() as dynamic;
@@ -69,7 +71,7 @@ class PushNotificationProvider extends ChangeNotifier {
             .orderBy('notificationSendTimestamp', descending: descending)
             .where('target', isEqualTo: orderByField)
             .startAfter([_lastVisible![orderByField]])
-            .limit(10)
+            .limit(20)
             .get();
       }
     }
@@ -97,5 +99,49 @@ class PushNotificationProvider extends ChangeNotifier {
   void setLastVisible({DocumentSnapshot? documentSnapshot}) {
     _lastVisible = documentSnapshot;
     notifyListeners();
+  }
+
+  void sortData(String sortColumn, bool isAscending) {
+    if (sortColumn == "notificationSendTimestamp") {
+      notificationData.sort((a, b) {
+        NotificationModel aData =
+            NotificationModel.fromMap(a.data() as dynamic);
+        NotificationModel bData =
+            NotificationModel.fromMap(b.data() as dynamic);
+        int comparison = aData.notificationSendTimestamp!
+            .compareTo(bData.notificationSendTimestamp!);
+        return isAscending ? comparison : -comparison;
+      });
+    } else if (sortColumn == "target") {
+      notificationData.sort((a, b) {
+        NotificationModel aData =
+            NotificationModel.fromMap(a.data() as dynamic);
+        NotificationModel bData =
+            NotificationModel.fromMap(b.data() as dynamic);
+        int comparison = aData.target!.compareTo(bData.target!);
+        return isAscending ? comparison : -comparison;
+      });
+    }
+    notifyListeners();
+  }
+
+  // deleting push notification
+  Future<void> deletingPushNotification(String pushNotificationId) async {
+    await firebaseFirestore
+        .collection('notifications')
+        .doc(pushNotificationId)
+        .delete();
+  }
+
+  Future<List<UserModel>> getUserDetails(List<String> id) async {
+    List<UserModel> userData = [];
+    for (var documentID in id) {
+      DocumentSnapshot snap =
+          await firebaseFirestore.collection('users').doc(documentID).get();
+      if (snap.exists) {
+        userData.add(UserModel.fromJson(snap.data() as dynamic));
+      }
+    }
+    return userData;
   }
 }
