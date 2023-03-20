@@ -15,6 +15,8 @@ class RequestsProvider extends ChangeNotifier {
   final FirebaseFirestore firebaseFirestoree = FirebaseFirestore.instance;
   bool _isLoadingChannelList = false;
   bool get isLoadingChannelList => _isLoadingChannelList;
+  bool _isChannelLoadingMoreContent = false;
+  bool get isChannelLoadingMoreContent => _isChannelLoadingMoreContent;
   bool _isLoadingRequestList = false;
   bool get isLoadingRequestList => _isLoadingRequestList;
   bool _hasChannelData = false;
@@ -43,6 +45,11 @@ class RequestsProvider extends ChangeNotifier {
   */
   void setChannelDataLoading({bool isLoading = false}) {
     _isLoadingChannelList = isLoading;
+    notifyListeners();
+  }
+
+  void setChannelDataMoreContent({bool isLoading = false}) {
+    _isChannelLoadingMoreContent = isLoading;
     notifyListeners();
   }
 
@@ -90,11 +97,12 @@ class RequestsProvider extends ChangeNotifier {
       if (_lastVisibleChannelList == null) {
         _isLoadingChannelList = false;
         _hasChannelData = false;
+        _isChannelLoadingMoreContent = false;
         notifyListeners();
       } else {
         _isLoadingChannelList = false;
         _hasChannelData = true;
-        showSnackbar(context!, 'No more channels available');
+        _isChannelLoadingMoreContent = false;
         notifyListeners();
       }
     }

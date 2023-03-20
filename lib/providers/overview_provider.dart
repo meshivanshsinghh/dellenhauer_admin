@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 class OverviewProvider extends ChangeNotifier {
   BuildContext? context;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
   int _userCount = 0;
   int get userCount => _userCount;
   int _channelCount = 0;
@@ -19,66 +21,69 @@ class OverviewProvider extends ChangeNotifier {
     this.context = context;
   }
 
-  // getting initial data
-  Future<void> loadData({bool reload = false}) async {
-    await getUserCount();
-    await getChannelCount();
-    await getServicesCount();
-    await getRequestCount();
-    await getNotificationCount();
-  }
-
-  // getting user data
-  Future getUserCount() async {
-    try {
-      QuerySnapshot query = await firebaseFirestore.collection('users').get();
-      _userCount = query.docs.length;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // get channel data
-  Future getChannelCount() async {
-    QuerySnapshot query = await firebaseFirestore.collection('channels').get();
-    _channelCount = query.docs.length;
+  void setLoading(bool isLoading) {
+    _isLoading = isLoading;
     notifyListeners();
   }
 
-  Future getNotificationCount() async {
-    QuerySnapshot query =
+  // getting initial data
+  Future<void> loadData({bool reload = false}) async {
+    try {
+      setLoading(true);
+      await Future.wait([
+        getUserCount(),
+        getChannelCount(),
+        getServicesCount(),
+        getRequestCount(),
+        getNotificationCount()
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // getting user data
+  Future<void> getUserCount() async {
+    QuerySnapshot<Map<String, dynamic>> query =
+        await firebaseFirestore.collection('users').get();
+    _userCount = query.size;
+    notifyListeners();
+  }
+
+  // get channel data
+  Future<void> getChannelCount() async {
+    QuerySnapshot<Map<String, dynamic>> query =
+        await firebaseFirestore.collection('channels').get();
+    _channelCount = query.size;
+    notifyListeners();
+  }
+
+  Future<void> getNotificationCount() async {
+    QuerySnapshot<Map<String, dynamic>> query =
         await firebaseFirestore.collection('notifications').get();
-    _notificationCount = query.docs.length;
+    _notificationCount = query.size;
     notifyListeners();
   }
 
   // getting services data
-  Future getServicesCount() async {
-    try {
-      DocumentSnapshot query =
-          await firebaseFirestore.collection('admin').doc('services').get();
-
-      _servicesCount = query['total_count'] as int;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
+  Future<void> getServicesCount() async {
+    QuerySnapshot<Map<String, dynamic>> query = await firebaseFirestore
+        .collection('admin')
+        .doc('services')
+        .collection('serviceCollection')
+        .get();
+    _servicesCount = query.size;
+    notifyListeners();
   }
 
   // getting request count
-  Future getRequestCount() async {
-    try {
-      QuerySnapshot query = await firebaseFirestore
-          .collection('admin')
-          .doc('settings')
-          .collection('channelRequests')
-          .get();
-
-      _requestCount = query.docs.length;
-      notifyListeners();
-    } catch (e) {
-      return null;
-    }
+  Future<void> getRequestCount() async {
+    QuerySnapshot<Map<String, dynamic>> query = await firebaseFirestore
+        .collection('admin')
+        .doc('settings')
+        .collection('channelRequests')
+        .get();
+    _requestCount = query.size;
+    notifyListeners();
   }
 }

@@ -18,10 +18,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () {
-      overviewProvider = Provider.of<OverviewProvider>(context, listen: false);
-      overviewProvider.attachContext(context);
-      overviewProvider.loadData();
+      initData();
     });
+  }
+
+  void initData() {
+    overviewProvider = Provider.of<OverviewProvider>(context, listen: false);
+    overviewProvider.setLoading(true);
+    overviewProvider
+        .loadData()
+        .whenComplete(() => overviewProvider.setLoading(false));
   }
 
   @override
@@ -44,10 +50,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
         child: Container(
           margin: const EdgeInsets.all(20),
           padding: const EdgeInsets.only(top: 30, bottom: 10),
-          child: overviewProvider.userCount == 0 &&
-                  overviewProvider.requestCount == 0 &&
-                  overviewProvider.channelCount == 0 &&
-                  overviewProvider.servicesCount == 0
+          child: overviewProvider.isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: kPrimaryColor,
@@ -91,8 +94,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                                 FontAwesomeIcons.briefcase),
                             card(
                                 'TOTAL NOTIFICATIONS',
-                                overviewProvider.servicesCount,
-                                FontAwesomeIcons.bell),
+                                overviewProvider.notificationCount,
+                                FontAwesomeIcons.solidBell),
                           ],
                         ),
                       ],
@@ -105,10 +108,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
   // card widget
   Widget card(String title, int number, IconData icon) {
     return Container(
+      width: 300,
+      height: 200,
       padding: const EdgeInsets.all(30),
       margin: const EdgeInsets.only(bottom: 10),
-      height: 180,
-      width: 280,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),

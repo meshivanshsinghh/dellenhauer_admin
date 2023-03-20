@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class ChannelProvider extends ChangeNotifier {
@@ -17,6 +15,9 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   List<String> _relatedChannels = [];
+
+  bool _isLoadingMoreContent = false;
+  bool get isLoadingMoreContent => _isLoadingMoreContent;
   List<String> get relatedChannels => _relatedChannels;
 
   void attachContext(BuildContext context) {
@@ -71,11 +72,13 @@ class ChannelProvider extends ChangeNotifier {
       if (_lastVisible == null) {
         _isLoading = false;
         _hasData = false;
+        _isLoadingMoreContent = false;
         notifyListeners();
       } else {
         _isLoading = false;
         _hasData = true;
-        showSnackbar(context!, 'No more channels available');
+        _isLoadingMoreContent = false;
+
         notifyListeners();
       }
     }
@@ -83,6 +86,11 @@ class ChannelProvider extends ChangeNotifier {
 
   void setLoading({bool isLoading = false}) {
     _isLoading = isLoading;
+    notifyListeners();
+  }
+
+  void loadingMoreContent({bool isLoading = false}) {
+    _isLoadingMoreContent = isLoading;
     notifyListeners();
   }
 

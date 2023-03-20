@@ -13,6 +13,8 @@ class UsersProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool _hasData = false;
   bool get hasData => _hasData;
+  bool _isLoadingMoreContent = false;
+  bool get isLoadingMoreContent => _isLoadingMoreContent;
   List<DocumentSnapshot> _data = [];
   List<DocumentSnapshot> get data => _data;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -37,6 +39,11 @@ class UsersProvider extends ChangeNotifier {
 
   void setLoading({bool isLoading = false}) {
     _isLoading = isLoading;
+    notifyListeners();
+  }
+
+  void loadingMoreContent({bool isLoading = false}) {
+    _isLoadingMoreContent = isLoading;
     notifyListeners();
   }
 
@@ -93,11 +100,12 @@ class UsersProvider extends ChangeNotifier {
       if (_lastVisible == null) {
         _isLoading = false;
         _hasData = false;
+        _isLoadingMoreContent = false;
         notifyListeners();
       } else {
         _isLoading = false;
         _hasData = true;
-        showSnackbar(context!, 'No more users available!');
+        _isLoadingMoreContent = false;
         notifyListeners();
       }
     }

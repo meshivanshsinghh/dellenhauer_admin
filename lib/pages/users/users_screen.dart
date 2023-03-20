@@ -19,7 +19,7 @@ class UserScreen extends StatefulWidget {
 
 class _UserScreenState extends State<UserScreen> {
   late UsersProvider usersProvider;
-  ScrollController? scrollController;
+
   late String orderBy;
   String? sortByText;
   late bool descending;
@@ -31,23 +31,11 @@ class _UserScreenState extends State<UserScreen> {
     orderBy = 'createdAt';
     descending = true;
     Future.delayed(Duration.zero, () {
-      scrollController = ScrollController()..addListener(_scrollListener);
       usersProvider = Provider.of<UsersProvider>(context, listen: false);
       usersProvider.attachContext(context);
       usersProvider.setLoading(isLoading: true);
       usersProvider.getUsersData(orderBy: orderBy, descending: descending);
     });
-  }
-
-  void _scrollListener() async {
-    usersProvider = Provider.of<UsersProvider>(context, listen: true);
-    if (!usersProvider.isLoading) {
-      if (scrollController!.position.pixels ==
-          scrollController!.position.maxScrollExtent) {
-        usersProvider.setLoading(isLoading: true);
-        usersProvider.getUsersData(orderBy: orderBy, descending: descending);
-      }
-    }
   }
 
   refreshData() {
@@ -57,12 +45,6 @@ class _UserScreenState extends State<UserScreen> {
     usersProvider.data.clear();
     usersProvider.getUsersData(orderBy: orderBy, descending: descending);
     usersProvider.notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    scrollController!.removeListener(_scrollListener);
   }
 
   @override
@@ -92,34 +74,12 @@ class _UserScreenState extends State<UserScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Users',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 5, bottom: 10),
-                    height: 3,
-                    width: 50,
-                    decoration: BoxDecoration(
-                        color: kPrimaryColor,
-                        borderRadius: BorderRadius.circular(15)),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Click on any user to edit their details',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+              const Text(
+                'All Users',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               sortingPopup(),
             ],
@@ -133,37 +93,54 @@ class _UserScreenState extends State<UserScreen> {
                     )
                   : usersProvider.hasData == false
                       ? emptyPage(FontAwesomeIcons.solidUser, 'No User Found!')
-                      : RefreshIndicator(
-                          color: kPrimaryColor,
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.only(top: 20),
-                            itemCount: usersProvider.data.length + 1,
-                            itemBuilder: ((context, index) {
-                              if (index < usersProvider.data.length) {
-                                final UserModel u = UserModel.fromJson(
-                                    usersProvider.data[index].data()
-                                        as dynamic);
-
-                                return buildUserData(u);
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (!usersProvider.isLoading) {
+                              if (notification.metrics.pixels ==
+                                  notification.metrics.maxScrollExtent) {
+                                usersProvider.loadingMoreContent(
+                                    isLoading: true);
+                                usersProvider.getUsersData(
+                                    orderBy: orderBy, descending: descending);
                               }
-                              return Center(
-                                child: Opacity(
-                                  opacity: usersProvider.isLoading ? 1.0 : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                      color: kPrimaryColor,
+                            }
+                            return true;
+                          },
+                          child: RefreshIndicator(
+                              color: kPrimaryColor,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: const EdgeInsets.only(top: 20),
+                                itemCount: usersProvider.data.length + 1,
+                                itemBuilder: ((context, index) {
+                                  if (index < usersProvider.data.length) {
+                                    final UserModel u = UserModel.fromJson(
+                                        usersProvider.data[index].data()
+                                            as dynamic);
+
+                                    return buildUserData(u);
+                                  }
+                                  return Center(
+                                    child: Opacity(
+                                      opacity:
+                                          usersProvider.isLoadingMoreContent
+                                              ? 1.0
+                                              : 0.0,
+                                      child: const SizedBox(
+                                        width: 32,
+                                        height: 32,
+                                        child: CircularProgressIndicator(
+                                          color: kPrimaryColor,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          onRefresh: () async {
-                            refreshData();
-                          }))
+                                  );
+                                }),
+                              ),
+                              onRefresh: () async {
+                                refreshData();
+                              }),
+                        ))
         ],
       ),
     );

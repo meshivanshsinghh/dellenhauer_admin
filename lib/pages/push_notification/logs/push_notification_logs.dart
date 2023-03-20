@@ -35,7 +35,13 @@ class _PushNotificationLogsScreenState
 
   getDate(int date) {
     DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(date);
-    String formattedDate = DateFormat('d MMMM - h:mm a').format(dateTime);
+    String formattedDate = DateFormat('d MMMM').format(dateTime);
+    return formattedDate;
+  }
+
+  getTime(int date) {
+    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(date);
+    String formattedDate = DateFormat('h:mm a').format(dateTime);
     return formattedDate;
   }
 
@@ -152,119 +158,139 @@ class _PushNotificationLogsScreenState
                             scrollDirection: Axis.vertical,
                             child: SizedBox(
                               width: MediaQuery.of(context).size.width,
-                              child: DataTable(
-                                dataRowHeight: 60,
-                                columns: const [
-                                  DataColumn(label: Text('Created At')),
-                                  DataColumn(label: Text('Target')),
-                                  DataColumn(label: Text('Href')),
-                                  DataColumn(label: Text('Done By')),
-                                  DataColumn(label: Text('Actions')),
-                                ],
-                                rows: notificationProvider.notificationData
-                                    .map((e) {
-                                  final NotificationModel d =
-                                      NotificationModel.fromMap(
-                                    e.data() as dynamic,
-                                  );
-                                  return DataRow(cells: [
-                                    DataCell(
-                                      Text(
-                                        getDate(
-                                          d.notificationSendTimestamp!
-                                              .millisecondsSinceEpoch,
-                                        ).toString(),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: DataTable(
+                                  dataRowHeight: 60,
+                                  columns: const [
+                                    DataColumn(label: Text('Time')),
+                                    DataColumn(label: Text('Target')),
+                                    DataColumn(label: Text('Href')),
+                                    DataColumn(label: Text('Created By')),
+                                    DataColumn(label: Text('Date')),
+                                    DataColumn(label: Text('Actions')),
+                                  ],
+                                  rows: notificationProvider.notificationData
+                                      .map((e) {
+                                    final NotificationModel d =
+                                        NotificationModel.fromMap(
+                                      e.data() as dynamic,
+                                    );
+                                    return DataRow(cells: [
+                                      DataCell(
+                                        Text(
+                                          getTime(
+                                            d.notificationSendTimestamp!
+                                                .millisecondsSinceEpoch,
+                                          ).toString(),
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                      // target
+                                      DataCell(Container(
+                                        decoration: BoxDecoration(
+                                          color:
+                                              colorsCustom[d.target == 'channel'
+                                                  ? 1
+                                                  : d.target == 'user'
+                                                      ? 2
+                                                      : d.target == 'article'
+                                                          ? 0
+                                                          : 3],
+                                          borderRadius:
+                                              BorderRadius.circular(0),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 5, horizontal: 10),
+                                        child: Text(
+                                          d.target!,
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                          maxLines: 1,
+                                        ),
+                                      )),
+                                      // href
+                                      DataCell(Text(
+                                        d.href!,
                                         maxLines: 1,
-                                      ),
-                                    ),
-                                    DataCell(Container(
-                                      decoration: BoxDecoration(
-                                        color:
-                                            colorsCustom[d.target == 'channel'
-                                                ? 1
-                                                : d.target == 'user'
-                                                    ? 2
-                                                    : d.target == 'article'
-                                                        ? 0
-                                                        : 3],
-                                        borderRadius: BorderRadius.circular(0),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 5, horizontal: 10),
-                                      child: Text(
-                                        d.target!,
-                                        style: const TextStyle(
-                                            color: Colors.white),
+                                      )),
+                                      DataCell(Text(
+                                        d.createdBy!,
                                         maxLines: 1,
+                                      )),
+                                      DataCell(
+                                        Text(
+                                          getDate(
+                                            d.notificationSendTimestamp!
+                                                .millisecondsSinceEpoch,
+                                          ).toString(),
+                                          maxLines: 1,
+                                        ),
                                       ),
-                                    )),
-                                    DataCell(Text(
-                                      d.href!,
-                                      maxLines: 1,
-                                    )),
-                                    DataCell(Text(
-                                      d.createdBy!,
-                                      maxLines: 1,
-                                    )),
-                                    DataCell(Row(
-                                      children: [
-                                        IconButton(
+                                      DataCell(Row(
+                                        children: [
+                                          IconButton(
+                                              onPressed: () {
+                                                nextScreen(
+                                                  context,
+                                                  PushNotificationDetailsView(
+                                                      notificationModel: d),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                FontAwesomeIcons.solidEye,
+                                                size: 20,
+                                                color: Colors.black54,
+                                              )),
+                                          const SizedBox(width: 5),
+                                          IconButton(
                                             onPressed: () {
-                                              nextScreen(
+                                              deletingUser(
                                                 context,
-                                                PushNotificationDetailsView(
-                                                    notificationModel: d),
+                                                'Delete Notification?',
+                                                'Are you sure you want to delete this notification from databse?',
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    notificationProvider
+                                                        .deletingPushNotification(
+                                                            d.id!)
+                                                        .whenComplete(() {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      showSnackbar(context,
+                                                          'Notification deleted successfully form database');
+                                                      refreshData();
+                                                    });
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              kPrimaryColor),
+                                                  child: const Text('YES'),
+                                                ),
+                                                ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.grey),
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
+                                                  child: const Text("NO"),
+                                                ),
                                               );
                                             },
                                             icon: const Icon(
-                                              FontAwesomeIcons.solidEye,
+                                              FontAwesomeIcons.trash,
+                                              color: kPrimaryColor,
                                               size: 20,
-                                              color: Colors.black54,
-                                            )),
-                                        const SizedBox(width: 5),
-                                        IconButton(
-                                          onPressed: () {
-                                            deletingUser(
-                                              context,
-                                              'Delete Notification?',
-                                              'Are you sure you want to delete this notification from databse?',
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  notificationProvider
-                                                      .deletingPushNotification(
-                                                          d.id!)
-                                                      .whenComplete(() {
-                                                    Navigator.of(context).pop();
-                                                    showSnackbar(context,
-                                                        'Notification deleted successfully form database');
-                                                    refreshData();
-                                                  });
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        kPrimaryColor),
-                                                child: const Text('YES'),
-                                              ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.grey),
-                                                onPressed: () =>
-                                                    Navigator.of(context).pop(),
-                                                child: const Text("NO"),
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: kPrimaryColor,
-                                            size: 20,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    )),
-                                  ]);
-                                }).toList(),
+                                        ],
+                                      )),
+                                    ]);
+                                  }).toList(),
+                                ),
                               ),
                             ),
                           ),

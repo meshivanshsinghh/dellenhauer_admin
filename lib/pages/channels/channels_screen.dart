@@ -20,7 +20,6 @@ class ChannelsScreen extends StatefulWidget {
 class _ChannelsScreenState extends State<ChannelsScreen> {
   String? sortByText;
   late ChannelProvider channelProvider;
-  ScrollController? scrollController;
   late bool descending;
   late String orderBy;
 
@@ -31,7 +30,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     orderBy = 'created_timestamp';
     descending = true;
     Future.delayed(Duration.zero, () {
-      scrollController = ScrollController()..addListener(_scrollListener);
       channelProvider = Provider.of<ChannelProvider>(context, listen: false);
       channelProvider.attachContext(context);
       channelProvider.setLoading(isLoading: true);
@@ -46,25 +44,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     channelProvider.channelData.clear();
     channelProvider.getChannelData(descending: descending, orderBy: orderBy);
     channelProvider.notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    scrollController!.removeListener(_scrollListener);
-  }
-
-  // scroll listener
-  void _scrollListener() {
-    channelProvider = Provider.of<ChannelProvider>(context, listen: true);
-    if (!channelProvider.isLoading) {
-      if (scrollController!.position.pixels ==
-          scrollController!.position.maxScrollExtent) {
-        channelProvider.setLoading(isLoading: true);
-        channelProvider.getChannelData(
-            orderBy: orderBy, descending: descending);
-      }
-    }
   }
 
   @override
@@ -123,36 +102,53 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                   : channelProvider.hasData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
-                      : RefreshIndicator(
-                          color: kPrimaryColor,
-                          child: ListView.builder(
-                            controller: scrollController,
-                            itemCount: channelProvider.channelData.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index < channelProvider.channelData.length) {
-                                final ChannelModel d = ChannelModel.fromMap(
-                                    channelProvider.channelData[index].data()
-                                        as dynamic);
-
-                                return buildContentList(d);
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (!channelProvider.isLoading) {
+                              if (notification.metrics.pixels ==
+                                  notification.metrics.maxScrollExtent) {
+                                channelProvider.loadingMoreContent(
+                                    isLoading: true);
+                                channelProvider.getChannelData(
+                                    orderBy: orderBy, descending: descending);
                               }
-                              return Center(
-                                child: Opacity(
-                                  opacity:
-                                      channelProvider.isLoading ? 1.0 : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                        color: kPrimaryColor),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          onRefresh: () async {
-                            refreshData();
-                          }))
+                            }
+                            return true;
+                          },
+                          child: RefreshIndicator(
+                              color: kPrimaryColor,
+                              child: ListView.builder(
+                                itemCount:
+                                    channelProvider.channelData.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index <
+                                      channelProvider.channelData.length) {
+                                    final ChannelModel d = ChannelModel.fromMap(
+                                        channelProvider.channelData[index]
+                                            .data() as dynamic);
+
+                                    return buildContentList(d);
+                                  }
+                                  return Center(
+                                    child: Opacity(
+                                      opacity:
+                                          channelProvider.isLoadingMoreContent
+                                              ? 1.0
+                                              : 0.0,
+                                      child: const SizedBox(
+                                        width: 32,
+                                        height: 32,
+                                        child: CircularProgressIndicator(
+                                            color: kPrimaryColor),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              onRefresh: () async {
+                                refreshData();
+                              }),
+                        ))
         ],
       ),
     );

@@ -143,7 +143,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               RichText(
                 text: TextSpan(
-                  text: 'Dellenhauer',
+                  text: '#DELLENHAUER',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
