@@ -1,6 +1,9 @@
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/standalone.dart' as tz;
 
 void showSnackbar(BuildContext context, String content) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -109,4 +112,13 @@ showTextContentDialog(context, String text, UserModel userData) {
           ),
         );
       });
+}
+
+String getDate(int date) {
+  tz.initializeTimeZones();
+  var berlin = tz.getLocation('Europe/Berlin');
+  var dateTime = DateTime.fromMillisecondsSinceEpoch(date).toUtc();
+  var berlinDateTime = tz.TZDateTime.from(dateTime, berlin);
+  var formatter = DateFormat('dd.MM.yyyy-HH:mm:ss');
+  return formatter.format(berlinDateTime);
 }

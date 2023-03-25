@@ -113,7 +113,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                     orderBy: orderBy, descending: descending);
                               }
                             }
-                            return true;
+                            return false;
                           },
                           child: RefreshIndicator(
                               color: kPrimaryColor,

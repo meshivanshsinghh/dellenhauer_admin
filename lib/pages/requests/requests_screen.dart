@@ -117,7 +117,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
                                 );
                               }
                             }
-                            return true;
+                            return false;
                           },
                           child: RefreshIndicator(
                             onRefresh: () async {

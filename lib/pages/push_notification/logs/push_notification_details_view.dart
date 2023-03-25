@@ -4,10 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
+
 import 'package:provider/provider.dart';
 
 class PushNotificationDetailsView extends StatefulWidget {
@@ -23,11 +24,6 @@ class PushNotificationDetailsView extends StatefulWidget {
 class _PushNotificationDetailsViewState
     extends State<PushNotificationDetailsView> {
   late PushNotificationProvider pushNotificationProvider;
-  getDate(int date) {
-    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(date);
-    String formattedDate = DateFormat('d MMMM - h:mm a').format(dateTime);
-    return formattedDate;
-  }
 
   @override
   Widget build(BuildContext context) {

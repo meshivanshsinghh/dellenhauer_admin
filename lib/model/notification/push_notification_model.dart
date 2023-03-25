@@ -11,6 +11,7 @@ class NotificationModel {
   bool? notificationSend;
   DateTime? notificationSendTimestamp;
   String? href;
+  String? lowerVersionNotificationMessage;
   String? target;
 
   NotificationModel({
@@ -20,6 +21,7 @@ class NotificationModel {
     this.notificationImage,
     this.notificationMessage,
     this.notificationOpened,
+    this.lowerVersionNotificationMessage,
     this.notificationOpenedTimestamp,
     this.notificationSend,
     this.notificationSendTimestamp,
@@ -35,12 +37,17 @@ class NotificationModel {
     badgeCount = map['badgeCount'] ?? true;
     if (map['receiverId'] != null) {
       receiverId = [];
-      map['receiverId'].forEach((value) {
-        receiverId!.add(value);
-      });
+      if (map['receiverId'] is List) {
+        map['receiverId'].forEach((value) {
+          receiverId!.add(value);
+        });
+      } else {
+        receiverId!.add(map['receiverId']);
+      }
     } else {
       receiverId = [];
     }
+    lowerVersionNotificationMessage = map['lowerVersionNotificationMessage'];
     href = map['href'];
     target = map['target'];
     createdBy = map['createdBy'];
@@ -73,11 +80,12 @@ class NotificationModel {
     data['notificationOpened'] = notificationOpened;
     data['notificationOpenedTimestamp'] = notificationOpenedTimestamp;
     data['notificationSend'] = notificationSend;
+    data['lowerVersionNotificationMessage'] = lowerVersionNotificationMessage;
     if (notificationSendTimestamp != null) {
-      data['notificationSentTimestamp'] =
+      data['notificationSendTimestamp'] =
           notificationSendTimestamp!.millisecondsSinceEpoch;
     } else {
-      data['notificationSentTimestamp'] = null;
+      data['notificationSendTimestamp'] = null;
     }
     return data;
   }

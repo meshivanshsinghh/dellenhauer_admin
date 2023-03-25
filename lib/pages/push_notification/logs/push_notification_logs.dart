@@ -7,6 +7,7 @@ import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,8 @@ class _PushNotificationLogsScreenState
   late PushNotificationProvider notificationProvider;
   late bool descending;
   late String orderBy;
+  int currentPage = 1;
+  final TextEditingController _searchController = TextEditingController();
 
   final colorsCustom = [
     kPrimaryColor,
@@ -32,12 +35,6 @@ class _PushNotificationLogsScreenState
     Colors.purpleAccent,
     Colors.black,
   ];
-
-  getDate(int date) {
-    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(date);
-    String formattedDate = DateFormat('d MMMM').format(dateTime);
-    return formattedDate;
-  }
 
   getTime(int date) {
     DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(date);
@@ -48,9 +45,11 @@ class _PushNotificationLogsScreenState
   @override
   void initState() {
     super.initState();
-    sortByText = 'Newest First';
-    orderBy = 'notificationSendTimestamp';
-    descending = true;
+    setState(() {
+      sortByText = 'Newest First';
+      orderBy = 'notificationSendTimestamp';
+      descending = true;
+    });
 
     Future.delayed(Duration.zero, () {
       notificationProvider =
@@ -68,7 +67,7 @@ class _PushNotificationLogsScreenState
     setState(() {
       notificationProvider =
           Provider.of<PushNotificationProvider>(context, listen: false);
-      notificationProvider.setLastVisible(documentSnapshot: null);
+      notificationProvider.lastVisibleData = null;
       notificationProvider.setLoading(isLoading: true);
       notificationProvider.notificationData.clear();
       notificationProvider.getNotificationData(
@@ -83,6 +82,7 @@ class _PushNotificationLogsScreenState
     final w = MediaQuery.of(context).size.width;
     notificationProvider =
         Provider.of<PushNotificationProvider>(context, listen: true);
+
     return Container(
       padding: EdgeInsets.only(
         left: w * 0.05,
@@ -100,7 +100,6 @@ class _PushNotificationLogsScreenState
         ],
       ),
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -128,43 +127,79 @@ class _PushNotificationLogsScreenState
                   color: kPrimaryColor,
                   borderRadius: BorderRadius.circular(15)),
             ),
+            // text form field for searching notifications
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              width: MediaQuery.of(context).size.width,
+              child: TextFormField(
+                controller: _searchController,
+                cursorColor: kPrimaryColor,
+                onChanged: onItemChanged,
+                decoration: InputDecoration(
+                  suffixIcon: _searchController.text.trim().isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            FontAwesomeIcons.solidCircleXmark,
+                            size: 20,
+                            color: kPrimaryColor,
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            setState(() {
+                              _searchController.clear();
+                            });
+                            refreshData();
+                          })
+                      : null,
+                  hintText: 'Search notification messages here',
+                  hintStyle: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 13,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  fillColor: const Color.fromRGBO(232, 232, 232, 1),
+                  filled: true,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.transparent),
+                  ),
+                  prefixIcon: const Icon(
+                    FontAwesomeIcons.magnifyingGlass,
+                    size: 16,
+                    color: kPrimaryColor,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.transparent),
+                  ),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+
             // displaying content
-            NotificationListener<ScrollNotification>(
-              onNotification: (scrollNotification) {
-                if (!notificationProvider.isLoading &&
-                    scrollNotification.metrics.pixels ==
-                        scrollNotification.metrics.maxScrollExtent) {
-                  notificationProvider.loadingMoreContent(isLoading: true);
-                  notificationProvider.getNotificationData(
-                    orderBy: orderBy,
-                    descending: descending,
-                  );
-                }
-                return true;
-              },
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  refreshData();
-                },
-                child: notificationProvider.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: kPrimaryColor),
-                      )
-                    : notificationProvider.hasData == false
-                        ? emptyPage(
-                            FontAwesomeIcons.bell, 'No notifications found!')
-                        : SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            scrollDirection: Axis.vertical,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              child: SingleChildScrollView(
+            notificationProvider.isLoading &&
+                    notificationProvider.notificationData.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: kPrimaryColor),
+                  )
+                : Column(
+                    children: [
+                      RefreshIndicator(
+                        onRefresh: () async {
+                          refreshData();
+                        },
+                        child: notificationProvider.hasData == false
+                            ? emptyPage(FontAwesomeIcons.bell,
+                                'No notifications found!')
+                            : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
                                   dataRowHeight: 60,
                                   columns: const [
-                                    DataColumn(label: Text('Time')),
+                                    DataColumn(label: Text('Created At')),
                                     DataColumn(label: Text('Target')),
+                                    DataColumn(label: Text('Message')),
                                     DataColumn(label: Text('Href')),
                                     DataColumn(label: Text('Created By')),
                                     DataColumn(label: Text('Date')),
@@ -179,10 +214,10 @@ class _PushNotificationLogsScreenState
                                     return DataRow(cells: [
                                       DataCell(
                                         Text(
-                                          getTime(
+                                          getDate(
                                             d.notificationSendTimestamp!
                                                 .millisecondsSinceEpoch,
-                                          ).toString(),
+                                          ),
                                           maxLines: 1,
                                         ),
                                       ),
@@ -207,6 +242,16 @@ class _PushNotificationLogsScreenState
                                           style: const TextStyle(
                                               color: Colors.white),
                                           maxLines: 1,
+                                        ),
+                                      )),
+
+                                      // href
+                                      DataCell(SizedBox(
+                                        width: 200,
+                                        child: Text(
+                                          d.notificationMessage!,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       )),
                                       // href
@@ -292,10 +337,11 @@ class _PushNotificationLogsScreenState
                                   }).toList(),
                                 ),
                               ),
-                            ),
-                          ),
-              ),
-            )
+                      ),
+                      const SizedBox(height: 10),
+                      buildPaginationRow(),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -383,9 +429,92 @@ class _PushNotificationLogsScreenState
             descending = true;
           });
         }
-        notificationProvider.sortData(orderBy, descending);
+
         refreshData();
       },
+    );
+  }
+
+  void onItemChanged(String value) {
+    setState(() {
+      notificationProvider.setLoading(isLoading: true);
+    });
+
+    if (value.isEmpty) {
+      refreshData();
+    } else {
+      final String searchQuery = value.toLowerCase();
+      notificationProvider.getNotificationData(
+        orderBy: orderBy,
+        descending: descending,
+        searchQuery: searchQuery,
+      );
+    }
+  }
+
+  Widget buildPaginationButton(
+      String text, bool condition, Function() onPressed) {
+    return Container(
+      alignment: Alignment.center,
+      width: 30,
+      child: ElevatedButton(
+        onPressed: condition ? onPressed : null,
+        child: Text(text),
+      ),
+    );
+  }
+
+  Future<void> getNextPage() async {
+    if (notificationProvider.hasMoreContent) {
+      setState(() {
+        currentPage++;
+        notificationProvider.setLoading(isLoading: true);
+      });
+      notificationProvider.clearNotification();
+      await notificationProvider.getNotificationData(
+        orderBy: orderBy,
+        descending: descending,
+        searchQuery: _searchController.text.trim(),
+        pageNumber: currentPage,
+      );
+    }
+  }
+
+  Future<void> getPreviousPage() async {
+    if (currentPage > 1) {
+      setState(() {
+        currentPage--;
+        notificationProvider.setLoading(isLoading: true);
+        notificationProvider.lastVisibleData = null;
+      });
+      notificationProvider.clearNotification();
+      await notificationProvider.getNotificationData(
+        orderBy: orderBy,
+        descending: descending,
+        searchQuery: _searchController.text,
+        pageNumber: currentPage,
+      );
+    }
+  }
+
+  Widget buildPaginationRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        buildPaginationButton(
+          '<',
+          currentPage > 1,
+          getPreviousPage,
+        ),
+        const SizedBox(width: 10),
+        Text('Page $currentPage'),
+        const SizedBox(width: 10),
+        buildPaginationButton(
+          '>',
+          notificationProvider.hasMoreContent,
+          getNextPage,
+        ),
+      ],
     );
   }
 }

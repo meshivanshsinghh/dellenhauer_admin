@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_single_user_logs.dart';
 import 'package:dellenhauer_admin/pages/users/users_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
@@ -104,7 +105,7 @@ class _UserScreenState extends State<UserScreen> {
                                     orderBy: orderBy, descending: descending);
                               }
                             }
-                            return true;
+                            return false;
                           },
                           child: RefreshIndicator(
                               color: kPrimaryColor,
@@ -250,7 +251,8 @@ class _UserScreenState extends State<UserScreen> {
           );
         },
       ),
-      subtitle: SelectableText('${userData.email} \nUID: ${userData.userId}'),
+      subtitle:
+          SelectableText('${userData.email} \nUID: ${userData.phoneNumber}'),
       title: SelectableText(
         '${userData.firstName} ${userData.lastName}',
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -291,6 +293,17 @@ class _UserScreenState extends State<UserScreen> {
                     child: const Text("NO"),
                   ),
                 );
+              }),
+          const SizedBox(width: 5),
+          IconButton(
+              icon: const Icon(
+                FontAwesomeIcons.solidBell,
+                color: Colors.black87,
+                size: 18,
+              ),
+              onPressed: () {
+                nextScreen(context,
+                    PushNotificationSingleUserLogs(userId: userData.userId!));
               }),
           const SizedBox(width: 5),
           IconButton(
