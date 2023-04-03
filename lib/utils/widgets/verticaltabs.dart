@@ -5,6 +5,7 @@ enum IndicatorSide { start, end }
 
 /// A vertical tab widget for flutter
 class VerticalTabs extends StatefulWidget {
+  @override
   final Key? key;
   final int initialIndex;
   final double tabsWidth;
@@ -27,7 +28,7 @@ class VerticalTabs extends StatefulWidget {
   final Function(int? tabIndex)? onSelect;
   final Color? backgroundColor;
 
-  VerticalTabs(
+  const VerticalTabs(
       {this.key,
       required this.tabs,
       required this.contents,

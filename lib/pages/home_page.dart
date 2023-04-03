@@ -3,6 +3,7 @@ import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_logs.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notitification_main.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
 import 'package:dellenhauer_admin/pages/services/services_screen.dart';
 import 'package:dellenhauer_admin/pages/settings/settings_screen.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     FontAwesomeIcons.chartPie,
     FontAwesomeIcons.peopleGroup,
     FontAwesomeIcons.solidUser,
+    FontAwesomeIcons.solidBell,
     FontAwesomeIcons.clockRotateLeft,
     FontAwesomeIcons.userPlus,
     FontAwesomeIcons.briefcase,
@@ -40,12 +42,13 @@ class _HomePageState extends State<HomePage> {
     'Overview',
     'Channels',
     'Users',
+    'Push Notifications',
     'Notification Logs',
     'Requests',
     'Services',
     'Courses',
     'Awards',
-    'Settings'
+    'Settings',
   ];
 
   @override
@@ -80,8 +83,10 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[6], icons[6]) as Tab,
                       tab(titles[7], icons[7]) as Tab,
                       tab(titles[8], icons[8]) as Tab,
+                      tab(titles[9], icons[9]) as Tab,
                     ],
                     contents: const [
+                      PushNotificationMain(),
                       OverviewScreen(),
                       ChannelsScreen(),
                       UserScreen(),
@@ -151,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   children: [
                     TextSpan(
-                      text: " - Admin Panel",
+                      text: "  App - Backend Software",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w400,

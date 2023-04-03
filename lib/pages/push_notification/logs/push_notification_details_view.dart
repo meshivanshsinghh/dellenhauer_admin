@@ -1,9 +1,9 @@
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
@@ -23,13 +23,13 @@ class PushNotificationDetailsView extends StatefulWidget {
 
 class _PushNotificationDetailsViewState
     extends State<PushNotificationDetailsView> {
-  late PushNotificationProvider pushNotificationProvider;
+  late PushNotificationLogsProvider pushNotificationProvider;
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     pushNotificationProvider =
-        Provider.of<PushNotificationProvider>(context, listen: false);
+        Provider.of<PushNotificationLogsProvider>(context, listen: false);
     return Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(60),

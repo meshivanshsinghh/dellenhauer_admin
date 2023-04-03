@@ -2,7 +2,7 @@ import 'package:dellenhauer_admin/utils/colors.dart';
 
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_details_view.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -23,7 +23,7 @@ class PushNotificationLogsScreen extends StatefulWidget {
 class _PushNotificationLogsScreenState
     extends State<PushNotificationLogsScreen> {
   String? sortByText;
-  late PushNotificationProvider notificationProvider;
+  late PushNotificationLogsProvider notificationProvider;
   late bool descending;
   late String orderBy;
   int currentPage = 1;
@@ -53,7 +53,7 @@ class _PushNotificationLogsScreenState
 
     Future.delayed(Duration.zero, () {
       notificationProvider =
-          Provider.of<PushNotificationProvider>(context, listen: false);
+          Provider.of<PushNotificationLogsProvider>(context, listen: false);
       notificationProvider.attachContext(context);
       notificationProvider.setLoading(isLoading: true);
       notificationProvider.getNotificationData(
@@ -66,7 +66,7 @@ class _PushNotificationLogsScreenState
   void refreshData() {
     setState(() {
       notificationProvider =
-          Provider.of<PushNotificationProvider>(context, listen: false);
+          Provider.of<PushNotificationLogsProvider>(context, listen: false);
       notificationProvider.lastVisibleData = null;
       notificationProvider.setLoading(isLoading: true);
       notificationProvider.notificationData.clear();
@@ -81,9 +81,10 @@ class _PushNotificationLogsScreenState
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     notificationProvider =
-        Provider.of<PushNotificationProvider>(context, listen: true);
+        Provider.of<PushNotificationLogsProvider>(context, listen: true);
 
     return Container(
+      margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
       padding: EdgeInsets.only(
         left: w * 0.05,
         right: w * 0.20,
@@ -202,7 +203,6 @@ class _PushNotificationLogsScreenState
                                     DataColumn(label: Text('Message')),
                                     DataColumn(label: Text('Href')),
                                     DataColumn(label: Text('Created By')),
-                                    DataColumn(label: Text('Date')),
                                     DataColumn(label: Text('Actions')),
                                   ],
                                   rows: notificationProvider.notificationData
@@ -263,15 +263,7 @@ class _PushNotificationLogsScreenState
                                         d.createdBy!,
                                         maxLines: 1,
                                       )),
-                                      DataCell(
-                                        Text(
-                                          getDate(
-                                            d.notificationSendTimestamp!
-                                                .millisecondsSinceEpoch,
-                                          ).toString(),
-                                          maxLines: 1,
-                                        ),
-                                      ),
+
                                       DataCell(Row(
                                         children: [
                                           IconButton(
@@ -340,6 +332,7 @@ class _PushNotificationLogsScreenState
                       ),
                       const SizedBox(height: 10),
                       buildPaginationRow(),
+                      const SizedBox(height: 50),
                     ],
                   ),
           ],
@@ -458,6 +451,7 @@ class _PushNotificationLogsScreenState
       alignment: Alignment.center,
       width: 30,
       child: ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
         onPressed: condition ? onPressed : null,
         child: Text(text),
       ),

@@ -1,6 +1,6 @@
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_details_view.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
@@ -21,7 +21,7 @@ class PushNotificationSingleUserLogs extends StatefulWidget {
 
 class _PushNotificationSingleUserLogsState
     extends State<PushNotificationSingleUserLogs> {
-  late PushNotificationProvider notificationProvider;
+  late PushNotificationLogsProvider notificationProvider;
   late bool descending;
   late String orderBy;
   late String sortByText;
@@ -34,7 +34,7 @@ class _PushNotificationSingleUserLogsState
     descending = true;
     Future.delayed(Duration.zero, () {
       notificationProvider =
-          Provider.of<PushNotificationProvider>(context, listen: false);
+          Provider.of<PushNotificationLogsProvider>(context, listen: false);
       notificationProvider.attachContext(context);
       notificationProvider.setLoading(isLoading: true);
       notificationProvider.getSingleUserNotificationData(
@@ -45,7 +45,7 @@ class _PushNotificationSingleUserLogsState
   void refreshData() {
     setState(() {
       notificationProvider =
-          Provider.of<PushNotificationProvider>(context, listen: false);
+          Provider.of<PushNotificationLogsProvider>(context, listen: false);
       notificationProvider.lastVisibleData = null;
       notificationProvider.setLoading(isLoading: true);
       notificationProvider.singleUserNotificationData.clear();
@@ -80,7 +80,7 @@ class _PushNotificationSingleUserLogsState
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     notificationProvider =
-        Provider.of<PushNotificationProvider>(context, listen: true);
+        Provider.of<PushNotificationLogsProvider>(context, listen: true);
     return Scaffold(
       appBar: AppBar(),
       body: Container(

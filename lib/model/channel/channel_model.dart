@@ -1,5 +1,3 @@
-import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
-
 enum ChannelEnum {
   public,
   private,

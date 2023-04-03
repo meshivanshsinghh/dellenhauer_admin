@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:flutter/material.dart';
 
-class PushNotificationProvider extends ChangeNotifier {
+class PushNotificationLogsProvider extends ChangeNotifier {
   BuildContext? context;
 
   bool _isLoading = false;
