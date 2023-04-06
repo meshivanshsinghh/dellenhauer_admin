@@ -1,4 +1,7 @@
-import 'package:dellenhauer_admin/providers/channels_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_channel_widget.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_user_widget.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
@@ -22,32 +25,16 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   TextEditingController articleController = TextEditingController();
   TextEditingController urlController = TextEditingController();
   late UsersProvider usersProvider;
-  late ChannelProvider channelProvider;
+  bool _isSent = false;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _badgeCount = true;
-  bool _sendNow = false;
+  bool _sendNow = true;
   bool _sendLater = false;
   DateTime? _selectedDateTime;
   String? _formatedDateTime;
   final targets = ['Article', 'Channels', 'Users', 'URL'];
   final List<String> _selectedTargets = [];
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration.zero, () {
-      usersProvider = Provider.of<UsersProvider>(context, listen: false);
-      usersProvider.attachContext(context);
-      usersProvider.setLoading(isLoading: true);
-      usersProvider.getUsersData(orderBy: 'createdAt', descending: true);
-      channelProvider = Provider.of<ChannelProvider>(context, listen: false);
-      channelProvider.attachContext(context);
-      channelProvider.setLoading(isLoading: true);
-      channelProvider.getChannelData(
-        orderBy: 'created_timestamp',
-        descending: true,
-      );
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +47,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
         TextPosition(offset: messageController.text.length));
     urlController.selection = TextSelection.fromPosition(
         TextPosition(offset: messageController.text.length));
-
+    usersProvider = Provider.of<UsersProvider>(context, listen: true);
     return Container(
       width: MediaQuery.of(context).size.width,
       margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
@@ -230,7 +217,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                   const Text('Send Later:'),
                   const SizedBox(width: 10),
                   // date time picker
-                  if (!_sendNow)
+                  if (!_sendNow && _sendLater)
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimaryColor,
@@ -289,7 +276,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
               // list of target items
               Container(
                 width: MediaQuery.of(context).size.width,
-                margin: const EdgeInsets.only(top: 20),
+                margin: const EdgeInsets.symmetric(vertical: 30),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -315,43 +302,195 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                     })
                   ],
                 ),
+              ),
+              // showcasing sent to option
+              const Text(
+                'Send To:',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SendToUserWidget(),
+              const SizedBox(height: 20),
+              const SendToChannelWidget(),
+              // sending test notification section
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(0),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Send Test Notification',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Send Test Notification to a selected user',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 20),
+                        child: Row(
+                          children: [
+                            // button
+                            usersProvider.selectedTestNotificationUser == null
+                                ? SizedBox(
+                                    child: TextButton(
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: kPrimaryColor,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30)),
+                                        ),
+                                        onPressed: () {
+                                          if (usersProvider
+                                                  .selectedTestNotificationUser ==
+                                              null) {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return const UserListNotificationSelection(
+                                                  isUser: true,
+                                                  isTestUser: true,
+                                                );
+                                              },
+                                            );
+                                          } else {
+                                            usersProvider
+                                                .removeSelectedTestUser();
+                                          }
+                                        },
+                                        child: const Text('Select User')),
+                                  )
+                                : const SizedBox.shrink(),
+                            // list tile
+                            usersProvider.selectedTestNotificationUser != null
+                                ? Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    width: 200,
+                                    child: ListTile(
+                                      leading: CachedNetworkImage(
+                                        imageUrl: usersProvider
+                                            .selectedTestNotificationUser!
+                                            .profilePic!,
+                                        placeholder: (context, url) {
+                                          return Container(
+                                            height: 30,
+                                            width: 30,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey[300],
+                                              image: const DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/placeholder.jpeg'),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorWidget: (context, url, error) {
+                                          return Container(
+                                            height: 30,
+                                            width: 30,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey[300],
+                                              image: const DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/placeholder.jpeg'),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        imageBuilder: (context, imageProvider) {
+                                          return Container(
+                                            height: 30,
+                                            width: 30,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey[300],
+                                              image: DecorationImage(
+                                                image: imageProvider,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                      title: Text(
+                                        '${usersProvider.selectedTestNotificationUser!.firstName!} ${usersProvider.selectedTestNotificationUser!.lastName!}',
+                                        maxLines: 1,
+                                      ),
+                                      subtitle: Text(
+                                        usersProvider
+                                            .selectedTestNotificationUser!
+                                            .phoneNumber!,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimaryColor,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30)),
+                            ),
+                            child: const Text('Send to Test-Device'),
+                          ),
+                          const SizedBox(width: 10),
+                          _isSent
+                              ? Text(
+                                  'Sent!',
+                                  style: TextStyle(
+                                    color: Colors.green.shade600,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              // publish button
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                ),
+                child: const Text('Publish'),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.10,
               )
-              // DropdownButtonFormField<String>(
-              //   value: _selectedTargets.isNotEmpty
-              //       ? _selectedTargets.toString()
-              //       : null,
-              //   decoration: InputDecoration(
-              //     labelText: 'Target',
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(0),
-              //     ),
-              //   ),
-              //   items: targets.map((target) {
-              //     return DropdownMenuItem(
-              //       value: target,
-              //       child: Row(
-              //         children: [
-              //           Checkbox(
-              //             value: _selectedTargets.contains(target),
-              //             onChanged: (bool? value) {
-              //               print(value);
-              //               if (value == true) {
-              //                 setState(() {
-              //                   _selectedTargets.add(target);
-              //                 });
-              //               } else {
-              //                 setState(() {
-              //                   _selectedTargets.remove(target);
-              //                 });
-              //               }
-              //             },
-              //           ),
-              //           Text(target),
-              //         ],
-              //       ),
-              //     );
-              //   }).toList(),
-              // ),
             ],
           ),
         ),

@@ -14,11 +14,24 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  List<String> _relatedChannels = [];
-
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
+  List<String> _relatedChannels = [];
   List<String> get relatedChannels => _relatedChannels;
+  List<ChannelModel> _selectedNotificationChannels = [];
+  List<ChannelModel> get selectedNotificationChannels =>
+      _selectedNotificationChannels;
+
+  void setSelectedNotificationChannels(ChannelModel channelModel) {
+    _selectedNotificationChannels.add(channelModel);
+    notifyListeners();
+  }
+
+  void removeSelectedNotificationChannels(String channelId) {
+    _selectedNotificationChannels
+        .removeWhere((element) => element.groupId == channelId);
+    notifyListeners();
+  }
 
   void attachContext(BuildContext context) {
     this.context = context;
@@ -30,11 +43,13 @@ class ChannelProvider extends ChangeNotifier {
   }
 
   void removeRelatedChannel(String relatedChannelId) {
-    for (var d in _relatedChannels) {
-      if (d == relatedChannelId) {
-        _relatedChannels.remove(d);
-      }
-    }
+    _relatedChannels.removeWhere((element) => element == relatedChannelId);
+
+    // for (var d in _relatedChannels) {
+    //   if (d == relatedChannelId) {
+    //     _relatedChannels.remove(d);
+    //   }
+    // }
     notifyListeners();
   }
 

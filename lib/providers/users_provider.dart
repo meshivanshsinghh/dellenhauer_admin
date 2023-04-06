@@ -21,6 +21,31 @@ class UsersProvider extends ChangeNotifier {
   List<AwardsModel> get selectedUserAwards => _selectedUserAwards;
   List<CoursesModel> _selectedCourses = [];
   List<CoursesModel> get selectedCourses => _selectedCourses;
+  List<UserModel> _selectedNotificationUser = [];
+  List<UserModel> get selectedNotificationUser => _selectedNotificationUser;
+  UserModel? _selectedTestNotificationUser;
+  UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
+
+  void setSelectedTestUser(UserModel userModel) {
+    _selectedTestNotificationUser = userModel;
+    notifyListeners();
+  }
+
+  void removeSelectedTestUser() {
+    _selectedTestNotificationUser = null;
+    notifyListeners();
+  }
+
+  void setSelectedUserForNotification(UserModel userModel) {
+    _selectedNotificationUser.add(userModel);
+    notifyListeners();
+  }
+
+  void removeSelectedUserForNoticiation(String userId) {
+    _selectedNotificationUser
+        .removeWhere((element) => element.userId == userId);
+    notifyListeners();
+  }
 
   void attachContext(BuildContext context) {
     this.context = context;
@@ -47,20 +72,22 @@ class UsersProvider extends ChangeNotifier {
   }
 
   void removeSelectUserAwards(String awardId) {
-    for (var d in _selectedUserAwards) {
-      if (d.id == awardId) {
-        _selectedUserAwards.remove(d);
-      }
-    }
+    _selectedUserAwards.removeWhere((element) => element.id == awardId);
+    // for (var d in _selectedUserAwards) {
+    //   if (d.id == awardId) {
+    //     _selectedUserAwards.remove(d);
+    //   }
+    // }
     notifyListeners();
   }
 
   void removeSelectCourses(String courseId) {
-    for (var d in _selectedCourses) {
-      if (d.id == courseId) {
-        _selectedCourses.remove(d);
-      }
-    }
+    _selectedCourses.removeWhere((element) => element.id == courseId);
+    // for (var d in _selectedCourses) {
+    //   if (d.id == courseId) {
+    //     _selectedCourses.remove(d);
+    //   }
+    // }
     notifyListeners();
   }
 
