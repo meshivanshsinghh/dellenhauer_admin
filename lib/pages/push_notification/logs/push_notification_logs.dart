@@ -245,7 +245,7 @@ class _PushNotificationLogsScreenState
                                         ),
                                       )),
 
-                                      // href
+                                      // message
                                       DataCell(SizedBox(
                                         width: 200,
                                         child: Text(
@@ -256,7 +256,9 @@ class _PushNotificationLogsScreenState
                                       )),
                                       // href
                                       DataCell(Text(
-                                        d.href!,
+                                        d.href!.trim().isEmpty
+                                            ? 'N/A'
+                                            : d.href!,
                                         maxLines: 1,
                                       )),
                                       DataCell(Text(
