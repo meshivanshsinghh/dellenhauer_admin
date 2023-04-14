@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_single_user_logs.dart';
 import 'package:dellenhauer_admin/pages/users/users_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -18,7 +20,7 @@ class UserScreen extends StatefulWidget {
 
 class _UserScreenState extends State<UserScreen> {
   late UsersProvider usersProvider;
-  ScrollController? scrollController;
+
   late String orderBy;
   String? sortByText;
   late bool descending;
@@ -30,23 +32,11 @@ class _UserScreenState extends State<UserScreen> {
     orderBy = 'createdAt';
     descending = true;
     Future.delayed(Duration.zero, () {
-      scrollController = ScrollController()..addListener(_scrollListener);
       usersProvider = Provider.of<UsersProvider>(context, listen: false);
       usersProvider.attachContext(context);
       usersProvider.setLoading(isLoading: true);
       usersProvider.getUsersData(orderBy: orderBy, descending: descending);
     });
-  }
-
-  void _scrollListener() async {
-    usersProvider = Provider.of<UsersProvider>(context, listen: true);
-    if (!usersProvider.isLoading) {
-      if (scrollController!.position.pixels ==
-          scrollController!.position.maxScrollExtent) {
-        usersProvider.setLoading(isLoading: true);
-        usersProvider.getUsersData(orderBy: orderBy, descending: descending);
-      }
-    }
   }
 
   refreshData() {
@@ -56,12 +46,6 @@ class _UserScreenState extends State<UserScreen> {
     usersProvider.data.clear();
     usersProvider.getUsersData(orderBy: orderBy, descending: descending);
     usersProvider.notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    scrollController!.removeListener(_scrollListener);
   }
 
   @override
@@ -91,34 +75,12 @@ class _UserScreenState extends State<UserScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Users',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 5, bottom: 10),
-                    height: 3,
-                    width: 50,
-                    decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(15)),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Click on any user to edit their details',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+              const Text(
+                'All Users',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               sortingPopup(),
             ],
@@ -127,42 +89,59 @@ class _UserScreenState extends State<UserScreen> {
               child: usersProvider.isLoading == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                       ),
                     )
                   : usersProvider.hasData == false
                       ? emptyPage(FontAwesomeIcons.solidUser, 'No User Found!')
-                      : RefreshIndicator(
-                          color: Colors.redAccent,
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.only(top: 20),
-                            itemCount: usersProvider.data.length + 1,
-                            itemBuilder: ((context, index) {
-                              if (index < usersProvider.data.length) {
-                                final UserModel u = UserModel.fromJson(
-                                    usersProvider.data[index].data()
-                                        as dynamic);
-
-                                return buildUserData(u);
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (!usersProvider.isLoading) {
+                              if (notification.metrics.pixels ==
+                                  notification.metrics.maxScrollExtent) {
+                                usersProvider.loadingMoreContent(
+                                    isLoading: true);
+                                usersProvider.getUsersData(
+                                    orderBy: orderBy, descending: descending);
                               }
-                              return Center(
-                                child: Opacity(
-                                  opacity: usersProvider.isLoading ? 1.0 : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
+                            }
+                            return false;
+                          },
+                          child: RefreshIndicator(
+                              color: kPrimaryColor,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: const EdgeInsets.only(top: 20),
+                                itemCount: usersProvider.data.length + 1,
+                                itemBuilder: ((context, index) {
+                                  if (index < usersProvider.data.length) {
+                                    final UserModel u = UserModel.fromJson(
+                                        usersProvider.data[index].data()
+                                            as dynamic);
+
+                                    return buildUserData(u);
+                                  }
+                                  return Center(
+                                    child: Opacity(
+                                      opacity:
+                                          usersProvider.isLoadingMoreContent
+                                              ? 1.0
+                                              : 0.0,
+                                      child: const SizedBox(
+                                        width: 32,
+                                        height: 32,
+                                        child: CircularProgressIndicator(
+                                          color: kPrimaryColor,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          onRefresh: () async {
-                            refreshData();
-                          }))
+                                  );
+                                }),
+                              ),
+                              onRefresh: () async {
+                                refreshData();
+                              }),
+                        ))
         ],
       ),
     );
@@ -272,7 +251,8 @@ class _UserScreenState extends State<UserScreen> {
           );
         },
       ),
-      subtitle: SelectableText('${userData.email} \nUID: ${userData.userId}'),
+      subtitle:
+          SelectableText('${userData.email} \nUID: ${userData.phoneNumber}'),
       title: SelectableText(
         '${userData.firstName} ${userData.lastName}',
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -283,7 +263,7 @@ class _UserScreenState extends State<UserScreen> {
           IconButton(
               icon: const Icon(
                 FontAwesomeIcons.trash,
-                color: Colors.redAccent,
+                color: kPrimaryColor,
                 size: 18,
               ),
               onPressed: () {
@@ -303,7 +283,7 @@ class _UserScreenState extends State<UserScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent),
+                        backgroundColor: kPrimaryColor),
                     child: const Text('YES'),
                   ),
                   ElevatedButton(
@@ -313,6 +293,17 @@ class _UserScreenState extends State<UserScreen> {
                     child: const Text("NO"),
                   ),
                 );
+              }),
+          const SizedBox(width: 5),
+          IconButton(
+              icon: const Icon(
+                FontAwesomeIcons.solidBell,
+                color: Colors.black87,
+                size: 18,
+              ),
+              onPressed: () {
+                nextScreen(context,
+                    PushNotificationSingleUserLogs(userId: userData.userId!));
               }),
           const SizedBox(width: 5),
           IconButton(

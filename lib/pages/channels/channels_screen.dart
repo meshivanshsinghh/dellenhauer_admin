@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_edit_screen.dart';
@@ -19,7 +20,6 @@ class ChannelsScreen extends StatefulWidget {
 class _ChannelsScreenState extends State<ChannelsScreen> {
   String? sortByText;
   late ChannelProvider channelProvider;
-  ScrollController? scrollController;
   late bool descending;
   late String orderBy;
 
@@ -30,7 +30,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     orderBy = 'created_timestamp';
     descending = true;
     Future.delayed(Duration.zero, () {
-      scrollController = ScrollController()..addListener(_scrollListener);
       channelProvider = Provider.of<ChannelProvider>(context, listen: false);
       channelProvider.attachContext(context);
       channelProvider.setLoading(isLoading: true);
@@ -45,25 +44,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     channelProvider.channelData.clear();
     channelProvider.getChannelData(descending: descending, orderBy: orderBy);
     channelProvider.notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    scrollController!.removeListener(_scrollListener);
-  }
-
-  // scroll listener
-  void _scrollListener() {
-    channelProvider = Provider.of<ChannelProvider>(context, listen: true);
-    if (!channelProvider.isLoading) {
-      if (scrollController!.position.pixels ==
-          scrollController!.position.maxScrollExtent) {
-        channelProvider.setLoading(isLoading: true);
-        channelProvider.getChannelData(
-            orderBy: orderBy, descending: descending);
-      }
-    }
   }
 
   @override
@@ -110,47 +90,65 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15)),
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
           ),
           // displaying content here
           Expanded(
               child: channelProvider.isLoading == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                      color: Colors.redAccent,
+                      color: kPrimaryColor,
                     ))
                   : channelProvider.hasData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
-                      : RefreshIndicator(
-                          color: Colors.redAccent,
-                          child: ListView.builder(
-                            itemCount: channelProvider.channelData.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index < channelProvider.channelData.length) {
-                                final ChannelModel d = ChannelModel.fromMap(
-                                    channelProvider.channelData[index].data()
-                                        as dynamic);
-                                return buildContentList(d);
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (!channelProvider.isLoading) {
+                              if (notification.metrics.pixels ==
+                                  notification.metrics.maxScrollExtent) {
+                                channelProvider.loadingMoreContent(
+                                    isLoading: true);
+                                channelProvider.getChannelData(
+                                    orderBy: orderBy, descending: descending);
                               }
-                              return Center(
-                                child: Opacity(
-                                  opacity:
-                                      channelProvider.isLoading ? 1.0 : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.redAccent),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          onRefresh: () async {
-                            refreshData();
-                          }))
+                            }
+                            return false;
+                          },
+                          child: RefreshIndicator(
+                              color: kPrimaryColor,
+                              child: ListView.builder(
+                                itemCount:
+                                    channelProvider.channelData.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index <
+                                      channelProvider.channelData.length) {
+                                    final ChannelModel d = ChannelModel.fromMap(
+                                        channelProvider.channelData[index]
+                                            .data() as dynamic);
+
+                                    return buildContentList(d);
+                                  }
+                                  return Center(
+                                    child: Opacity(
+                                      opacity:
+                                          channelProvider.isLoadingMoreContent
+                                              ? 1.0
+                                              : 0.0,
+                                      child: const SizedBox(
+                                        width: 32,
+                                        height: 32,
+                                        child: CircularProgressIndicator(
+                                            color: kPrimaryColor),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              onRefresh: () async {
+                                refreshData();
+                              }),
+                        ))
         ],
       ),
     );
@@ -394,7 +392,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                           padding: const EdgeInsets.all(10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: Colors.redAccent,
+                            color: kPrimaryColor,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -427,7 +425,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                             });
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.redAccent,
+                                            backgroundColor: kPrimaryColor,
                                           ),
                                           child: const Text('YES')),
                                       ElevatedButton(

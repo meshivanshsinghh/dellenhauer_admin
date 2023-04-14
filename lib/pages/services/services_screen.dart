@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/providers/services_provider.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
@@ -53,8 +55,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15)),
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
           ),
           // text field to add new service to our app
           Wrap(
@@ -67,7 +68,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     'Enter new service...',
                     _serviceController,
                   ),
-                  cursorColor: Colors.redAccent,
+                  cursorColor: kPrimaryColor,
                   onChanged: (value) {
                     setState(() {
                       _serviceController.text = value;
@@ -97,7 +98,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: kPrimaryColor,
                     ),
                     child: const Text('Add')),
               )
@@ -131,7 +132,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 );
               }
               return const Center(
-                child: CircularProgressIndicator(color: Colors.redAccent),
+                child: CircularProgressIndicator(color: kPrimaryColor),
               );
             },
           )
@@ -157,7 +158,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
           )
         ],
       ),

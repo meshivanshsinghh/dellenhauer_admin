@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <!--
+  <head>
+    <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
 
@@ -14,74 +14,63 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="/">
+    <base href="/" />
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+    <meta charset="UTF-8" />
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+    <meta name="description" content="A new Flutter project." />
 
-  <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="dellenhauer_admin">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <!-- iOS meta tags & icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="dellenhauer_admin" />
+    <link rel="apple-touch-icon" href="icons/Icon-192.png" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>Dellenhauer Admin Panel</title>
-  <link rel="manifest" href="manifest.json">
+    <title>#DELLENAUER App - Backend Software</title>
+    <link rel="manifest" href="manifest.json" />
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-</head>
-<body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        }
-      }).then(function(engineInitializer) {
-        return engineInitializer.initializeEngine();
-      }).then(function(appRunner) {
-        return appRunner.runApp();
+    <script>
+      // The value below is injected by flutter build, do not touch.
+      var serviceWorkerVersion = null;
+    </script>
+    <!-- This script adds the flutter initialization JS code -->
+    <script src="flutter.js" defer></script>
+  </head>
+  <body>
+    <script>
+      window.addEventListener("load", function (ev) {
+        // Download main.dart.js
+        _flutter.loader
+          .loadEntrypoint({
+            serviceWorker: {
+              serviceWorkerVersion: serviceWorkerVersion,
+            },
+          })
+          .then(function (engineInitializer) {
+            return engineInitializer.initializeEngine();
+          })
+          .then(function (appRunner) {
+            return appRunner.runApp();
+          });
       });
-    });
-  </script>
-  
-  <!--setting up firebase -->
-  <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-analytics.js";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
+    </script>
 
-    // Your web app's Firebase configuration
-    // replace it with your firebase details
-    const firebaseConfig = {
-      apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
-      authDomain: "dellenhauer-eae5f.firebaseapp.com",
-      projectId: "dellenhauer-eae5f",
-      storageBucket: "dellenhauer-eae5f.appspot.com",
-      messagingSenderId: "337585374916",
-      appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
-      measurementId: "G-6TTJEH91W"
-    };
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    firebase.getAnalytics(app);
-    
-  </script>
- 
-
-</body>
+    <script>
+      var firebaseConfig = {
+        apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
+        authDomain: "dellenhauer-eae5f.firebaseapp.com",
+        projectId: "dellenhauer-eae5f",
+        storageBucket: "dellenhauer-eae5f.appspot.com",
+        messagingSenderId: "337585374916",
+        appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
+        measurementId: "G-6TTJEH91W",
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+  </body>
 </html>

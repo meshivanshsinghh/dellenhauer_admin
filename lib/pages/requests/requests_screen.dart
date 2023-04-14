@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/pages/requests/request_list.dart';
@@ -17,7 +19,6 @@ class RequestsScreenList extends StatefulWidget {
 
 class _RequestsScreenListState extends State<RequestsScreenList> {
   late RequestsProvider requestsProvider;
-  ScrollController? scrollController;
   late String orderBy;
   late bool descending;
   String? sortByText;
@@ -29,7 +30,6 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
     orderBy = 'created_timestamp';
     descending = true;
     Future.delayed(Duration.zero, () {
-      scrollController = ScrollController()..addListener(_scrollListener);
       requestsProvider = Provider.of<RequestsProvider>(context, listen: false);
       requestsProvider.attachContext(context);
       requestsProvider.setChannelDataLoading(isLoading: true);
@@ -47,26 +47,6 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
     requestsProvider.channelData.clear();
     requestsProvider.getChannelData(orderBy: orderBy, descending: descending);
     requestsProvider.notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    scrollController!.removeListener(_scrollListener);
-  }
-
-  void _scrollListener() async {
-    requestsProvider = Provider.of<RequestsProvider>(context, listen: true);
-    if (!requestsProvider.isLoadingChannelList) {
-      if (scrollController!.position.pixels ==
-          scrollController!.position.maxScrollExtent) {
-        requestsProvider.setChannelDataLoading(isLoading: true);
-        requestsProvider.getChannelData(
-          orderBy: orderBy,
-          descending: descending,
-        );
-      }
-    }
   }
 
   navigateToRequestsScreen(BuildContext context, ChannelModel channelData) {
@@ -103,79 +83,74 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Channel Join Requests',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 5, bottom: 10),
-                    height: 3,
-                    width: 50,
-                    decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(15)),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Click on any channel to view list of channel requests',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Join Requests',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              // sorting
               sortingPopup(),
             ],
           ),
-
           // displaying content here
           Expanded(
               child: requestsProvider.isLoadingChannelList == true
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: Colors.redAccent,
+                        color: kPrimaryColor,
                       ),
                     )
                   : requestsProvider.hasChannelData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            refreshData();
-                          },
-                          color: Colors.red,
-                          child: ListView.builder(
-                            itemCount: requestsProvider.channelData.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index < requestsProvider.channelData.length) {
-                                final ChannelModel d = ChannelModel.fromMap(
-                                    requestsProvider.channelData[index].data()
-                                        as dynamic);
-                                return buildChannelList(d);
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (!requestsProvider.isLoadingChannelList) {
+                              if (notification.metrics.pixels ==
+                                  notification.metrics.maxScrollExtent) {
+                                requestsProvider.setChannelDataMoreContent(
+                                    isLoading: true);
+                                requestsProvider.getChannelData(
+                                  orderBy: orderBy,
+                                  descending: descending,
+                                );
                               }
-                              return Center(
-                                child: Opacity(
-                                  opacity: requestsProvider.isLoadingChannelList
-                                      ? 1.0
-                                      : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.redAccent),
-                                  ),
-                                ),
-                              );
+                            }
+                            return false;
+                          },
+                          child: RefreshIndicator(
+                            onRefresh: () async {
+                              refreshData();
                             },
+                            color: kPrimaryColor,
+                            child: ListView.builder(
+                              itemCount:
+                                  requestsProvider.channelData.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index <
+                                    requestsProvider.channelData.length) {
+                                  final ChannelModel d = ChannelModel.fromMap(
+                                      requestsProvider.channelData[index].data()
+                                          as dynamic);
+                                  return buildChannelList(d);
+                                }
+                                return Center(
+                                  child: Opacity(
+                                    opacity: requestsProvider
+                                            .isChannelLoadingMoreContent
+                                        ? 1.0
+                                        : 0.0,
+                                    child: const SizedBox(
+                                      width: 32,
+                                      height: 32,
+                                      child: CircularProgressIndicator(
+                                          color: kPrimaryColor),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ))
         ],
@@ -243,7 +218,6 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
   Widget buildChannelList(ChannelModel channelData) {
     return Container(
       padding: const EdgeInsets.all(15),
-      height: 100,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[200]!),

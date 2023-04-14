@@ -1,6 +1,7 @@
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -54,7 +55,7 @@ class _UsersAwardsListState extends State<UsersAwardsList> {
                 );
               }
               return const Center(
-                child: CircularProgressIndicator(color: Colors.redAccent),
+                child: CircularProgressIndicator(color: kPrimaryColor),
               );
             },
           ),
@@ -63,7 +64,7 @@ class _UsersAwardsListState extends State<UsersAwardsList> {
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: kPrimaryColor,
             ),
             child: const Text('Close'),
           ),
@@ -83,9 +84,16 @@ class _UsersAwardsListState extends State<UsersAwardsList> {
         subtitle: Text(awardsModel.description!),
         isThreeLine: true,
         trailing: IconButton(
+          color: usersProvider.selectedUserAwards
+                  .any((element) => element.id == awardsModel.id)
+              ? Colors.grey
+              : kPrimaryColor,
           icon: const Icon(FontAwesomeIcons.circlePlus),
           onPressed: () {
-            usersProvider.setselectedUserAwards(awardsModel);
+            if (!usersProvider.selectedUserAwards
+                .any((element) => element.id == awardsModel.id)) {
+              usersProvider.setselectedUserAwards(awardsModel);
+            }
           },
         ),
       ),

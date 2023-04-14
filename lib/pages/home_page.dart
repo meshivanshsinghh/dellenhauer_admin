@@ -2,12 +2,14 @@ import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_screen.dart';
+import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_logs.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notitification_main.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
 import 'package:dellenhauer_admin/pages/services/services_screen.dart';
 import 'package:dellenhauer_admin/pages/settings/settings_screen.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/pages/users/users_screen.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/widgets/verticaltabs.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +31,7 @@ class _HomePageState extends State<HomePage> {
     FontAwesomeIcons.peopleGroup,
     FontAwesomeIcons.solidUser,
     FontAwesomeIcons.solidBell,
+    FontAwesomeIcons.clockRotateLeft,
     FontAwesomeIcons.userPlus,
     FontAwesomeIcons.briefcase,
     FontAwesomeIcons.book,
@@ -40,11 +43,12 @@ class _HomePageState extends State<HomePage> {
     'Channels',
     'Users',
     'Push Notifications',
+    'Notification Logs',
     'Requests',
     'Services',
     'Courses',
     'Awards',
-    'Settings'
+    'Settings',
   ];
 
   @override
@@ -63,8 +67,8 @@ class _HomePageState extends State<HomePage> {
                     tabsElevation: 0.5,
                     tabsShadowColor: Colors.grey[500],
                     tabsWidth: 200,
-                    indicatorColor: Colors.red,
-                    selectedTabBackgroundColor: Colors.red.withOpacity(0.1),
+                    indicatorColor: kPrimaryColor,
+                    selectedTabBackgroundColor: kPrimaryColor.withOpacity(0.1),
                     indicatorWidth: 5,
                     disabledChangePageFromContentView: true,
                     initialIndex: pageIndex,
@@ -79,12 +83,14 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[6], icons[6]) as Tab,
                       tab(titles[7], icons[7]) as Tab,
                       tab(titles[8], icons[8]) as Tab,
+                      tab(titles[9], icons[9]) as Tab,
                     ],
                     contents: const [
-                      ChannelsScreen(),
                       OverviewScreen(),
+                      ChannelsScreen(),
                       UserScreen(),
-                      PushNotificationScreen(),
+                      PushNotificationMain(),
+                      PushNotificationLogsScreen(),
                       RequestsScreenList(),
                       ServicesScreen(),
                       CoursesScreen(),
@@ -142,15 +148,15 @@ class _HomePageState extends State<HomePage> {
             children: [
               RichText(
                 text: TextSpan(
-                  text: 'Dellenhauer',
+                  text: '#DELLENHAUER',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Colors.red,
+                    color: kPrimaryColor,
                   ),
                   children: [
                     TextSpan(
-                      text: " - Admin Panel",
+                      text: "  App - Backend Software",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w400,
@@ -165,7 +171,7 @@ class _HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.only(
                     left: 15, right: 15, top: 5, bottom: 5),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: kPrimaryColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -193,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                 margin: const EdgeInsets.all(5),
                 padding: const EdgeInsets.only(left: 10, right: 20),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red),
+                  border: Border.all(color: kPrimaryColor),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton.icon(
@@ -204,7 +210,7 @@ class _HomePageState extends State<HomePage> {
                     'Signed as admin',
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      color: Colors.red,
+                      color: kPrimaryColor,
                       fontSize: 16,
                     ),
                   ),

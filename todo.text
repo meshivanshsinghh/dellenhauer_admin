@@ -10,3 +10,44 @@
 10. add new channel option
 
 11. deleting a user should delete it from all user chats
+
+===== MAIN TODO ======
+(App + Admin Panel)
+
+// push notificaiton logs 
+-> done: logs: searching of notifications
+-> done: logs: sorting of push notifications (manual sortData)
+-> done: logs: deleting bulk checkout
+
+// push notification creation 
+-> done : sending new push notification as target: channels,website, article and to all users or selected users. 
+-> done: user awards and user courses adding and deleting 
+-> done : long messages should be limited in overflowing
+-> done: user detail should contain user registered at (in berlin timezone)
+
+left: 
+-> done: invited by user popup on user page 
+-> done: user edit for toggling on push notifciatoon or off 
+
+// channel edit 
+-> done: profile photo 
+-> done: removing attachement of read-only and join access boolen values. 
+
+
+// app part
+-> invitation not opening up in app 
+-> background of chats should be changed 
+-> routing should be done when user opens app from terminated state. 
+-> sound issues or sound recording new design capability. 
+-> single chat photo in notification 
+-> group chat photo in notification 
+-> green icon and  fixing isOnline concept. 
+
+
+
+
+// coding for target
+-> title and message can be totally ok for normal single chat user, channel chat
+-> url target should include a url field 
+-> article target should include article url? 
+

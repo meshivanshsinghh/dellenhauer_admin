@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:flutter/material.dart';
 
@@ -50,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   height: 3,
                   width: 50,
                   decoration: BoxDecoration(
-                      color: Colors.redAccent,
+                      color: kPrimaryColor,
                       borderRadius: BorderRadius.circular(15)),
                 ),
                 const SizedBox(
@@ -79,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       Container(
                           width: MediaQuery.of(context).size.width,
-                          color: Colors.red,
+                          color: kPrimaryColor,
                           height: 45,
                           child: TextButton(
                               child: const Text(

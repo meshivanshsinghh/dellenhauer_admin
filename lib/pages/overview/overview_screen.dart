@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:dellenhauer_admin/providers/overview_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -16,10 +18,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () {
-      overviewProvider = Provider.of<OverviewProvider>(context, listen: false);
-      overviewProvider.attachContext(context);
-      overviewProvider.loadData();
+      initData();
     });
+  }
+
+  void initData() {
+    overviewProvider = Provider.of<OverviewProvider>(context, listen: false);
+    overviewProvider.setLoading(true);
+    overviewProvider
+        .loadData()
+        .whenComplete(() => overviewProvider.setLoading(false));
   }
 
   @override
@@ -42,20 +50,17 @@ class _OverviewScreenState extends State<OverviewScreen> {
         child: Container(
           margin: const EdgeInsets.all(20),
           padding: const EdgeInsets.only(top: 30, bottom: 10),
-          child: overviewProvider.userCount == 0 &&
-                  overviewProvider.requestCount == 0 &&
-                  overviewProvider.channelCount == 0 &&
-                  overviewProvider.servicesCount == 0
+          child: overviewProvider.isLoading
               ? const Center(
                   child: CircularProgressIndicator(
-                    color: Colors.redAccent,
+                    color: kPrimaryColor,
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: () async {
                     overviewProvider.loadData(reload: true);
                   },
-                  color: Colors.red,
+                  color: kPrimaryColor,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     scrollDirection: Axis.vertical,
@@ -87,6 +92,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
                                 'TOTAL SERVICES',
                                 overviewProvider.servicesCount,
                                 FontAwesomeIcons.briefcase),
+                            card(
+                                'TOTAL NOTIFICATIONS',
+                                overviewProvider.notificationCount,
+                                FontAwesomeIcons.solidBell),
                           ],
                         ),
                       ],
@@ -99,10 +108,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
   // card widget
   Widget card(String title, int number, IconData icon) {
     return Container(
+      width: 300,
+      height: 200,
       padding: const EdgeInsets.all(30),
       margin: const EdgeInsets.only(bottom: 10),
-      height: 180,
-      width: 280,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -130,7 +139,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             height: 2,
             width: 30,
             decoration: BoxDecoration(
-              color: Colors.red,
+              color: kPrimaryColor,
               borderRadius: BorderRadius.circular(15),
             ),
           ),
@@ -139,7 +148,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, size: 30, color: Colors.redAccent),
+              Icon(icon, size: 30, color: kPrimaryColor),
               const SizedBox(width: 20),
               Text(
                 number.toString(),

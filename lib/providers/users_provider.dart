@@ -1,8 +1,10 @@
+import 'dart:html';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class UsersProvider extends ChangeNotifier {
@@ -13,6 +15,8 @@ class UsersProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool _hasData = false;
   bool get hasData => _hasData;
+  bool _isLoadingMoreContent = false;
+  bool get isLoadingMoreContent => _isLoadingMoreContent;
   List<DocumentSnapshot> _data = [];
   List<DocumentSnapshot> get data => _data;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -20,6 +24,43 @@ class UsersProvider extends ChangeNotifier {
   List<AwardsModel> get selectedUserAwards => _selectedUserAwards;
   List<CoursesModel> _selectedCourses = [];
   List<CoursesModel> get selectedCourses => _selectedCourses;
+  List<UserModel> _selectedNotificationUser = [];
+  List<UserModel> get selectedNotificationUser => _selectedNotificationUser;
+  UserModel? _selectedTestNotificationUser;
+  UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
+  UserModel? _invitedByUser;
+  UserModel? get invitedByUser => _invitedByUser;
+
+  void setSelectedTestUser(UserModel userModel) {
+    _selectedTestNotificationUser = userModel;
+    notifyListeners();
+  }
+
+  void setInvitedByUser(UserModel userModel) {
+    _invitedByUser = userModel;
+    notifyListeners();
+  }
+
+  void removeInvitedByUser() {
+    _invitedByUser = null;
+    notifyListeners();
+  }
+
+  void removeSelectedTestUser() {
+    _selectedTestNotificationUser = null;
+    notifyListeners();
+  }
+
+  void setSelectedUserForNotification(UserModel userModel) {
+    _selectedNotificationUser.add(userModel);
+    notifyListeners();
+  }
+
+  void removeSelectedUserForNoticiation(String userId) {
+    _selectedNotificationUser
+        .removeWhere((element) => element.userId == userId);
+    notifyListeners();
+  }
 
   void attachContext(BuildContext context) {
     this.context = context;
@@ -40,21 +81,19 @@ class UsersProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void loadingMoreContent({bool isLoading = false}) {
+    _isLoadingMoreContent = isLoading;
+    notifyListeners();
+  }
+
   void removeSelectUserAwards(String awardId) {
-    for (var d in _selectedUserAwards) {
-      if (d.id == awardId) {
-        _selectedUserAwards.remove(d);
-      }
-    }
+    _selectedUserAwards.removeWhere((element) => element.id == awardId);
     notifyListeners();
   }
 
   void removeSelectCourses(String courseId) {
-    for (var d in _selectedCourses) {
-      if (d.id == courseId) {
-        _selectedCourses.remove(d);
-      }
-    }
+    _selectedCourses.removeWhere((element) => element.id == courseId);
+
     notifyListeners();
   }
 
@@ -93,11 +132,12 @@ class UsersProvider extends ChangeNotifier {
       if (_lastVisible == null) {
         _isLoading = false;
         _hasData = false;
+        _isLoadingMoreContent = false;
         notifyListeners();
       } else {
         _isLoading = false;
         _hasData = true;
-        showSnackbar(context!, 'No more users available!');
+        _isLoadingMoreContent = false;
         notifyListeners();
       }
     }
@@ -105,19 +145,11 @@ class UsersProvider extends ChangeNotifier {
 
   // getting userdata form userId
   Future<UserModel?> getUserDataFromId(String userId) async {
-    try {
-      UserModel? userData;
-      await firebaseFirestore
-          .collection('users')
-          .doc(userId)
-          .get()
-          .then((value) {
-        userData = UserModel.fromJson(value.data() as dynamic);
-      });
-      return userData;
-    } catch (e) {
-      return null;
-    }
+    DocumentSnapshot documentSnapshot =
+        await firebaseFirestore.collection('users').doc(userId).get();
+    UserModel? userData =
+        UserModel.fromJson(documentSnapshot.data() as dynamic);
+    return userData;
   }
 
   // adding awards data to usermodel
@@ -140,7 +172,9 @@ class UsersProvider extends ChangeNotifier {
 
   // updating existing data
   Future<void> updateUserData(
-      {required UserModel userModel, required String userId}) async {
+      {required UserModel userModel,
+      required String userId,
+      required bool activatePush}) async {
     try {
       await firebaseFirestore.collection('users').doc(userId).update({
         'firstName': userModel.firstName,
@@ -156,8 +190,59 @@ class UsersProvider extends ChangeNotifier {
         'phoneNumber': userModel.phoneNumber,
         'websiteUrl': userModel.websiteUrl,
       });
+
+      DocumentSnapshot documentSnapshot =
+          await firebaseFirestore.collection('users').doc(userId).get();
+      if (documentSnapshot.exists) {
+        String fcmToken = documentSnapshot['fcmToken'];
+        if (fcmToken.trim().isNotEmpty) {
+          QuerySnapshot query = await firebaseFirestore
+              .collection('devices')
+              .where('fcmToken', isEqualTo: userModel.fcmToken)
+              .get();
+          if (query.docs.isNotEmpty) {
+            await firebaseFirestore
+                .collection('devices')
+                .doc(query.docs[0].id)
+                .update({'activatePush': activatePush});
+          }
+        }
+      }
     } catch (e) {
       print(e.toString());
+    }
+  }
+
+  Future<bool> determineActivatePushForUser(String userId) async {
+    try {
+      DocumentSnapshot documentSnapshot =
+          await firebaseFirestore.collection('users').doc(userId).get();
+      if (documentSnapshot.exists) {
+        UserModel userModel =
+            UserModel.fromJson(documentSnapshot.data() as dynamic);
+        String fcmToken = userModel.fcmToken!;
+        if (fcmToken.trim().isNotEmpty) {
+          QuerySnapshot query = await firebaseFirestore
+              .collection('devices')
+              .where('fcmToken', isEqualTo: fcmToken)
+              .get();
+          if (query.docs.isNotEmpty) {
+            bool activatePush = query.docs[0]['activatePush'];
+            return activatePush;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return false;
     }
   }
 }

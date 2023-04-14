@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
@@ -131,7 +133,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                       height: 3,
                       width: 50,
                       decoration: BoxDecoration(
-                          color: Colors.redAccent,
+                          color: kPrimaryColor,
                           borderRadius: BorderRadius.circular(15)),
                     ),
                     const SizedBox(height: 10),
@@ -153,7 +155,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
             Expanded(
               child: requestsProvider.isLoadingRequestList == true
                   ? const Center(
-                      child: CircularProgressIndicator(color: Colors.redAccent),
+                      child: CircularProgressIndicator(color: kPrimaryColor),
                     )
                   : requestsProvider.requestData.isEmpty
                       ? emptyPage(FontAwesomeIcons.userPlus,
@@ -181,7 +183,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                                     width: 32,
                                     height: 32,
                                     child: CircularProgressIndicator(
-                                        color: Colors.redAccent),
+                                        color: kPrimaryColor),
                                   ),
                                 ));
                               }),
@@ -354,7 +356,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
         Row(
           children: [
             actionButton(
-              buttonBackgroundColor: Colors.redAccent,
+              buttonBackgroundColor: kPrimaryColor,
               textColor: Colors.white,
               onPressed: () {
                 requestsProvider

@@ -1,13 +1,18 @@
+import 'dart:io';
+
+import 'package:dellenhauer_admin/utils/colors.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_list_selection_screen.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/pages/channels/users_list_screen.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:provider/provider.dart';
 
 class ChannelEditScreen extends StatefulWidget {
@@ -27,6 +32,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
   late bool _isReadOnly;
   late bool _joinAccessRequired;
   String? _visibility;
+  Uint8List? _image;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -38,6 +44,13 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
       channelProvider.relatedChannels.clear();
     });
     getData();
+  }
+
+  Future<void> _pickImage() async {
+    final pickedImage = await ImagePickerWeb.getImageAsBytes();
+    setState(() {
+      _image = pickedImage;
+    });
   }
 
   getData() {
@@ -106,51 +119,77 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CachedNetworkImage(
-                imageUrl: widget.channelModel.channelPhoto!,
-                placeholder: (context, url) {
-                  return Container(
-                    height: 150,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/placeholder.jpeg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
+              InkWell(
+                onTap: () {
+                  _pickImage();
                 },
-                errorWidget: (context, url, error) {
-                  return Container(
-                    height: 150,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/placeholder.jpeg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                },
-                imageBuilder: (context, imageProvider) {
-                  return Container(
-                    height: 150,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: imageProvider,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                },
+                child: Stack(
+                  children: [
+                    _image == null
+                        ? CachedNetworkImage(
+                            imageUrl: widget.channelModel.channelPhoto!,
+                            placeholder: (context, url) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorWidget: (context, url, error) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                            imageBuilder: (context, imageProvider) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: SizedBox(
+                              height: 150,
+                              width: 150,
+                              child: _image != null
+                                  ? FittedBox(
+                                      fit: BoxFit.cover,
+                                      child: Image.memory(_image!),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                  ],
+                ),
               ),
+
               const SizedBox(height: 20),
               textFieldEntry(
                 'Real Estate',
@@ -219,7 +258,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: kPrimaryColor,
                   ),
                   onPressed: () {
                     channelProvider
@@ -228,6 +267,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                       channelName: _channelNameController.text,
                       channelDescription: _channelDescriptionController.text,
                       autoJoin: _isAutoJoinSwitched,
+                      imageFile: _image,
                       readOnly: _isReadOnly,
                       joinAccessRequired: _joinAccessRequired,
                       visibility: _visibility!,
@@ -235,13 +275,12 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                     )
                         .whenComplete(() {
                       showSnackbar(context, 'Updated successfully');
-                      Navigator.of(context).pop();
                     });
                   },
                   child: channelProvider.isLoading == true
                       ? const Center(
                           child: CircularProgressIndicator(
-                          color: Colors.redAccent,
+                          color: Colors.white,
                         ))
                       : const Text('Save'),
                 ),
@@ -324,7 +363,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
           ),
           Switch(
             value: value,
-            activeColor: Colors.redAccent,
+            activeColor: kPrimaryColor,
             onChanged: onChanged,
           ),
         ],
@@ -350,7 +389,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
         TextFormField(
           maxLines: controller == _channelDescriptionController ? 4 : 1,
           controller: controller,
-          cursorColor: Colors.redAccent,
+          cursorColor: kPrimaryColor,
           decoration: InputDecoration(
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -419,7 +458,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
     );
   }
 
-  Widget relatedChannelWidget(List<RelatedChannel> initialData) {
+  Widget relatedChannelWidget(List<String> initialData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -430,7 +469,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
             IconButton(
                 icon: const Icon(
                   FontAwesomeIcons.circlePlus,
-                  color: Colors.redAccent,
+                  color: kPrimaryColor,
                   size: 20,
                 ),
                 onPressed: () {
@@ -457,9 +496,9 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
               children: [
                 ...channelProvider.relatedChannels.map(
                   (e) => singleCardWidget(
-                    title: e.relatedChannelName!,
+                    title: e,
                     onDelete: () {
-                      channelProvider.removeRelatedChannel(e.relatedChannelId!);
+                      channelProvider.removeRelatedChannel(e);
                     },
                   ),
                 ),

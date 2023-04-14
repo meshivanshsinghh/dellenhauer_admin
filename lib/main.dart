@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/providers/courses_provider.dart';
@@ -8,6 +10,7 @@ import 'package:dellenhauer_admin/providers/services_provider.dart';
 import 'package:dellenhauer_admin/pages/signin_page.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
+import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +25,7 @@ void main() async {
       appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
       messagingSenderId: "337585374916",
       projectId: "dellenhauer-eae5f",
+      storageBucket: "dellenhauer-eae5f.appspot.com",
     ),
   );
   setUrlStrategy(PathUrlStrategy());
@@ -49,12 +53,17 @@ class MyApp extends StatelessWidget {
             create: (_) => CoursesProvider()),
         ChangeNotifierProvider<AwardsProvider>(create: (_) => AwardsProvider()),
         ChangeNotifierProvider<UsersProvider>(create: (_) => UsersProvider()),
+        ChangeNotifierProvider<PushNotificationLogsProvider>(
+            create: (_) => PushNotificationLogsProvider()),
+        ChangeNotifierProvider<PushNotificationMainProvider>(
+            create: (_) => PushNotificationMainProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         scrollBehavior: TouchAndMouseScrollbehaviour(),
         theme: ThemeData(
           fontFamily: 'Poppins',
+          primaryColor: kPrimaryColor,
           appBarTheme: AppBarTheme(
             color: Colors.white,
             titleTextStyle: TextStyle(
@@ -65,6 +74,11 @@ class MyApp extends StatelessWidget {
             elevation: 0,
             actionsIconTheme: IconThemeData(color: Colors.grey[900]),
             iconTheme: IconThemeData(color: Colors.grey[900]),
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: kPrimaryColor),
+            ),
           ),
         ),
         home: const AppLogic(),

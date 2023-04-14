@@ -1,9 +1,11 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/model/channel/related_channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChannelProvider extends ChangeNotifier {
   BuildContext? context;
@@ -16,24 +18,43 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  List<RelatedChannel> _relatedChannels = [];
-  List<RelatedChannel> get relatedChannels => _relatedChannels;
+  final FirebaseStorage storage = FirebaseStorage.instance;
+  bool _isLoadingMoreContent = false;
+  bool get isLoadingMoreContent => _isLoadingMoreContent;
+  List<String> _relatedChannels = [];
+  List<String> get relatedChannels => _relatedChannels;
+  List<ChannelModel> _selectedNotificationChannels = [];
+  List<ChannelModel> get selectedNotificationChannels =>
+      _selectedNotificationChannels;
+
+  void setSelectedNotificationChannels(ChannelModel channelModel) {
+    _selectedNotificationChannels.add(channelModel);
+    notifyListeners();
+  }
+
+  void removeSelectedNotificationChannels(String channelId) {
+    _selectedNotificationChannels
+        .removeWhere((element) => element.groupId == channelId);
+    notifyListeners();
+  }
 
   void attachContext(BuildContext context) {
     this.context = context;
   }
 
-  void setRelatedChannel(RelatedChannel relatedChannel) {
-    _relatedChannels.add(relatedChannel);
+  void setRelatedChannel(String relatedChannelId) {
+    _relatedChannels.add(relatedChannelId);
     notifyListeners();
   }
 
   void removeRelatedChannel(String relatedChannelId) {
-    for (var d in _relatedChannels) {
-      if (d.relatedChannelId == relatedChannelId) {
-        _relatedChannels.remove(d);
-      }
-    }
+    _relatedChannels.removeWhere((element) => element == relatedChannelId);
+
+    // for (var d in _relatedChannels) {
+    //   if (d == relatedChannelId) {
+    //     _relatedChannels.remove(d);
+    //   }
+    // }
     notifyListeners();
   }
 
@@ -71,11 +92,13 @@ class ChannelProvider extends ChangeNotifier {
       if (_lastVisible == null) {
         _isLoading = false;
         _hasData = false;
+        _isLoadingMoreContent = false;
         notifyListeners();
       } else {
         _isLoading = false;
         _hasData = true;
-        showSnackbar(context!, 'No more channels available');
+        _isLoadingMoreContent = false;
+
         notifyListeners();
       }
     }
@@ -83,6 +106,11 @@ class ChannelProvider extends ChangeNotifier {
 
   void setLoading({bool isLoading = false}) {
     _isLoading = isLoading;
+    notifyListeners();
+  }
+
+  void loadingMoreContent({bool isLoading = false}) {
+    _isLoadingMoreContent = isLoading;
     notifyListeners();
   }
 
@@ -233,31 +261,52 @@ class ChannelProvider extends ChangeNotifier {
               });
   }
 
-  // updating channel data
   Future<void> updateChannelData({
     required String channelName,
     required String channelDescription,
     required bool autoJoin,
     required bool readOnly,
     required bool joinAccessRequired,
+    Uint8List? imageFile,
     required String visibility,
     required String channelId,
-    required List<RelatedChannel> relatedChannels,
+    required List<String> relatedChannels,
   }) async {
     _isLoading = true;
     notifyListeners();
-    await firebaseFirestore.collection('channels').doc(channelId).update({
-      'channel_name': channelName,
-      'channel_description': channelDescription,
-      'channel_autojoin': autoJoin,
-      'related_channels': relatedChannels.map((e) => e.toMap()).toList(),
-      'channel_readonly': readOnly,
-      'join_access_required': joinAccessRequired,
-      'visibility': visibility,
-    }).whenComplete(() {
-      _isLoading = false;
-      notifyListeners();
-    });
+    if (imageFile != null) {
+      await storeFileToFirebase(
+        'channels/profilePic/$channelId',
+        imageFile,
+      ).then((value) async {
+        await firebaseFirestore.collection('channels').doc(channelId).update({
+          'channel_name': channelName,
+          'channel_description': channelDescription,
+          'channel_autojoin': autoJoin,
+          'related_channels': FieldValue.arrayUnion(relatedChannels),
+          'channel_readonly': readOnly,
+          'channel_photo': value,
+          'join_access_required': joinAccessRequired,
+          'visibility': visibility,
+        }).whenComplete(() {
+          _isLoading = false;
+          notifyListeners();
+        });
+      });
+    } else {
+      await firebaseFirestore.collection('channels').doc(channelId).update({
+        'channel_name': channelName,
+        'channel_description': channelDescription,
+        'channel_autojoin': autoJoin,
+        'related_channels': FieldValue.arrayUnion(relatedChannels),
+        'channel_readonly': readOnly,
+        'join_access_required': joinAccessRequired,
+        'visibility': visibility,
+      }).whenComplete(() {
+        _isLoading = false;
+        notifyListeners();
+      });
+    }
   }
 
   // deleting a channel from databse
@@ -265,5 +314,12 @@ class ChannelProvider extends ChangeNotifier {
     required String channelId,
   }) async {
     await firebaseFirestore.collection('channels').doc(channelId).delete();
+  }
+
+  Future<String> storeFileToFirebase(String ref, Uint8List data) async {
+    UploadTask uploadTask = storage.ref().child(ref).putData(data);
+    await uploadTask;
+    String downloadUrl = await storage.ref(ref).getDownloadURL();
+    return downloadUrl;
   }
 }
