@@ -7,7 +7,15 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SendToUserWidget extends StatefulWidget {
-  const SendToUserWidget({super.key});
+  final bool isActive;
+  final Function(bool? value) onCheckboxAllUsers;
+  final Function(bool? value) onCheckboxSingleUser;
+  const SendToUserWidget({
+    super.key,
+    required this.isActive,
+    required this.onCheckboxAllUsers,
+    required this.onCheckboxSingleUser,
+  });
 
   @override
   State<SendToUserWidget> createState() => _SendToUserWidgetState();
@@ -34,12 +42,16 @@ class _SendToUserWidgetState extends State<SendToUserWidget> {
                     Checkbox(
                       activeColor: kPrimaryColor,
                       value: _isSingleUser,
-                      onChanged: (value) {
-                        setState(() {
-                          _isSingleUser = value!;
-                          _allUser = false;
-                        });
-                      },
+                      onChanged: widget.isActive
+                          ? (value) {
+                              setState(() {
+                                _isSingleUser = value!;
+                                _allUser = false;
+                              });
+                              widget.onCheckboxAllUsers(_allUser);
+                              widget.onCheckboxSingleUser(_isSingleUser);
+                            }
+                          : null,
                     ),
                     const Text('Single Users'),
                   ],
@@ -52,12 +64,16 @@ class _SendToUserWidgetState extends State<SendToUserWidget> {
                     Checkbox(
                       activeColor: kPrimaryColor,
                       value: _allUser,
-                      onChanged: (value) {
-                        setState(() {
-                          _allUser = value!;
-                          _isSingleUser = false;
-                        });
-                      },
+                      onChanged: widget.isActive
+                          ? (value) {
+                              setState(() {
+                                _allUser = value!;
+                                _isSingleUser = false;
+                              });
+                              widget.onCheckboxAllUsers(_allUser);
+                              widget.onCheckboxSingleUser(_isSingleUser);
+                            }
+                          : null,
                     ),
                     const Text('All Users'),
                   ],
@@ -67,7 +83,7 @@ class _SendToUserWidgetState extends State<SendToUserWidget> {
           ),
 
           // when single user is selected then i will be showcasing popup for adding users
-          _isSingleUser
+          _isSingleUser && widget.isActive
               ? Stack(
                   children: [
                     Container(

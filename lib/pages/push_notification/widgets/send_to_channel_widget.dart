@@ -7,7 +7,16 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SendToChannelWidget extends StatefulWidget {
-  const SendToChannelWidget({super.key});
+  final bool isActive;
+  final Function(bool? value) onCheckboxAllChannels;
+  final Function(bool? value) onCheckboxSingleChannel;
+
+  const SendToChannelWidget({
+    super.key,
+    required this.isActive,
+    required this.onCheckboxAllChannels,
+    required this.onCheckboxSingleChannel,
+  });
 
   @override
   State<SendToChannelWidget> createState() => _SendToChannelWidgetState();
@@ -35,12 +44,16 @@ class _SendToChannelWidgetState extends State<SendToChannelWidget> {
                     Checkbox(
                       activeColor: kPrimaryColor,
                       value: _isSingleChannel,
-                      onChanged: (value) {
-                        setState(() {
-                          _isSingleChannel = value!;
-                          _allChannels = false;
-                        });
-                      },
+                      onChanged: widget.isActive
+                          ? (value) {
+                              setState(() {
+                                _isSingleChannel = value!;
+                                _allChannels = false;
+                              });
+                              widget.onCheckboxAllChannels(_allChannels);
+                              widget.onCheckboxSingleChannel(_isSingleChannel);
+                            }
+                          : null,
                     ),
                     const Text('Single Channel'),
                   ],
@@ -53,12 +66,16 @@ class _SendToChannelWidgetState extends State<SendToChannelWidget> {
                     Checkbox(
                       activeColor: kPrimaryColor,
                       value: _allChannels,
-                      onChanged: (value) {
-                        setState(() {
-                          _allChannels = value!;
-                          _isSingleChannel = false;
-                        });
-                      },
+                      onChanged: widget.isActive
+                          ? (value) {
+                              setState(() {
+                                _allChannels = value!;
+                                _isSingleChannel = false;
+                              });
+                              widget.onCheckboxAllChannels(_allChannels);
+                              widget.onCheckboxSingleChannel(_isSingleChannel);
+                            }
+                          : null,
                     ),
                     const Text('All Channels'),
                   ],
@@ -66,7 +83,7 @@ class _SendToChannelWidgetState extends State<SendToChannelWidget> {
               ),
             ],
           ),
-          _isSingleChannel
+          _isSingleChannel && widget.isActive
               ? Stack(
                   children: [
                     Container(
