@@ -489,4 +489,49 @@ class PushNotificationMainProvider extends ChangeNotifier {
       badgeCount: badgeCount,
     );
   }
+
+  // send noticiation to test user
+  Future<void> sendPushNotificationToTestUser({
+    required UserModel user,
+    required String title,
+    required String message,
+    required bool badgeCount,
+  }) async {
+    if (user.fcmToken == null || user.fcmToken!.trim().isEmpty) {
+      return;
+    }
+    // payload
+    var notificationPayload = {
+      'notification': {
+        'title': title,
+        'body': message,
+        'sound': 'default',
+      },
+      'data': {
+        'badgeCount': badgeCount,
+        'target': 'user',
+        'href': user.userId,
+        'notificationImage': user.profilePic,
+        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+        'senderId': 'admin',
+        'name': '${user.firstName!} ${user.lastName!}',
+      },
+      'to': user.fcmToken,
+    };
+    var res = await http.post(
+      Uri.parse(Contants.firebaseUrl),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCM,
+      },
+      body: jsonEncode(notificationPayload),
+    );
+
+    if (res.statusCode == 200) {
+      Map<String, dynamic> data = jsonDecode(res.body);
+      if (kDebugMode) {
+        print(data);
+      }
+    }
+  }
 }

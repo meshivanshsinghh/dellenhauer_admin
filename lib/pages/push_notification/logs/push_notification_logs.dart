@@ -33,7 +33,7 @@ class _PushNotificationLogsScreenState
     kPrimaryColor,
     Colors.blueAccent,
     Colors.purpleAccent,
-    Colors.black,
+    const Color.fromARGB(255, 91, 28, 1),
   ];
 
   getTime(int date) {
