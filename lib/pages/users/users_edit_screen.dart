@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
 import 'package:dellenhauer_admin/pages/users/users_courses_list.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
@@ -10,7 +11,10 @@ import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/standalone.dart' as tz;
 
 class UsersEditScreen extends StatefulWidget {
   final String userId;
@@ -22,6 +26,7 @@ class UsersEditScreen extends StatefulWidget {
 
 class _UsersEditScreenState extends State<UsersEditScreen> {
   late UsersProvider userProvider;
+  bool isLoading = false;
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _nickNameController = TextEditingController();
@@ -31,30 +36,32 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   late bool _isPremiumUser;
   late bool _isVerified;
   UserModel? userModelLatest;
-  final TextEditingController _invitedBy = TextEditingController();
   final TextEditingController _phoneNumber = TextEditingController();
   List<AwardsModel> awardsModel = [];
   List<CoursesModel> coursesModel = [];
-  final TextEditingController _websiteUrl = TextEditingController();
+  bool _activatePush = false;
   late UserModel currentUser;
+  final TextEditingController _websiteUrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
       userProvider = Provider.of<UsersProvider>(context, listen: false);
       userProvider.attachContext(context);
+      userProvider.removeInvitedByUser();
       userProvider.selectedCourses.clear();
       userProvider.selectedUserAwards.clear();
       await userProvider.getUserDataFromId(widget.userId).then((value) {
         setState(() {
           currentUser = value!;
         });
-      });
-      setData();
+      }).whenComplete(() => setData());
+      await fetchPushPermission(currentUser.userId!);
     });
   }
 
-  setData() {
+  setData() async {
     if (mounted) {
       setState(() {
         _isPremiumUser = currentUser.isPremiumUser!;
@@ -63,6 +70,20 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       });
       userProvider.selectedCourses.addAll(currentUser.coursesModel!);
       userProvider.selectedUserAwards.addAll(currentUser.awardsModel!);
+    }
+    if (currentUser.invitedBy!.trim().isNotEmpty) {
+      setState(() {
+        isLoading = true;
+      });
+      await userProvider
+          .getUserDataFromId(currentUser.invitedBy!)
+          .then((value) {
+        userProvider.setInvitedByUser(value!);
+      }).whenComplete(() {
+        setState(() {
+          isLoading = false;
+        });
+      });
     }
   }
 
@@ -75,7 +96,21 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       setState(() {
         _isVerified = value;
       });
+    } else if (type == 'activatePush') {
+      setState(() {
+        _activatePush = value;
+      });
     }
+  }
+
+  Future<void> fetchPushPermission(String userId) async {
+    await userProvider.determineActivatePushForUser(userId).then((value) {
+      if (mounted) {
+        setState(() {
+          _activatePush = value;
+        });
+      }
+    });
   }
 
   @override
@@ -86,7 +121,6 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     _nickNameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
-    _invitedBy.dispose();
     _websiteUrl.dispose();
     _phoneNumber.dispose();
   }
@@ -95,7 +129,6 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     userProvider = Provider.of<UsersProvider>(context, listen: true);
-
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -132,7 +165,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
             future: userProvider.getUserDataFromId(widget.userId),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
-                // setting up data
+                // setting up dataa
                 return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Column(
@@ -227,6 +260,9 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                       switchWidget('Premium User', _isPremiumUser, (value) {
                         toggleSwitch(value, 'premium');
                       }),
+                      switchWidget('Activate Push', _activatePush, (value) {
+                        toggleSwitch(value, 'activatePush');
+                      }),
                       switchWidget('Verified User', _isVerified, (value) {
                         toggleSwitch(value, 'verified');
                       }),
@@ -235,10 +271,12 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                       awardsShowcaseWidget(snapshot.data!.awardsModel!),
                       // courses list
                       coursesShowWidget(snapshot.data!.coursesModel!),
-                      loadInvitedUserWidget(snapshot.data!.invitedBy!),
+                      loadInvitedUserWidget(),
+                      // showcasing when user was created
+                      userCreated(snapshot.data!.createdAt!),
                       Container(
                         width: double.infinity,
-                        margin: const EdgeInsets.only(top: 30),
+                        margin: const EdgeInsets.only(top: 5),
                         height: 40,
                         child: ElevatedButton(
                           onPressed: () {
@@ -439,149 +477,207 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       {required String title, required VoidCallback onDelete}) {
     return Container(
       height: 50,
-      width: 150,
+      constraints: const BoxConstraints(maxWidth: 200),
       margin: const EdgeInsets.only(right: 10, bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(5),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            maxLines: 1,
-          ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(FontAwesomeIcons.circleXmark, size: 15),
-          )
-        ],
+      child: ListTile(
+        title: Text(
+          title,
+          maxLines: 1,
+        ),
+        trailing: IconButton(
+          onPressed: onDelete,
+          icon: const Icon(FontAwesomeIcons.circleXmark, size: 15),
+        ),
       ),
     );
   }
 
-  Widget loadInvitedUserWidget(String userId) {
-    return FutureBuilder<UserModel?>(
-        future: userProvider.getUserDataFromId(userId),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(top: 20, bottom: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Invited By User',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+  String getUserCreatedDate(int timestamp) {
+    tz.initializeTimeZones();
+    final berlin = tz.getLocation('Europe/Berlin');
+    final berlinTime =
+        tz.TZDateTime.fromMillisecondsSinceEpoch(berlin, timestamp);
+    final formatter = DateFormat('d.M.y H:m:s');
+    final berlinFormatted = formatter.format(berlinTime);
+    return 'User created at: $berlinFormatted (Berlin)';
+  }
+
+  Widget userCreated(String createdAt) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 30),
+      padding: const EdgeInsets.all(10.0),
+      width: MediaQuery.of(context).size.width,
+      child: Text(
+        getUserCreatedDate(int.parse(createdAt)),
+        style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget loadInvitedUserWidget() {
+    return Container(
+        width: MediaQuery.of(context).size.width,
+        margin: const EdgeInsets.only(top: 20, bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Invited By User',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+            isLoading
+                ? const Center(
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: kPrimaryColor,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(children: [
-                      CachedNetworkImage(
-                        imageUrl: snapshot.data!.profilePic!,
-                        placeholder: (context, url) {
-                          return Container(
-                            height: 50,
-                            width: 50,
-                            margin: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                    'assets/images/placeholder.jpeg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                  )
+                : userProvider.invitedByUser == null
+                    ? ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return const UserListNotificationSelection(
+                                isUser: true,
+                                isEditUser: true,
+                              );
+                            },
                           );
                         },
-                        errorWidget: (context, url, errr) {
-                          return Container(
-                            height: 50,
-                            margin: const EdgeInsets.only(right: 20),
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                    'assets/images/placeholder.jpeg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          );
-                        },
-                        imageBuilder: (context, imageProvider) {
-                          return Container(
-                            height: 50,
-                            width: 50,
-                            margin: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${snapshot.data!.firstName} ${snapshot.data!.lastName}',
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0),
                           ),
-                          Text(
-                            '${snapshot.data!.userId}',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ]),
-                  ],
-                ));
-          } else if (snapshot.hasError) {
-            return emptyPage(FontAwesomeIcons.circleXmark, 'Error!');
-          } else if (snapshot.data == null) {
-            return emptyPage(
-                FontAwesomeIcons.solidUser, 'Not invited by any user');
-          }
-          return const SizedBox(
-            width: double.infinity,
-            height: 100,
-          );
-        });
+                        ),
+                        child: const Text('Add User'),
+                      )
+                    : ListTile(
+                        leading: CachedNetworkImage(
+                          imageUrl: userProvider.invitedByUser!.profilePic!,
+                          placeholder: (context, url) {
+                            return Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                      'assets/images/placeholder.jpeg'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                          errorWidget: (context, url, errr) {
+                            return Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                      'assets/images/placeholder.jpeg'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                          imageBuilder: (context, imageProvider) {
+                            return Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        title: Text(
+                          '${userProvider.invitedByUser!.firstName} ${userProvider.invitedByUser!.lastName}',
+                        ),
+                        subtitle: Text(
+                          '${userProvider.invitedByUser!.userId}',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        trailing: userProvider.invitedByUser != null
+                            ? IconButton(
+                                onPressed: () {
+                                  userProvider.removeInvitedByUser();
+                                },
+                                icon: const Icon(
+                                  FontAwesomeIcons.circleXmark,
+                                  size: 20,
+                                  color: kPrimaryColor,
+                                ),
+                              )
+                            : IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return const UserListNotificationSelection(
+                                        isUser: true,
+                                        isEditUser: true,
+                                      );
+                                    },
+                                  );
+                                },
+                                icon: const Icon(
+                                  FontAwesomeIcons.pencil,
+                                  size: 20,
+                                  color: kPrimaryColor,
+                                ),
+                              ),
+                      )
+          ],
+        ));
   }
 
   // submitting data
   void submitData() async {
-    UserModel userModelLatest = UserModel(
-      firstName: _firstNameController.text.trim(),
-      lastName: _lastNameController.text.trim(),
-      nickname: _nickNameController.text.trim(),
-      awardsModel: userProvider.selectedUserAwards,
-      coursesModel: userProvider.selectedCourses,
-      email: _emailController.text.trim(),
-      bio: _bioController.text.trim(),
-      isPremiumUser: _isPremiumUser,
-      isVerified: _isVerified,
-      invitedBy: _invitedBy.text.trim(),
-      phoneNumber: _phoneNumber.text.trim(),
-      websiteUrl: _websiteUrl.text.trim(),
-    );
-
-    await userProvider
-        .updateUserData(
-      userModel: userModelLatest,
-      userId: widget.userId,
-    )
-        .whenComplete(() {
-      showSnackbar(context, 'User data updated successfully');
-    });
+    if (userProvider.invitedByUser == null) {
+      showSnackbar(context, 'Please select a invited by user first');
+    } else {
+      UserModel userModelLatest = UserModel(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        nickname: _nickNameController.text.trim(),
+        awardsModel: userProvider.selectedUserAwards,
+        coursesModel: userProvider.selectedCourses,
+        email: _emailController.text.trim(),
+        bio: _bioController.text.trim(),
+        isPremiumUser: _isPremiumUser,
+        isVerified: _isVerified,
+        invitedBy: userProvider.invitedByUser!.userId!,
+        phoneNumber: _phoneNumber.text.trim(),
+        websiteUrl: _websiteUrl.text.trim(),
+      );
+      await userProvider
+          .updateUserData(
+              userModel: userModelLatest,
+              userId: widget.userId,
+              activatePush: _activatePush)
+          .whenComplete(() {
+        showSnackbar(context, 'User data updated successfully');
+      });
+    }
   }
 }

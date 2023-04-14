@@ -237,15 +237,8 @@ class _PushNotificationDetailsViewState
   Widget buildItem(String title, String value, bool firstItem) {
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-              color: firstItem ? Colors.transparent : Colors.black26, width: 1),
-          top: const BorderSide(color: Colors.black26, width: 1),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
@@ -254,6 +247,7 @@ class _PushNotificationDetailsViewState
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
+            maxLines: 1,
           ),
           Text(
             value,
@@ -263,7 +257,7 @@ class _PushNotificationDetailsViewState
               color: Colors.black54,
             ),
             maxLines: 1,
-          )
+          ),
         ],
       ),
     );

@@ -84,9 +84,16 @@ class _UsersAwardsListState extends State<UsersAwardsList> {
         subtitle: Text(awardsModel.description!),
         isThreeLine: true,
         trailing: IconButton(
+          color: usersProvider.selectedUserAwards
+                  .any((element) => element.id == awardsModel.id)
+              ? Colors.grey
+              : kPrimaryColor,
           icon: const Icon(FontAwesomeIcons.circlePlus),
           onPressed: () {
-            usersProvider.setselectedUserAwards(awardsModel);
+            if (!usersProvider.selectedUserAwards
+                .any((element) => element.id == awardsModel.id)) {
+              usersProvider.setselectedUserAwards(awardsModel);
+            }
           },
         ),
       ),

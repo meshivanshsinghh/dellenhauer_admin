@@ -12,8 +12,12 @@ import 'package:provider/provider.dart';
 class UserListNotificationSelection extends StatefulWidget {
   final bool isUser;
   final bool isTestUser;
+  final bool isEditUser;
   const UserListNotificationSelection(
-      {super.key, required this.isUser, this.isTestUser = false});
+      {super.key,
+      required this.isUser,
+      this.isTestUser = false,
+      this.isEditUser = false});
 
   @override
   State<UserListNotificationSelection> createState() =>
@@ -298,20 +302,31 @@ class _UserListNotificationSelectionState
                 },
               ),
             )
-          : IgnorePointer(
-              ignoring: usersProvider.selectedNotificationUser
-                  .any((element) => element.userId == userData.userId),
-              child: IconButton(
-                color: usersProvider.selectedNotificationUser
-                        .any((element) => element.userId == userData.userId)
-                    ? Colors.grey
-                    : kPrimaryColor,
-                icon: const Icon(FontAwesomeIcons.circlePlus),
-                onPressed: () {
-                  usersProvider.setSelectedUserForNotification(userData);
-                },
-              ),
-            ),
+          : widget.isEditUser
+              ? usersProvider.invitedByUser == null
+                  ? IconButton(
+                      color: usersProvider.invitedByUser != null
+                          ? Colors.grey
+                          : kPrimaryColor,
+                      icon: const Icon(FontAwesomeIcons.circlePlus),
+                      onPressed: () {
+                        if (usersProvider.invitedByUser == null) {
+                          usersProvider.setInvitedByUser(userData);
+                        }
+                      },
+                    )
+                  : const SizedBox.shrink()
+              : IgnorePointer(
+                  ignoring: usersProvider.selectedNotificationUser
+                      .any((element) => element.userId == userData.userId),
+                  child: IconButton(
+                    color: kPrimaryColor,
+                    icon: const Icon(FontAwesomeIcons.circlePlus),
+                    onPressed: () {
+                      usersProvider.setSelectedUserForNotification(userData);
+                    },
+                  ),
+                ),
     );
   }
 

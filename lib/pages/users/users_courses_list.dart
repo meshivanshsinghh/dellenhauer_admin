@@ -46,8 +46,8 @@ class _UsersCoursesListState extends State<UsersCoursesList> {
               } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                 return Center(
                   child: emptyPage(
-                    FontAwesomeIcons.trophy,
-                    'No awards found!',
+                    FontAwesomeIcons.book,
+                    'No courses found!',
                   ),
                 );
               }
@@ -82,8 +82,15 @@ class _UsersCoursesListState extends State<UsersCoursesList> {
         isThreeLine: true,
         trailing: IconButton(
           icon: const Icon(FontAwesomeIcons.circlePlus),
+          color: usersProvider.selectedCourses
+                  .any((element) => element.id == coursesModel.id)
+              ? Colors.grey
+              : kPrimaryColor,
           onPressed: () {
-            usersProvider.setSelectedCourses(coursesModel);
+            if (!usersProvider.selectedCourses
+                .any((element) => element.id == coursesModel.id)) {
+              usersProvider.setSelectedCourses(coursesModel);
+            }
           },
         ),
       ),

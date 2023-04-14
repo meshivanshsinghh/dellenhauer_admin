@@ -15,29 +15,25 @@
 (App + Admin Panel)
 
 // push notificaiton logs 
--> searching of notifications
--> sorting of push notifications (manual sortData)
+-> logs: searching of notifications
+-> logs: sorting of push notifications (manual sortData)
+-> logs: deleting bulk checkout
 
 // push notification creation 
--> sending new push notification as target: channels,website, article and to all users or selected users. 
--> invited by user popup on user page 
--> user awards and user courses adding and deleting 
--> long messages should be limited in overflowing
--> deleting bulk checkout
--> user detail should contain user registered at (in berlin timezone)
+-> done : sending new push notification as target: channels,website, article and to all users or selected users. 
+-> done: user awards and user courses adding and deleting 
+-> done : long messages should be limited in overflowing
+-> done: user detail should contain user registered at (in berlin timezone)
+
+left: 
+-> done: invited by user popup on user page 
+-> done: user edit for toggling on push notifciatoon or off 
+
+// app part
 -> invitation not opening up in app 
 -> background of chats should be changed 
--> user edit for toggling on push notifciatoon or off 
-
-
-
-// bugs in push notification 
 -> routing should be done when user opens app from terminated state. 
 -> sound issues or sound recording new design capability. 
--> user push notification history based on pagination concept. 
-
-
-// app concepts 
 -> single chat photo in notification 
 -> group chat photo in notification 
 -> green icon and  fixing isOnline concept. 
