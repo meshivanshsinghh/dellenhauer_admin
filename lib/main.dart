@@ -25,6 +25,7 @@ void main() async {
       appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
       messagingSenderId: "337585374916",
       projectId: "dellenhauer-eae5f",
+      storageBucket: "dellenhauer-eae5f.appspot.com",
     ),
   );
   setUrlStrategy(PathUrlStrategy());

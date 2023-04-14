@@ -50,7 +50,9 @@ dependencies:
   timezone: ^0.9.1
   firebase_messaging: ^14.3.0
   http: ^0.13.5
-
+  image_picker_web: ^3.0.0+1
+  firebase_storage: ^11.1.0
+ 
 dev_dependencies:
   flutter_test:
     sdk: flutter

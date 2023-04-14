@@ -15,9 +15,9 @@
 (App + Admin Panel)
 
 // push notificaiton logs 
--> logs: searching of notifications
--> logs: sorting of push notifications (manual sortData)
--> logs: deleting bulk checkout
+-> done: logs: searching of notifications
+-> done: logs: sorting of push notifications (manual sortData)
+-> done: logs: deleting bulk checkout
 
 // push notification creation 
 -> done : sending new push notification as target: channels,website, article and to all users or selected users. 
@@ -29,6 +29,11 @@ left:
 -> done: invited by user popup on user page 
 -> done: user edit for toggling on push notifciatoon or off 
 
+// channel edit 
+-> done: profile photo 
+-> done: removing attachement of read-only and join access boolen values. 
+
+
 // app part
 -> invitation not opening up in app 
 -> background of chats should be changed 
@@ -38,10 +43,6 @@ left:
 -> group chat photo in notification 
 -> green icon and  fixing isOnline concept. 
 
-
-// channel edit 
--> profile photo 
--> removing attachement of read-only and join access boolen values. 
 
 
 

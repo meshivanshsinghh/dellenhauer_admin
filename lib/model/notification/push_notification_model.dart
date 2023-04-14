@@ -13,6 +13,7 @@ class NotificationModel {
   String? href;
   String? lowerVersionNotificationMessage;
   String? target;
+  bool selected = false;
 
   NotificationModel({
     this.badgeCount,

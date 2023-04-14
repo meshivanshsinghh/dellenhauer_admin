@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChannelProvider extends ChangeNotifier {
   BuildContext? context;
@@ -14,6 +18,7 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  final FirebaseStorage storage = FirebaseStorage.instance;
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
   List<String> _relatedChannels = [];
@@ -256,31 +261,52 @@ class ChannelProvider extends ChangeNotifier {
               });
   }
 
-  // updating channel data
   Future<void> updateChannelData({
     required String channelName,
     required String channelDescription,
     required bool autoJoin,
     required bool readOnly,
     required bool joinAccessRequired,
+    Uint8List? imageFile,
     required String visibility,
     required String channelId,
     required List<String> relatedChannels,
   }) async {
     _isLoading = true;
     notifyListeners();
-    await firebaseFirestore.collection('channels').doc(channelId).update({
-      'channel_name': channelName,
-      'channel_description': channelDescription,
-      'channel_autojoin': autoJoin,
-      'related_channels': FieldValue.arrayUnion([relatedChannels]),
-      'channel_readonly': readOnly,
-      'join_access_required': joinAccessRequired,
-      'visibility': visibility,
-    }).whenComplete(() {
-      _isLoading = false;
-      notifyListeners();
-    });
+    if (imageFile != null) {
+      await storeFileToFirebase(
+        'channels/profilePic/$channelId',
+        imageFile,
+      ).then((value) async {
+        await firebaseFirestore.collection('channels').doc(channelId).update({
+          'channel_name': channelName,
+          'channel_description': channelDescription,
+          'channel_autojoin': autoJoin,
+          'related_channels': FieldValue.arrayUnion(relatedChannels),
+          'channel_readonly': readOnly,
+          'channel_photo': value,
+          'join_access_required': joinAccessRequired,
+          'visibility': visibility,
+        }).whenComplete(() {
+          _isLoading = false;
+          notifyListeners();
+        });
+      });
+    } else {
+      await firebaseFirestore.collection('channels').doc(channelId).update({
+        'channel_name': channelName,
+        'channel_description': channelDescription,
+        'channel_autojoin': autoJoin,
+        'related_channels': FieldValue.arrayUnion(relatedChannels),
+        'channel_readonly': readOnly,
+        'join_access_required': joinAccessRequired,
+        'visibility': visibility,
+      }).whenComplete(() {
+        _isLoading = false;
+        notifyListeners();
+      });
+    }
   }
 
   // deleting a channel from databse
@@ -288,5 +314,12 @@ class ChannelProvider extends ChangeNotifier {
     required String channelId,
   }) async {
     await firebaseFirestore.collection('channels').doc(channelId).delete();
+  }
+
+  Future<String> storeFileToFirebase(String ref, Uint8List data) async {
+    UploadTask uploadTask = storage.ref().child(ref).putData(data);
+    await uploadTask;
+    String downloadUrl = await storage.ref(ref).getDownloadURL();
+    return downloadUrl;
   }
 }
