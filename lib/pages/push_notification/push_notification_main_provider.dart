@@ -398,7 +398,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
         notificationOpened: false,
         target: target,
         notificationImage: '',
-        href: '',
+        href: payload == null ? '' : payload['data']['href'],
       );
       if (selectedDateTime != null) {
         DocumentReference documentReference =
@@ -521,7 +521,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
         },
         'data': {
           'badgeCount': badgeCount,
-          'target': 'url',
+          'target': 'website',
           'click_action': 'FLUTTER_NOTIFICATION_CLICK',
           'notificationImage': '',
           'href': url,

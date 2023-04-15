@@ -311,11 +311,17 @@ class _PushNotificationLogsScreenState
                                               ),
                                             )),
                                             // href
-                                            DataCell(Text(
-                                              d.href!.trim().isEmpty
-                                                  ? 'N/A'
-                                                  : d.href!,
-                                              maxLines: 1,
+                                            DataCell(Container(
+                                              constraints: const BoxConstraints(
+                                                maxWidth: 200,
+                                              ),
+                                              child: Text(
+                                                d.href != null &&
+                                                        d.href!.trim().isEmpty
+                                                    ? 'N/A'
+                                                    : d.href ?? 'N/A',
+                                                maxLines: 1,
+                                              ),
                                             )),
                                             DataCell(Text(
                                               d.createdBy!,
