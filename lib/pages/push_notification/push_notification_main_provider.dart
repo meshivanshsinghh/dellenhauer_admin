@@ -123,7 +123,12 @@ class PushNotificationMainProvider extends ChangeNotifier {
             );
             if (res.statusCode == 200) {
               Map<String, dynamic> data = jsonDecode(res.body);
-              notificationModel.id = data['results'][0]['message_id'];
+
+              if (data['results'][0]['message_id'] != null) {
+                notificationModel.id = data['results'][0]['message_id'];
+              } else {
+                notificationModel.id = data['multicast_id'];
+              }
               notificationModel.notificationSend = true;
               notificationModel.notificationSendTimestamp = DateTime.now();
               await firebaseFirestore.collection('notifications').add(
@@ -219,7 +224,11 @@ class PushNotificationMainProvider extends ChangeNotifier {
         );
         if (res.statusCode == 200) {
           Map<String, dynamic> data = jsonDecode(res.body);
-          notificationModel.id = data['results'][0]['message_id'];
+          if (data['results'][0]['message_id'] != null) {
+            notificationModel.id = data['results'][0]['message_id'];
+          } else {
+            notificationModel.id = data['multicast_id'];
+          }
           notificationModel.notificationSend = true;
           notificationModel.notificationSendTimestamp = DateTime.now();
           await firebaseFirestore.collection('notifications').add(
@@ -334,7 +343,11 @@ class PushNotificationMainProvider extends ChangeNotifier {
 
             if (res.statusCode == 200) {
               Map<String, dynamic> data = jsonDecode(res.body);
-              notificationModel.id = data['results'][0]['message_id'];
+              if (data['results'][0]['message_id'] != null) {
+                notificationModel.id = data['results'][0]['message_id'];
+              } else {
+                notificationModel.id = data['multicast_id'];
+              }
               notificationModel.notificationSend = true;
               notificationModel.notificationSendTimestamp = DateTime.now();
               await firebaseFirestore.collection('notifications').add(
@@ -357,6 +370,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
     required bool badgeCount,
     DateTime? selectedDateTime,
     required String target,
+    Map<String, dynamic>? payload,
   }) async {
     try {
       List<String> fcmTokens = [];
@@ -404,22 +418,28 @@ class PushNotificationMainProvider extends ChangeNotifier {
             .set(jobModel.toMap());
       } else {
         // payload
-        var notificationPayload = {
-          'notification': {
-            'title': title,
-            'body': message,
-            'sound': 'default',
-          },
-          'data': {
-            'badgeCount': badgeCount,
-            'target': target,
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            'notificationImage': '',
-            'href': '',
-            'name': title,
-          },
-          'registration_ids': updatedFcmTokens,
-        };
+        Map<String, dynamic> notificationPayload;
+        if (payload == null) {
+          notificationPayload = {
+            'notification': {
+              'title': title,
+              'body': message,
+              'sound': 'default',
+            },
+            'data': {
+              'badgeCount': badgeCount,
+              'target': target,
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'notificationImage': '',
+              'href': '',
+              'name': title,
+            },
+            'registration_ids': updatedFcmTokens,
+          };
+        } else {
+          notificationPayload = payload;
+          notificationPayload['registration_ids'] = updatedFcmTokens;
+        }
         var res = await http.post(
           Uri.parse(Contants.firebaseUrl),
           headers: {
@@ -431,7 +451,11 @@ class PushNotificationMainProvider extends ChangeNotifier {
 
         if (res.statusCode == 200) {
           Map<String, dynamic> data = jsonDecode(res.body);
-          notificationModel.id = data['results'][0]['message_id'];
+          if (data['results'][0]['message_id'] != null) {
+            notificationModel.id = data['results'][0]['message_id'];
+          } else {
+            notificationModel.id = data['multicast_id'];
+          }
           notificationModel.notificationSend = true;
           notificationModel.notificationSendTimestamp = DateTime.now();
           await firebaseFirestore.collection('notifications').add(
@@ -451,19 +475,28 @@ class PushNotificationMainProvider extends ChangeNotifier {
     required String title,
     required String message,
     DateTime? selectedTime,
+    required String articleUrl,
     required bool badgeCount,
   }) async {
-    // only limiting to all users
-    // await sendPushNotificationToAllChannels(
-    //   title: title,
-    //   message: message,
-    //   target: 'article',
-    //   badgeCount: badgeCount,
-    // );
     await sendPushNotificationToAllUsers(
       title: title,
       target: 'article',
       message: message,
+      payload: {
+        'notification': {
+          'title': title,
+          'body': message,
+          'sound': 'default',
+        },
+        'data': {
+          'badgeCount': badgeCount,
+          'target': 'article',
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+          'notificationImage': '',
+          'href': articleUrl,
+          'name': title,
+        },
+      },
       badgeCount: badgeCount,
     );
   }
@@ -472,20 +505,29 @@ class PushNotificationMainProvider extends ChangeNotifier {
   Future<void> sendNotificationToUrl({
     required String title,
     required String message,
+    required String url,
     DateTime? selectedTime,
     required bool badgeCount,
   }) async {
-    // only limiting to all users
-    // await sendPushNotificationToAllChannels(
-    //   title: title,
-    //   message: message,
-    //   target: 'website',
-    //   badgeCount: badgeCount,
-    // );
     await sendPushNotificationToAllUsers(
       title: title,
       target: 'website',
       message: message,
+      payload: {
+        'notification': {
+          'title': title,
+          'body': message,
+          'sound': 'default',
+        },
+        'data': {
+          'badgeCount': badgeCount,
+          'target': 'url',
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+          'notificationImage': '',
+          'href': url,
+          'name': title,
+        },
+      },
       badgeCount: badgeCount,
     );
   }

@@ -613,14 +613,16 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
           if (a == 'Article') {
             await pushNotificationMainProvider.sendNotificationToArticle(
               title: titleController.text.trim(),
-              message: articleController.text.trim(),
+              message: messageController.text.trim(),
+              articleUrl: articleController.text.trim(),
               selectedTime: _selectedDateTime,
               badgeCount: _badgeCount,
             );
           } else if (a == 'URL') {
             await pushNotificationMainProvider.sendNotificationToUrl(
               title: titleController.text.trim(),
-              message: urlController.text.trim(),
+              message: messageController.text.trim(),
+              url: urlController.text.trim(),
               badgeCount: _badgeCount,
               selectedTime: _selectedDateTime,
             );
