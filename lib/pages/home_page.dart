@@ -2,6 +2,7 @@ import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
+import 'package:dellenhauer_admin/pages/pending_users/pending_users.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_logs.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notitification_main.dart';
 import 'package:dellenhauer_admin/pages/requests/requests_screen.dart';
@@ -30,6 +31,7 @@ class _HomePageState extends State<HomePage> {
     FontAwesomeIcons.chartPie,
     FontAwesomeIcons.peopleGroup,
     FontAwesomeIcons.solidUser,
+    FontAwesomeIcons.userPlus,
     FontAwesomeIcons.solidBell,
     FontAwesomeIcons.clockRotateLeft,
     FontAwesomeIcons.userPlus,
@@ -42,6 +44,7 @@ class _HomePageState extends State<HomePage> {
     'Overview',
     'Channels',
     'Users',
+    'Pending Users',
     'Push Notifications',
     'Notification Logs',
     'Requests',
@@ -84,11 +87,13 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[7], icons[7]) as Tab,
                       tab(titles[8], icons[8]) as Tab,
                       tab(titles[9], icons[9]) as Tab,
+                      tab(titles[10], icons[10]) as Tab,
                     ],
                     contents: const [
                       OverviewScreen(),
                       ChannelsScreen(),
                       UserScreen(),
+                      PendingUsers(),
                       PushNotificationMain(),
                       PushNotificationLogsScreen(),
                       RequestsScreenList(),

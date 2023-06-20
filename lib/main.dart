@@ -1,3 +1,5 @@
+import 'package:dellenhauer_admin/pages/pending_users/pending_users.dart';
+import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
@@ -57,6 +59,8 @@ class MyApp extends StatelessWidget {
             create: (_) => PushNotificationLogsProvider()),
         ChangeNotifierProvider<PushNotificationMainProvider>(
             create: (_) => PushNotificationMainProvider()),
+        ChangeNotifierProvider<PendingUsersProvider>(
+            create: (_) => PendingUsersProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
