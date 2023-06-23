@@ -672,9 +672,10 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       );
       await userProvider
           .updateUserData(
-              userModel: userModelLatest,
-              userId: widget.userId,
-              activatePush: _activatePush)
+        userModel: userModelLatest,
+        userId: widget.userId,
+        activatePush: _activatePush,
+      )
           .whenComplete(() {
         showSnackbar(context, 'User data updated successfully');
       });

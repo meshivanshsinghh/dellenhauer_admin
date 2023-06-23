@@ -34,7 +34,7 @@ class NotificationModel {
 
   // form json
   NotificationModel.fromMap(Map<String, dynamic> map) {
-    id = map['id'];
+    id = map['id'].toString();
     badgeCount = map['badgeCount'] ?? true;
     if (map['receiverId'] != null) {
       receiverId = [];
@@ -69,7 +69,7 @@ class NotificationModel {
   // to json
   Map<String, dynamic> toMap() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
+    data['id'] = id.toString();
     data['badgeCount'] = badgeCount;
     data['receiverId'] = receiverId;
     data['createdBy'] = createdBy;

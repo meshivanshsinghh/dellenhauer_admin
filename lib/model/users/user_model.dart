@@ -47,40 +47,51 @@ class UserModel {
   List<CoursesModel>? coursesModel;
   String? invitedBy;
   String? invitedTimestamp;
-  List<AwardsModel>? awardsModel;
   bool? isTyping;
+  List<String>? likedArticles;
+  List<AwardsModel>? awardsModel;
+  int? lastSeen;
+  int? firstLoginTimeStamp;
+  List<String>? joinedChannels;
 
-  UserModel(
-      {this.bio,
-      this.awardsModel,
-      this.coursesModel,
-      this.countryModel,
-      this.createdAt,
-      this.isOnline,
-      this.email,
-      this.fcmToken,
-      this.firstName,
-      this.isVerified,
-      this.isPremiumUser,
-      this.websiteUrl,
-      this.lastName,
-      this.phoneNumber,
-      this.invitedBy,
-      this.invitedTimestamp,
-      this.postalCode,
-      this.profilePic,
-      this.isTyping,
-      this.servicesLooking,
-      this.qrCodeUrl,
-      this.servicesOffering,
-      this.userId,
-      this.nickname});
+  UserModel({
+    this.bio,
+    this.countryModel,
+    this.createdAt,
+    this.isOnline,
+    this.awardsModel,
+    this.email,
+    this.likedArticles,
+    this.coursesModel,
+    this.fcmToken,
+    this.firstName,
+    this.isVerified,
+    this.isPremiumUser,
+    this.websiteUrl,
+    this.lastName,
+    this.phoneNumber,
+    this.invitedBy,
+    this.invitedTimestamp,
+    this.postalCode,
+    this.profilePic,
+    this.joinedChannels,
+    this.isTyping,
+    this.servicesLooking,
+    this.qrCodeUrl,
+    this.servicesOffering,
+    this.userId,
+    this.lastSeen,
+    this.nickname,
+    this.firstLoginTimeStamp,
+  });
 
   // from json
-  UserModel.fromJson(Map<String, dynamic> map) {
-    if (map.isEmpty) {
+  UserModel.fromJson(Map<String, dynamic>? map) {
+    if (map == null) {
       return;
     }
+    lastSeen = map['lastSeen'];
+    firstLoginTimeStamp = map['firstLoginTimestamp'];
     email = map['email'];
     userId = map['userId'];
     qrCodeUrl = map['qr_code_url'];
@@ -91,22 +102,6 @@ class UserModel {
     invitedTimestamp = map['invited_timestamp'];
     isTyping = map['isTyping'] ?? false;
     phoneNumber = map['phoneNumber'];
-    if (map['awards'] != null) {
-      awardsModel = [];
-      map['awards'].forEach((value) {
-        awardsModel!.add(AwardsModel.fromMap(value));
-      });
-    } else {
-      awardsModel = [];
-    }
-    if (map['courses'] != null) {
-      coursesModel = [];
-      map['courses'].forEach((value) {
-        coursesModel!.add(CoursesModel.fromMap(value));
-      });
-    } else {
-      coursesModel = [];
-    }
     isOnline = map['isOnline'] ?? false;
     bio = map['bio'];
     websiteUrl = map['websiteUrl'];
@@ -120,21 +115,43 @@ class UserModel {
     isPremiumUser = map['is_premium_user'];
     fcmToken = map['fcmToken'];
 
-    if (map['servicesLooking'] != null) {
-      servicesLooking = [];
+    joinedChannels = [];
+    if (map.containsKey('joinedChannels') && map['joinedChannels'] != null) {
+      map['joinedChannels'].forEach((value) {
+        joinedChannels!.add(value);
+      });
+    }
+
+    likedArticles = [];
+    if (map.containsKey('likedArticles') && map['likedArticles'] != null) {
+      map['likedArticles'].forEach((value) {
+        likedArticles!.add(value);
+      });
+    }
+    awardsModel = [];
+    if (map.containsKey('awards') && map['awards'] != null) {
+      map['awards'].forEach((value) {
+        awardsModel!.add(AwardsModel.fromMap(value));
+      });
+    }
+    coursesModel = [];
+    if (map.containsKey('courses') && map['courses'] != null) {
+      map['courses'].forEach((value) {
+        coursesModel!.add(CoursesModel.fromMap(value));
+      });
+    }
+    servicesLooking = [];
+    if (map.containsKey('servicesLooking') && map['servicesLooking'] != null) {
       map['servicesLooking'].forEach((value) {
         servicesLooking!.add(value);
       });
-    } else {
-      servicesLooking = [];
     }
-    if (map['servicesOffering'] != null) {
-      servicesLooking = [];
+    servicesOffering = [];
+    if (map.containsKey('servicesOffering') &&
+        map['servicesOffering'] != null) {
       map['servicesOffering'].forEach((value) {
-        servicesLooking!.add(value);
+        servicesOffering!.add(value);
       });
-    } else {
-      servicesLooking = [];
     }
   }
 
@@ -142,6 +159,8 @@ class UserModel {
     return {
       'websiteUrl': websiteUrl,
       'email': email,
+      'lastSeen': lastSeen,
+      'firstLoginTimestamp': firstLoginTimeStamp,
       'userId': userId,
       'firstName': firstName,
       'isOnline': isOnline ?? false,
@@ -154,20 +173,31 @@ class UserModel {
       'is_premium_user': isPremiumUser ?? false,
       'phoneNumber': phoneNumber,
       'bio': bio,
-      'awards': awardsModel!.isNotEmpty
-          ? awardsModel!.map((e) => e.toMap()).toList()
-          : null,
-      'courses': coursesModel!.isNotEmpty
-          ? coursesModel!.map((e) => e.toMap()).toList()
-          : null,
       'postalCode': postalCode,
-      'countryModel': countryModel,
+      'countryModel': countryModel!.toJson(),
       'isVerified': isVerified ?? false,
       'createdAt': createdAt,
       'profilePic': profilePic,
       'fcmToken': fcmToken,
-      'servicesLooking': servicesLooking,
-      'servicesOffering': servicesOffering,
+      'likedArticles': likedArticles != null && likedArticles!.isNotEmpty
+          ? likedArticles!.map((e) => e).toList()
+          : [],
+      'joinedChannels': joinedChannels != null && joinedChannels!.isNotEmpty
+          ? joinedChannels!.map((e) => e).toList()
+          : [],
+      'awards': awardsModel != null && awardsModel!.isNotEmpty
+          ? awardsModel!.map((e) => e.toMap()).toList()
+          : [],
+      'courses': coursesModel != null && coursesModel!.isNotEmpty
+          ? coursesModel!.map((e) => e.toMap()).toList()
+          : [],
+      'servicesLooking': servicesLooking != null && servicesLooking!.isNotEmpty
+          ? servicesLooking!.map((e) => e).toList()
+          : [],
+      'servicesOffering':
+          servicesOffering != null && servicesOffering!.isNotEmpty
+              ? servicesOffering!.map((e) => e).toList()
+              : [],
     };
   }
 }

@@ -12,8 +12,13 @@ import 'package:provider/provider.dart';
 class UserListScreen extends StatefulWidget {
   final bool isModerator;
   final String channelId;
-  const UserListScreen(
-      {super.key, required this.isModerator, required this.channelId});
+  final String channelName;
+  const UserListScreen({
+    super.key,
+    required this.isModerator,
+    required this.channelId,
+    required this.channelName,
+  });
 
   @override
   State<UserListScreen> createState() => _UserListScreenState();
@@ -21,12 +26,15 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen> {
   late ChannelProvider channelProvider;
-
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     channelProvider = Provider.of<ChannelProvider>(context, listen: false);
-
+    _searchController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _searchController.text.length),
+    );
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -45,14 +53,16 @@ class _UserListScreenState extends State<UserListScreen> {
                     ),
                     onPressed: () {
                       showDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (context) {
-                            return UserListAddDialog(
-                              isModerator: widget.isModerator,
-                              channelId: widget.channelId,
-                            );
-                          });
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) {
+                          return UserListAddDialog(
+                            isModerator: widget.isModerator,
+                            channelId: widget.channelId,
+                            channelName: widget.channelName,
+                          );
+                        },
+                      );
                     },
                   ),
                 ]),
@@ -76,30 +86,128 @@ class _UserListScreenState extends State<UserListScreen> {
             )
           ],
         ),
-        child: StreamBuilder<List<UserModel>>(
-          stream: channelProvider.getUserStream(
-              groupId: widget.channelId, isModerator: widget.isModerator),
-          builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data!.isEmpty) {
-              return emptyPage(FontAwesomeIcons.solidUser,
-                  'No ${widget.isModerator ? 'Moderators' : 'Users'} found!');
-            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                padding: const EdgeInsets.only(top: 20, bottom: 30),
-                itemBuilder: (context, index) {
-                  return buildUserData(snapshot.data![index]);
-                },
-              );
-            } else if (snapshot.hasError) {
-              return emptyPage(
-                FontAwesomeIcons.circleXmark,
-                'Some unexpected error!',
-              );
-            }
-            return const Center(
-                child: CircularProgressIndicator(color: kPrimaryColor));
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Container(
+                  height: 50,
+                  margin: const EdgeInsets.only(top: 10),
+                  width: MediaQuery.of(context).size.width,
+                  child: TextFormField(
+                    focusNode: _focusNode,
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.black54),
+                    onChanged: (value) {
+                      if (value.trim().isNotEmpty) {
+                        setState(() {
+                          _searchController.text = value;
+                        });
+                      } else {
+                        setState(() {
+                          _searchController.clear();
+                          _focusNode.unfocus();
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _focusNode.unfocus();
+                                });
+                              },
+                              icon: const Icon(
+                                FontAwesomeIcons.solidCircleXmark,
+                                size: 20,
+                                color: kPrimaryColor,
+                              ),
+                            )
+                          : null,
+                      hintText:
+                          'Search ${widget.isModerator ? 'Moderators' : 'Users'} here...',
+                      hintStyle: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                      fillColor: const Color.fromRGBO(232, 232, 232, 1),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                      prefixIcon: const Icon(
+                        FontAwesomeIcons.magnifyingGlass,
+                        size: 16,
+                        color: kPrimaryColor,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.redAccent),
+                      ),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                )),
+
+            // streambuilder for displaying user list
+            StreamBuilder<List<UserModel>>(
+              stream: channelProvider.getUserStream(
+                groupId: widget.channelId,
+                isModerator: widget.isModerator,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data!.isEmpty) {
+                  return emptyPage(
+                    FontAwesomeIcons.solidUser,
+                    'No ${widget.isModerator ? 'Moderators' : 'Users'} found!',
+                  );
+                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  List<UserModel> users = snapshot.data!;
+                  if (_searchController.text.isNotEmpty) {
+                    users = snapshot.data!.where((element) {
+                      return element.firstName
+                          .toString()
+                          .toLowerCase()
+                          .contains(
+                            _searchController.text.toLowerCase(),
+                          );
+                    }).toList();
+                  }
+                  return Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: users.length,
+                      padding: const EdgeInsets.only(top: 20, bottom: 30),
+                      itemBuilder: (context, index) {
+                        return buildUserData(users[index]);
+                      },
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return emptyPage(
+                    FontAwesomeIcons.circleXmark,
+                    'Some unexpected error!',
+                  );
+                }
+                return const Padding(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Center(
+                    child: CircularProgressIndicator(color: kPrimaryColor),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -177,13 +285,13 @@ class _UserListScreenState extends State<UserListScreen> {
                       .removeUserFromChannel(
                     userId: userData.userId!,
                     isModerator: widget.isModerator,
+                    channelName: widget.channelName,
                     channelId: widget.channelId,
                   )
                       .whenComplete(() {
                     Navigator.of(context).pop();
                     showSnackbar(context, 'Removed successfully from database');
                   });
-                  setState(() {});
                 },
                 child: const Text(
                   'YES',

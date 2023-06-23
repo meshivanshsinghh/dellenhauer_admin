@@ -9,7 +9,8 @@ import 'package:provider/provider.dart';
 import '../../utils/widgets/empty.dart';
 
 class ChannelListSelectionScreen extends StatefulWidget {
-  const ChannelListSelectionScreen({super.key});
+  final String currentChannelId;
+  const ChannelListSelectionScreen({super.key, required this.currentChannelId});
 
   @override
   State<ChannelListSelectionScreen> createState() =>
@@ -24,15 +25,18 @@ class _ChannelListSelectionScreenState
   Widget build(BuildContext context) {
     channelProvider = Provider.of<ChannelProvider>(context, listen: false);
     return FractionallySizedBox(
-        heightFactor: 0.8,
-        widthFactor: 0.8,
-        child: Scaffold(
-            body: Column(
+      heightFactor: 0.8,
+      widthFactor: 0.8,
+      child: Scaffold(
+        body: Column(
           children: [
             FutureBuilder<List<ChannelModel>>(
                 future: channelProvider.getChannelList(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    snapshot.data!.removeWhere(
+                      (element) => element.groupId == widget.currentChannelId,
+                    );
                     return Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -60,18 +64,10 @@ class _ChannelListSelectionScreenState
                     ),
                   );
                 }),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-              ),
-              child: const Text('Close'),
-            ),
-            const SizedBox(height: 20),
           ],
-        )));
+        ),
+      ),
+    );
   }
 
   Widget channelBuilder(ChannelModel channelModel) {
@@ -126,7 +122,10 @@ class _ChannelListSelectionScreenState
           },
         ),
         title: Text(channelModel.channelName!),
-        subtitle: Text(channelModel.channelDescription!),
+        subtitle: SelectableText(
+          '${channelModel.channelDescription} \nID: ${channelModel.groupId}',
+          style: const TextStyle(fontSize: 12),
+        ),
         isThreeLine: true,
         trailing: IconButton(
           icon: const Icon(FontAwesomeIcons.circlePlus),

@@ -209,7 +209,9 @@ class UsersProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print(e.toString());
+      if (kDebugMode) {
+        print(e.toString());
+      }
     }
   }
 

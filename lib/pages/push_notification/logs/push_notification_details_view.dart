@@ -98,9 +98,10 @@ class _PushNotificationDetailsViewState
                 ),
                 buildItem(
                   'Href',
-                  widget.notificationModel.href!.trim().isEmpty
+                  widget.notificationModel.href != null &&
+                          widget.notificationModel.href!.trim().isEmpty
                       ? 'N/A'
-                      : widget.notificationModel.href!,
+                      : widget.notificationModel.href ?? 'N/A',
                   false,
                 ),
                 const SizedBox(height: 10),
