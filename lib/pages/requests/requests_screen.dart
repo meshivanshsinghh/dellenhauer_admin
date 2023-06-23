@@ -275,7 +275,7 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: SelectableText(
-            'UID: ${channelData.groupId} \nMembers: ${channelData.membersId!.length} Moderators: ${channelData.moderatorsId!.length}'),
+            'UID: ${channelData.groupId} \nMembers: ${channelData.totalMembers} Moderators: ${channelData.totalModerators}'),
         isThreeLine: true,
         trailing: InkWell(
           child: CircleAvatar(

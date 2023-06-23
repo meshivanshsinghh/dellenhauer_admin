@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dellenhauer_admin/pages/push_notification/article/article_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_channel_widget.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_user_widget.dart';
@@ -29,6 +30,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   late UsersProvider usersProvider;
   late ChannelProvider channelProvider;
   late PushNotificationMainProvider pushNotificationMainProvider;
+
   bool _isSent = false;
   bool? _allUsers;
   bool? _singleUser;
@@ -43,7 +45,6 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   String? _formatedDateTime;
   final targets = ['Article', 'Channels', 'Users', 'URL'];
   final List<String> _selectedTargets = [];
-
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -127,20 +128,49 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                         return null;
                       },
                     ),
+                    // todo
                     _selectedTargets.contains('Article')
                         ? Container(
+                            width: MediaQuery.of(context).size.width,
                             margin: const EdgeInsets.only(top: 20),
-                            child: TextFormField(
-                              controller: articleController,
-                              cursorColor: kPrimaryColor,
-                              decoration: inputDecoration('Enter Article Url',
-                                  'https://articleurl.com', articleController),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Article url cannot be empty";
-                                }
-                                return null;
-                              },
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: articleController,
+                                    cursorColor: kPrimaryColor,
+                                    decoration: inputDecoration(
+                                        'Enter Article Url',
+                                        'https://articleurl.com',
+                                        articleController),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return "Article url cannot be empty";
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (context) {
+                                        return const ArticleListAddDialog();
+                                      },
+                                    );
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.only(left: 20),
+                                    child: const Icon(
+                                      FontAwesomeIcons.circlePlus,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ),
+                                )
+                              ],
                             ),
                           )
                         : const SizedBox.shrink(),

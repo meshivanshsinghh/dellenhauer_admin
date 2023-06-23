@@ -113,6 +113,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  extended_image:
+    dependency: "direct main"
+    description:
+      name: extended_image
+      sha256: "75e4b0ad0f8f63eed7935ff2506c809a670f5e6dd0f61304525879d53fc41a17"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.2"
+  extended_image_library:
+    dependency: transitive
+    description:
+      name: extended_image_library
+      sha256: "550743b43ab093aed35ef234500fcc7a304cbac1eca47b0cc991e07e88750758"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.4.2"
   fake_async:
     dependency: transitive
     description:
@@ -296,6 +312,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.5"
+  http_client_helper:
+    dependency: transitive
+    description:
+      name: http_client_helper
+      sha256: "14c6e756644339f561321dab021215475ba4779aa962466f59ccb3ecf66b36c3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
   http_parser:
     dependency: transitive
     description:
@@ -473,7 +497,7 @@ packages:
     source: hosted
     version: "6.0.5"
   rxdart:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: rxdart
       sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
@@ -536,6 +560,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.5"
+  shimmer:
+    dependency: "direct main"
+    description:
+      name: shimmer
+      sha256: "5f88c883a22e9f9f299e5ba0e4f7e6054857224976a5d9f839d4ebdc94a14ac9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -695,4 +727,4 @@ packages:
     version: "1.0.0"
 sdks:
   dart: ">=2.18.4 <3.0.0"
-  flutter: ">=3.3.0"
+  flutter: ">=3.7.0"

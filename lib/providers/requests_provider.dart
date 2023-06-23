@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
@@ -37,12 +38,6 @@ class RequestsProvider extends ChangeNotifier {
     this.context = context;
   }
 
-  /* 
-
-  1. showcasing the list of channels
-  2. on clicking on single channel opening up the channel requests section
-  
-  */
   void setChannelDataLoading({bool isLoading = false}) {
     _isLoadingChannelList = isLoading;
     notifyListeners();
@@ -170,55 +165,84 @@ class RequestsProvider extends ChangeNotifier {
   }
 
   // approve request
-  Future<void> acceptChannelRequest(
-      {required ChannelRequestModel channelRequestData,
-      required String channelId}) async {
-    // updating the channel request section
-    await firebaseFirestoree
-        .collection('channels')
-        .doc(channelId)
-        .collection('requests')
-        .doc(channelRequestData.requestId)
-        .update({
-      'approved_by': 'admin',
-      'isApproved': true,
-    });
-    // adding user to collection
-    await firebaseFirestoree.collection('channels').doc(channelId).update({
-      'members_id': FieldValue.arrayUnion([channelRequestData.userId])
-    });
-
-    // updating user personal request
-    QuerySnapshot snap = await firebaseFirestoree
-        .collection('users')
-        .doc(channelRequestData.userId)
-        .collection('channelRequests')
-        .where('channelId', isEqualTo: channelId)
-        .get();
-    if (snap.docs.isNotEmpty) {
+  Future<void> acceptChannelRequest({
+    required ChannelRequestModel channelRequestData,
+    required String channelId,
+  }) async {
+    DocumentSnapshot channelDocSnapshot =
+        await firebaseFirestoree.collection('channels').doc(channelId).get();
+    if (channelDocSnapshot.exists) {
+      Map<String, dynamic> data = channelDocSnapshot.data() as dynamic;
       await firebaseFirestoree
+          .collection('channels')
+          .doc(channelId)
+          .collection('requests')
+          .doc(channelRequestData.requestId)
+          .update({
+        'approved_by': 'admin',
+        'isApproved': true,
+      });
+      DocumentSnapshot dSnapshot = await firebaseFirestoree
+          .collection('channels')
+          .doc(channelId)
+          .collection('members')
+          .doc(channelRequestData.userId)
+          .get();
+      if (!dSnapshot.exists) {
+        // adding to members collection
+        await firebaseFirestoree
+            .collection('channels')
+            .doc(channelId)
+            .collection('members')
+            .doc(channelRequestData.userId)
+            .set(
+              ParticipantModel(
+                      isNotificationEnabled: true,
+                      uid: channelRequestData.userId,
+                      joinedAt: DateTime.now().millisecondsSinceEpoch)
+                  .toMap(),
+              SetOptions(merge: true),
+            );
+        if (data.containsKey('totalMembers') && data['totalMembers'] >= 0) {
+          await firebaseFirestoree
+              .collection('channels')
+              .doc(channelId)
+              .update({
+            'totalMembers': FieldValue.increment(1),
+          });
+        }
+        // adding to user's joined channel array
+        await firebaseFirestoree
+            .collection('users')
+            .doc(channelRequestData.userId)
+            .update({
+          'joinedChannels': FieldValue.arrayUnion([channelId])
+        });
+      }
+      // updating user personal request
+      QuerySnapshot snap = await firebaseFirestoree
           .collection('users')
           .doc(channelRequestData.userId)
           .collection('channelRequests')
-          .doc(snap.docs[0].id)
-          .update({
-        'accepted': true,
-      });
+          .where('channelId', isEqualTo: channelId)
+          .get();
+      if (snap.docs.isNotEmpty) {
+        await firebaseFirestoree
+            .collection('users')
+            .doc(channelRequestData.userId)
+            .collection('channelRequests')
+            .doc(snap.docs[0].id)
+            .update({
+          'accepted': true,
+        });
+      }
     }
   }
-  /*
 
-  1. go to current channel and in rquest collection i will search for the doc which contains requestId
-  2. now will update the reference doc with approved by isApproved to true
-  3. adding the current user as member in channel using channelId then getting doc snapshot and then updating memberid
-  4. now go to user collection and inside that channelRequests colelction look for channelId and update that doc to accepted as true;
-
-
-  */
-
-  Future<void> declineChannelRequest(
-      {required ChannelRequestModel channelRequestdata,
-      required String channelId}) async {
+  Future<void> declineChannelRequest({
+    required ChannelRequestModel channelRequestdata,
+    required String channelId,
+  }) async {
     await firebaseFirestoree
         .collection('channels')
         .doc(channelId)

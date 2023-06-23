@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
-import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -11,8 +11,14 @@ import 'package:provider/provider.dart';
 class UserListAddDialog extends StatefulWidget {
   final bool isModerator;
   final String channelId;
-  const UserListAddDialog(
-      {super.key, required this.isModerator, required this.channelId});
+  final String channelName;
+
+  const UserListAddDialog({
+    super.key,
+    required this.isModerator,
+    required this.channelId,
+    required this.channelName,
+  });
 
   @override
   State<UserListAddDialog> createState() => _UserListAddDialogState();
@@ -25,31 +31,101 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
   @override
   Widget build(BuildContext context) {
     channelProvider = Provider.of<ChannelProvider>(context, listen: false);
+    _textEditingController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _textEditingController.text.length),
+    );
     return FractionallySizedBox(
-      heightFactor: 0.8,
-      widthFactor: 0.8,
+      heightFactor: 0.85,
+      widthFactor: 0.85,
       child: Scaffold(
         body: Padding(
           padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
           child: Column(
             children: [
-              TextFormField(
-                controller: _textEditingController,
-                decoration: inputDecoration(
-                  widget.isModerator ? 'Search Moderators' : 'Search Users',
-                  widget.isModerator
-                      ? 'Add new moderator...'
-                      : 'Add new user...',
-                  _textEditingController,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Container(
+                  height: 50,
+                  margin: const EdgeInsets.only(top: 10),
+                  width: MediaQuery.of(context).size.width,
+                  child: TextFormField(
+                    controller: _textEditingController,
+                    style: const TextStyle(color: Colors.black54),
+                    onChanged: (value) {
+                      if (value.trim().isNotEmpty) {
+                        setState(() {
+                          _textEditingController.text = value;
+                        });
+                      } else {
+                        setState(() {
+                          _textEditingController.clear();
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      suffixIcon: _textEditingController.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _textEditingController.clear();
+                                });
+                              },
+                              icon: const Icon(
+                                FontAwesomeIcons.solidCircleXmark,
+                                size: 20,
+                                color: kPrimaryColor,
+                              ),
+                            )
+                          : null,
+                      hintText:
+                          'Search ${widget.isModerator ? 'Moderators' : 'Users'} here...',
+                      hintStyle: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                      fillColor: const Color.fromRGBO(232, 232, 232, 1),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                      prefixIcon: const Icon(
+                        FontAwesomeIcons.magnifyingGlass,
+                        size: 16,
+                        color: kPrimaryColor,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.redAccent),
+                      ),
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
               ),
 
               // list view of all the users in our channel
-              FutureBuilder(
-                  future: channelProvider.getUserList(),
+              StreamBuilder(
+                  stream: channelProvider.getUserList(),
                   builder: (context, snapshot) {
                     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       List<UserModel> userList = snapshot.data!;
+                      if (_textEditingController.text.isNotEmpty) {
+                        userList = snapshot.data!.where((element) {
+                          return element.firstName
+                              .toString()
+                              .toLowerCase()
+                              .contains(
+                                _textEditingController.text.toLowerCase(),
+                              );
+                        }).toList();
+                      }
                       return Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -121,16 +197,22 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
                                       FontAwesomeIcons.circlePlus,
                                       color: kPrimaryColor,
                                     ),
-                                    onPressed: () {
+                                    onPressed: () async {
                                       // adding user to moderators collection
-                                      channelProvider
+                                      await channelProvider
                                           .addUserToChannel(
                                         userId: userList[index].userId!,
                                         isModerator: widget.isModerator,
                                         channelId: widget.channelId,
+                                        channelName: widget.channelName,
                                       )
-                                          .whenComplete(() {
+                                          .then((v) {
                                         Navigator.of(context).pop();
+                                      }).whenComplete(() {
+                                        showSnackbar(
+                                          context,
+                                          '${widget.isModerator ? 'Moderator' : 'User'} added to channel',
+                                        );
                                       });
                                     }),
                               ),

@@ -1,7 +1,9 @@
+import 'dart:async';
+
+import 'package:dellenhauer_admin/pages/channels/edit/channels_edit_screen.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
-import 'package:dellenhauer_admin/pages/channels/channels_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/nextscreen.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
@@ -22,6 +24,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   late ChannelProvider channelProvider;
   late bool descending;
   late String orderBy;
+  final _debouncer = Debouncer(milliseconds: 100);
 
   @override
   void initState() {
@@ -73,7 +76,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             height: MediaQuery.of(context).size.height * 0.05,
           ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'All Channels',
@@ -82,7 +84,21 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              const Spacer(),
               sortingPopup(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  refreshData();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  child: const Icon(
+                    FontAwesomeIcons.arrowsRotate,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              )
             ],
           ),
           Container(
@@ -102,52 +118,47 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                   : channelProvider.hasData == false
                       ? emptyPage(
                           FontAwesomeIcons.peopleGroup, 'No Channel Found!')
-                      : NotificationListener<ScrollNotification>(
+                      : NotificationListener<ScrollUpdateNotification>(
                           onNotification: (notification) {
                             if (!channelProvider.isLoading) {
                               if (notification.metrics.pixels ==
-                                  notification.metrics.maxScrollExtent) {
-                                channelProvider.loadingMoreContent(
-                                    isLoading: true);
-                                channelProvider.getChannelData(
-                                    orderBy: orderBy, descending: descending);
+                                      notification.metrics.maxScrollExtent &&
+                                  notification.scrollDelta! > 0) {
+                                _debouncer.run(() {
+                                  channelProvider.loadingMoreContent(
+                                      isLoading: true);
+                                  channelProvider.getChannelData(
+                                      orderBy: orderBy, descending: descending);
+                                });
                               }
                             }
                             return false;
                           },
-                          child: RefreshIndicator(
-                              color: kPrimaryColor,
-                              child: ListView.builder(
-                                itemCount:
-                                    channelProvider.channelData.length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index <
-                                      channelProvider.channelData.length) {
-                                    final ChannelModel d = ChannelModel.fromMap(
-                                        channelProvider.channelData[index]
-                                            .data() as dynamic);
+                          child: ListView.builder(
+                            itemCount: channelProvider.channelData.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index < channelProvider.channelData.length) {
+                                final ChannelModel d = ChannelModel.fromMap(
+                                    channelProvider.channelData[index].data()
+                                        as dynamic);
 
-                                    return buildContentList(d);
-                                  }
-                                  return Center(
-                                    child: Opacity(
-                                      opacity:
-                                          channelProvider.isLoadingMoreContent
-                                              ? 1.0
-                                              : 0.0,
-                                      child: const SizedBox(
-                                        width: 32,
-                                        height: 32,
-                                        child: CircularProgressIndicator(
-                                            color: kPrimaryColor),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              onRefresh: () async {
-                                refreshData();
-                              }),
+                                return buildContentList(d);
+                              }
+                              return Center(
+                                child: Opacity(
+                                  opacity: channelProvider.isLoadingMoreContent
+                                      ? 1.0
+                                      : 0.0,
+                                  child: const SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                        color: kPrimaryColor),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ))
         ],
       ),
@@ -311,7 +322,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              channelModel.membersId!.length.toString(),
+                              channelModel.totalMembers.toString(),
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,
@@ -340,7 +351,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              channelModel.moderatorsId!.length.toString(),
+                              channelModel.totalModerators.toString(),
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,
@@ -383,8 +394,13 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                             color: Colors.grey,
                           ),
                         ),
-                        onTap: () => nextScreen(context,
-                            ChannelEditScreen(channelModel: channelModel)),
+                        onTap: () => nextScreen(
+                          context,
+                          ChannelEditScreen(
+                            channelModel: channelModel,
+                            onSaved: refreshData,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       InkWell(
@@ -450,7 +466,32 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    super.dispose();
+  }
+
   void handlePreview(BuildContext context, String imageUrl) async {
     await showImageContentDialog(context, imageUrl);
+  }
+}
+
+class Debouncer {
+  final int milliseconds;
+  VoidCallback? action;
+  Timer? _timer;
+
+  Debouncer({required this.milliseconds});
+
+  run(VoidCallback action) {
+    if (_timer != null) {
+      _timer!.cancel();
+    }
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
+
+  void dispose() {
+    _timer?.cancel();
   }
 }

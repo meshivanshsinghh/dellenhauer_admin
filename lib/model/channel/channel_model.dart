@@ -22,12 +22,14 @@ class ChannelModel {
   String? channelDescription;
   bool? channelNotification;
   String? channelPhoto;
-  bool? channelAutoJoin;
+  // bool? channelAutoJoin;
+  bool? channelAutoJoinWithRefCode;
+  bool? channelAutoJoinWithoutRefCode;
   bool? channelReadOnly;
   String? createdAt;
   bool? joinAccessRequired;
-  List<String>? membersId;
-  List<String>? moderatorsId;
+  // List<String>? membersId;
+  // List<String>? moderatorsId;
   String? groupId;
   ChannelEnum? visibility;
   List<String>? relatedChannel;
@@ -36,22 +38,30 @@ class ChannelModel {
   DateTime? timeSent;
   String? lastMessage;
 
+  int? totalMembers;
+  int? totalModerators;
+  int? onlineUsers;
+
   ChannelModel({
     this.channelName,
     this.channelDescription,
     this.channelNotification,
     this.channelPhoto,
     this.relatedChannel,
-    this.channelAutoJoin,
+    this.channelAutoJoinWithRefCode,
+    this.channelAutoJoinWithoutRefCode,
     this.channelReadOnly,
     this.createdAt,
     this.joinAccessRequired,
     this.groupId,
     this.lastMessage,
-    this.membersId,
-    this.moderatorsId,
+    // this.membersId,
+    // this.moderatorsId,
     this.timeSent,
     this.visibility,
+    this.onlineUsers,
+    this.totalMembers,
+    this.totalModerators,
   });
 
   // to map
@@ -61,15 +71,19 @@ class ChannelModel {
       'channel_description': channelDescription,
       'channel_notification': channelNotification,
       'channel_photo': channelPhoto,
-      'channel_autojoin': channelAutoJoin,
+      'channel_autojoin_with_refcode': channelAutoJoinWithRefCode,
+      'channel_autojoin_without_refcode': channelAutoJoinWithoutRefCode,
       'channel_readonly': channelReadOnly,
       'created_timestamp': createdAt,
       'related_channels': relatedChannel,
       'join_access_required': joinAccessRequired,
-      'members_id': membersId,
-      'moderators_id': moderatorsId,
+      // 'members_id': membersId,
+      // 'moderators_id': moderatorsId,
       'groupId': groupId,
       'visibility': visibility,
+      'onlineUsers': onlineUsers,
+      'totalMembers': totalMembers,
+      'totalModerators': totalModerators,
       'timeSent': timeSent!.millisecondsSinceEpoch,
       'lastMessage': lastMessage,
     };
@@ -90,10 +104,15 @@ class ChannelModel {
     }
     channelPhoto = map['channel_photo'];
 
-    if (map['channel_autojoin'] != null) {
-      channelAutoJoin = map['channel_autojoin'];
+    if (map['channel_autojoin_with_refcode'] != null) {
+      channelAutoJoinWithRefCode = map['channel_autojoin_with_refcode'];
     } else {
-      channelAutoJoin = false;
+      channelAutoJoinWithRefCode = false;
+    }
+    if (map['channel_autojoin_without_refcode'] != null) {
+      channelAutoJoinWithoutRefCode = map['channel_autojoin_without_refcode'];
+    } else {
+      channelAutoJoinWithoutRefCode = false;
     }
 
     if (map['channel_readonly'] != null) {
@@ -112,22 +131,22 @@ class ChannelModel {
 
     groupId = map['groupId'];
     lastMessage = map['lastMessage'];
-    if (map['members_id'] != null) {
-      membersId = [];
-      map['members_id'].forEach((value) {
-        membersId!.add(value);
-      });
-    } else {
-      membersId = [];
-    }
-    if (map['moderators_id'] != null) {
-      moderatorsId = [];
-      map['moderators_id'].forEach((value) {
-        moderatorsId!.add(value);
-      });
-    } else {
-      moderatorsId = [];
-    }
+    // if (map['members_id'] != null) {
+    //   membersId = [];
+    //   map['members_id'].forEach((value) {
+    //     membersId!.add(value);
+    //   });
+    // } else {
+    //   membersId = [];
+    // }
+    // if (map['moderators_id'] != null) {
+    //   moderatorsId = [];
+    //   map['moderators_id'].forEach((value) {
+    //     moderatorsId!.add(value);
+    //   });
+    // } else {
+    //   moderatorsId = [];
+    // }
     if (map['related_channels'] != null) {
       relatedChannel = [];
       map['related_channels'].forEach((value) {
@@ -135,6 +154,21 @@ class ChannelModel {
       });
     } else {
       relatedChannel = [];
+    }
+    if (map['onlineUsers'] != null) {
+      onlineUsers = map['onlineUsers'];
+    } else {
+      onlineUsers = 0;
+    }
+    if (map['totalMembers'] != null) {
+      totalMembers = map['totalMembers'];
+    } else {
+      totalMembers = 0;
+    }
+    if (map['totalModerators'] != null) {
+      totalModerators = map['totalModerators'];
+    } else {
+      totalModerators = 0;
     }
 
     timeSent = DateTime.fromMillisecondsSinceEpoch(map['timeSent']);

@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dellenhauer_admin/constants.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/model/channel/participant_model.dart';
+import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 class ChannelProvider extends ChangeNotifier {
   BuildContext? context;
@@ -21,9 +26,9 @@ class ChannelProvider extends ChangeNotifier {
   final FirebaseStorage storage = FirebaseStorage.instance;
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
-  List<String> _relatedChannels = [];
+  final List<String> _relatedChannels = [];
   List<String> get relatedChannels => _relatedChannels;
-  List<ChannelModel> _selectedNotificationChannels = [];
+  final List<ChannelModel> _selectedNotificationChannels = [];
   List<ChannelModel> get selectedNotificationChannels =>
       _selectedNotificationChannels;
 
@@ -49,12 +54,6 @@ class ChannelProvider extends ChangeNotifier {
 
   void removeRelatedChannel(String relatedChannelId) {
     _relatedChannels.removeWhere((element) => element == relatedChannelId);
-
-    // for (var d in _relatedChannels) {
-    //   if (d == relatedChannelId) {
-    //     _relatedChannels.remove(d);
-    //   }
-    // }
     notifyListeners();
   }
 
@@ -114,40 +113,29 @@ class ChannelProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // getting user model from list of users
-  Future<List<UserModel>> getUserDataFromUserId({
-    isReload = true,
+  // getting user model form list of users
+  Future<List<UserModel>> getSubCollectionUsers({
+    bool isReload = true,
     required String groupId,
     required bool isModerator,
   }) async {
-    // getting the channel data first
     List<UserModel> userData = [];
-    List<String> id = [];
-    await firebaseFirestore
-        .collection('channels')
-        .doc(groupId)
-        .get()
-        .then((value) async {
-      ChannelModel channelData = ChannelModel.fromMap(value.data() as dynamic);
-
-      if (isModerator) {
-        id.addAll(channelData.moderatorsId!);
-      } else {
-        id.addAll(channelData.membersId!);
-      }
-    });
-
-    // getting data from user id
-    for (var userId in id) {
-      await firebaseFirestore
-          .collection('users')
-          .doc(userId)
-          .get()
-          .then((value) {
-        if (value.exists) {
-          userData.add(UserModel.fromJson(value.data() as dynamic));
+    DocumentSnapshot documentSnapshot =
+        await firebaseFirestore.collection('channels').doc(groupId).get();
+    if (documentSnapshot.exists) {
+      QuerySnapshot query = await firebaseFirestore
+          .collection('channels')
+          .doc(groupId)
+          .collection(isModerator ? 'moderators' : 'members')
+          .get();
+      for (var p in query.docs) {
+        String userId = p.id;
+        DocumentSnapshot documentSnapshot =
+            await firebaseFirestore.collection('users').doc(userId).get();
+        if (documentSnapshot.exists) {
+          userData.add(UserModel.fromJson(documentSnapshot.data() as dynamic));
         }
-      });
+      }
     }
     return userData;
   }
@@ -159,39 +147,18 @@ class ChannelProvider extends ChangeNotifier {
     return firebaseFirestore
         .collection('channels')
         .doc(groupId)
+        .collection(isModerator ? 'moderators' : 'members')
         .snapshots()
         .asyncMap((event) async {
-      ChannelModel channelData = ChannelModel.fromMap(event.data() as dynamic);
-
-      if (isModerator) {
-        List<UserModel> moderatorList = [];
-        for (var id in channelData.moderatorsId!) {
-          await firebaseFirestore
-              .collection('users')
-              .doc(id)
-              .get()
-              .then((value) {
-            if (value.exists) {
-              moderatorList.add(UserModel.fromJson(value.data() as dynamic));
-            }
-          });
+      List<UserModel> finalUserList = [];
+      for (var p in event.docs) {
+        DocumentSnapshot snapshot =
+            await firebaseFirestore.collection('users').doc(p.id).get();
+        if (snapshot.exists) {
+          finalUserList.add(UserModel.fromJson(snapshot.data() as dynamic));
         }
-        return moderatorList;
-      } else {
-        List<UserModel> membersList = [];
-        for (var id in channelData.membersId!) {
-          await firebaseFirestore
-              .collection('users')
-              .doc(id)
-              .get()
-              .then((value) {
-            if (value.exists) {
-              membersList.add(UserModel.fromJson(value.data() as dynamic));
-            }
-          });
-        }
-        return membersList;
       }
+      return finalUserList;
     });
   }
 
@@ -207,64 +174,127 @@ class ChannelProvider extends ChangeNotifier {
     return channels;
   }
 
-  Future<List<UserModel>> getUserList() async {
-    List<UserModel> users = [];
-    await firebaseFirestore.collection('users').get().then((value) {
-      for (var document in value.docs) {
-        if (document.exists) {
-          users.add(UserModel.fromJson(document.data()));
-        }
+  Stream<List<UserModel>> getUserList() {
+    return firebaseFirestore.collection('users').snapshots().asyncMap((event) {
+      List<UserModel> users = [];
+      for (var document in event.docs) {
+        users.add(UserModel.fromJson(document.data()));
       }
+      return users;
     });
-    return users;
   }
 
-  Future<void> addUserToChannel(
-      {required String userId,
-      required bool isModerator,
-      required String channelId}) async {
-    DocumentSnapshot documentSnapshot =
+  Future<void> addUserToChannel({
+    required String userId,
+    required bool isModerator,
+    required String channelId,
+    required String channelName,
+  }) async {
+    DocumentSnapshot dSnapshot =
         await firebaseFirestore.collection('channels').doc(channelId).get();
-    if (documentSnapshot.exists) {
-      ChannelModel channelData =
-          ChannelModel.fromMap(documentSnapshot.data() as dynamic);
-      if (isModerator) {
-        if (!channelData.moderatorsId!.contains(userId)) {
+
+    if (dSnapshot.exists) {
+      Map<String, dynamic> data = dSnapshot.data() as dynamic;
+      DocumentSnapshot documentSnapshot = await firebaseFirestore
+          .collection('channels')
+          .doc(channelId)
+          .collection(isModerator ? 'moderators' : 'members')
+          .doc(userId)
+          .get();
+      if (!documentSnapshot.exists) {
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelId)
+            .collection(isModerator ? 'moderators' : 'members')
+            .doc(userId)
+            .set(
+              ParticipantModel(
+                      isNotificationEnabled: true,
+                      uid: userId,
+                      joinedAt: DateTime.now().millisecondsSinceEpoch)
+                  .toMap(),
+              SetOptions(merge: true),
+            );
+        if (data.containsKey(
+                isModerator ? 'totalModerators' : 'totalMembers') &&
+            data[isModerator ? 'totalModerators' : 'totalMembers'] >= 0) {
           await firebaseFirestore.collection('channels').doc(channelId).update({
-            'moderators_id': FieldValue.arrayUnion([userId])
+            isModerator ? 'totalModerators' : 'totalMembers':
+                FieldValue.increment(1),
           });
         }
-      } else {
-        if (!channelData.membersId!.contains(userId)) {
-          await firebaseFirestore.collection('channels').doc(channelId).update({
-            'members_id': FieldValue.arrayUnion([userId])
-          });
+        await firebaseFirestore.collection('users').doc(userId).update({
+          'joinedChannels': FieldValue.arrayUnion([channelId])
+        });
+        if (isModerator) {
+          sendModeratorPushNotification(
+            userId: userId,
+            message:
+                'Du bist nun Moderator von $channelName und kannst den Channel verwalten',
+            title: 'Als Moderator hinzugefügt',
+            channelId: channelId,
+            channelName: channelName,
+          );
         }
       }
     }
   }
 
   // removing id from collection
-  Future<void> removeUserFromChannel(
-      {required String userId,
-      required bool isModerator,
-      required String channelId}) async {
-    await firebaseFirestore
-        .collection('channels')
-        .doc(channelId)
-        .update(isModerator
-            ? {
-                'moderators_id': FieldValue.arrayRemove([userId])
-              }
-            : {
-                'members_id': FieldValue.arrayRemove([userId])
-              });
+  Future<void> removeUserFromChannel({
+    required String userId,
+    required bool isModerator,
+    required String channelId,
+    required String channelName,
+  }) async {
+    DocumentSnapshot dSnapshot =
+        await firebaseFirestore.collection('channels').doc(channelId).get();
+
+    if (dSnapshot.exists) {
+      Map<String, dynamic> data = dSnapshot.data() as dynamic;
+      DocumentSnapshot dReference = await firebaseFirestore
+          .collection('channels')
+          .doc(channelId)
+          .collection(isModerator ? 'moderators' : 'members')
+          .doc(userId)
+          .get();
+      if (dReference.exists) {
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelId)
+            .collection(isModerator ? 'moderators' : 'members')
+            .doc(userId)
+            .delete();
+
+        if (data.containsKey(
+                isModerator ? 'totalModerators' : 'totalMembers') &&
+            data[isModerator ? 'totalModerators' : 'totalMembers'] > 0) {
+          await firebaseFirestore.collection('channels').doc(channelId).update({
+            isModerator ? 'totalModerators' : 'totalMembers':
+                FieldValue.increment(-1),
+          });
+        }
+        await firebaseFirestore.collection('users').doc(userId).update({
+          'joinedChannels': FieldValue.arrayRemove([channelId])
+        });
+        if (isModerator) {
+          sendModeratorPushNotification(
+            userId: userId,
+            message: 'Sie wurden als Moderator von $channelName entfernt',
+            title: 'Als Moderator entfernt',
+            channelId: channelId,
+            channelName: channelName,
+          );
+        }
+      }
+    }
   }
 
-  Future<void> updateChannelData({
+  Future<bool> updateChannelData({
     required String channelName,
     required String channelDescription,
-    required bool autoJoin,
+    required bool autoJoinWithRefCode,
+    required bool autoJoinWithoutRefCode,
     required bool readOnly,
     required bool joinAccessRequired,
     Uint8List? imageFile,
@@ -274,38 +304,48 @@ class ChannelProvider extends ChangeNotifier {
   }) async {
     _isLoading = true;
     notifyListeners();
-    if (imageFile != null) {
-      await storeFileToFirebase(
-        'channels/profilePic/$channelId',
-        imageFile,
-      ).then((value) async {
+    try {
+      if (imageFile != null) {
+        await storeFileToFirebase(
+          'channels/profilePic/$channelId',
+          imageFile,
+        ).then((value) async {
+          await firebaseFirestore.collection('channels').doc(channelId).update({
+            'channel_name': channelName,
+            'channel_description': channelDescription,
+            'channel_autojoin_with_refcode': autoJoinWithRefCode,
+            'channel_autojoin_without_refcode': autoJoinWithoutRefCode,
+            'related_channels': FieldValue.arrayUnion(relatedChannels),
+            'channel_readonly': readOnly,
+            'channel_photo': value,
+            'join_access_required': joinAccessRequired,
+            'visibility': visibility,
+          }).whenComplete(() {
+            _isLoading = false;
+            notifyListeners();
+          });
+        });
+      } else {
         await firebaseFirestore.collection('channels').doc(channelId).update({
           'channel_name': channelName,
           'channel_description': channelDescription,
-          'channel_autojoin': autoJoin,
+          'channel_autojoin_with_refcode': autoJoinWithRefCode,
+          'channel_autojoin_without_refcode': autoJoinWithoutRefCode,
           'related_channels': FieldValue.arrayUnion(relatedChannels),
           'channel_readonly': readOnly,
-          'channel_photo': value,
           'join_access_required': joinAccessRequired,
           'visibility': visibility,
         }).whenComplete(() {
           _isLoading = false;
           notifyListeners();
         });
-      });
-    } else {
-      await firebaseFirestore.collection('channels').doc(channelId).update({
-        'channel_name': channelName,
-        'channel_description': channelDescription,
-        'channel_autojoin': autoJoin,
-        'related_channels': FieldValue.arrayUnion(relatedChannels),
-        'channel_readonly': readOnly,
-        'join_access_required': joinAccessRequired,
-        'visibility': visibility,
-      }).whenComplete(() {
-        _isLoading = false;
-        notifyListeners();
-      });
+      }
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return false;
     }
   }
 
@@ -321,5 +361,77 @@ class ChannelProvider extends ChangeNotifier {
     await uploadTask;
     String downloadUrl = await storage.ref(ref).getDownloadURL();
     return downloadUrl;
+  }
+
+  Future<void> sendModeratorPushNotification({
+    required String userId,
+    required String title,
+    required String message,
+    required String channelId,
+    required String channelName,
+  }) async {
+    DocumentSnapshot documentSnapshot =
+        await firebaseFirestore.collection('users').doc(userId).get();
+    try {
+      if (documentSnapshot.exists) {
+        UserModel userData =
+            UserModel.fromJson(documentSnapshot.data() as dynamic);
+        if (userData.fcmToken != null && userData.fcmToken!.trim().isNotEmpty) {
+          NotificationModel notificationModel = NotificationModel(
+            badgeCount: true,
+            receiverId: [userData.userId!],
+            createdBy: 'admin',
+            notificationImage: userData.profilePic,
+            notificationTitle: title,
+            notificationMessage: message,
+            lowerVersionNotificationMessage: message.toString().toLowerCase(),
+            notificationOpened: false,
+            target: 'channel',
+            href: channelId,
+          );
+          var notificationPayload = {
+            'notification': {
+              'title': title,
+              'body': message,
+              'sound': 'default',
+            },
+            'data': {
+              'badgeCount': true,
+              'target': 'channel',
+              'href': channelId,
+              'notificationImage': userData.profilePic,
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'senderId': 'admin',
+              'name': channelName,
+            },
+            'registration_ids': [userData.fcmToken]
+          };
+          var res = await http.post(
+            Uri.parse(Contants.firebaseUrl),
+            headers: {
+              HttpHeaders.contentTypeHeader: 'application/json',
+              HttpHeaders.authorizationHeader:
+                  Contants.authorizationHeaderFCMDev,
+            },
+            body: jsonEncode(notificationPayload),
+          );
+          if (res.statusCode == 200) {
+            Map<String, dynamic> data = jsonDecode(res.body);
+            if (data['results'][0]['message_id'] != null) {
+              notificationModel.id = data['results'][0]['message_id'];
+            } else {
+              notificationModel.id = data['multicast_id'];
+            }
+            notificationModel.notificationSend = true;
+            notificationModel.notificationSendTimestamp = DateTime.now();
+            await firebaseFirestore.collection('notifications').add(
+                  notificationModel.toMap(),
+                );
+          }
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 }

@@ -40,11 +40,28 @@ class PushNotificationMainProvider extends ChangeNotifier {
     List<String> fcmToken = [];
     try {
       for (var channelData in selectedChannels) {
-        if (channelData.membersId == null && channelData.moderatorsId == null) {
+        QuerySnapshot moderatorsQuery = await firebaseFirestore
+            .collection('channels')
+            .doc(channelData.groupId)
+            .collection('moderators')
+            .limit(10)
+            .get();
+        QuerySnapshot membersQuery = await firebaseFirestore
+            .collection('channels')
+            .doc(channelData.groupId)
+            .collection('members')
+            .limit(10)
+            .get();
+
+        if (moderatorsQuery.docs.isEmpty && membersQuery.docs.isEmpty) {
           continue;
         }
+
         var userIds = [
-          ...{...channelData.membersId!, ...channelData.moderatorsId!}
+          ...{
+            ...moderatorsQuery.docs.map((doc) => doc.id),
+            ...membersQuery.docs.map((doc) => doc.id)
+          }
         ];
         if (userIds.isNotEmpty) {
           var userDocs = await firebaseFirestore
@@ -117,13 +134,12 @@ class PushNotificationMainProvider extends ChangeNotifier {
               headers: {
                 HttpHeaders.contentTypeHeader: 'application/json',
                 HttpHeaders.authorizationHeader:
-                    Contants.authorizationHeaderFCM,
+                    Contants.authorizationHeaderFCMDev,
               },
               body: jsonEncode(notificationPayload),
             );
             if (res.statusCode == 200) {
               Map<String, dynamic> data = jsonDecode(res.body);
-
               if (data['results'][0]['message_id'] != null) {
                 notificationModel.id = data['results'][0]['message_id'];
               } else {
@@ -218,7 +234,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
           Uri.parse(Contants.firebaseUrl),
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCM,
+            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
           },
           body: jsonEncode(notificationPayload),
         );
@@ -257,12 +273,27 @@ class PushNotificationMainProvider extends ChangeNotifier {
 
       for (var channelDoc in channelDocs.docs) {
         ChannelModel channelModel = ChannelModel.fromMap(channelDoc.data());
-        if (channelModel.membersId == null &&
-            channelModel.moderatorsId == null) {
+        QuerySnapshot moderatorsQuery = await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .collection('moderators')
+            .limit(10)
+            .get();
+        QuerySnapshot membersQuery = await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .collection('members')
+            .limit(10)
+            .get();
+
+        if (moderatorsQuery.docs.isEmpty && membersQuery.docs.isEmpty) {
           continue;
         }
         var userIds = [
-          ...{...channelModel.membersId!, ...channelModel.moderatorsId!}
+          ...{
+            ...moderatorsQuery.docs.map((doc) => doc.id),
+            ...membersQuery.docs.map((doc) => doc.id)
+          }
         ];
 
         if (userIds.isNotEmpty) {
@@ -336,7 +367,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
               headers: {
                 HttpHeaders.contentTypeHeader: 'application/json',
                 HttpHeaders.authorizationHeader:
-                    Contants.authorizationHeaderFCM,
+                    Contants.authorizationHeaderFCMDev,
               },
               body: jsonEncode(notificationPayload),
             );
@@ -444,7 +475,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
           Uri.parse(Contants.firebaseUrl),
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCM,
+            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
           },
           body: jsonEncode(notificationPayload),
         );
@@ -564,7 +595,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
       Uri.parse(Contants.firebaseUrl),
       headers: {
         HttpHeaders.contentTypeHeader: 'application/json',
-        HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCM,
+        HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
       },
       body: jsonEncode(notificationPayload),
     );

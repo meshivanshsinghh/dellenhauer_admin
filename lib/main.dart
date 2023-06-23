@@ -1,5 +1,5 @@
-import 'package:dellenhauer_admin/pages/pending_users/pending_users.dart';
 import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/article/push_notification_article_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
@@ -22,12 +22,24 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
+    // Production Options
+    // options: const FirebaseOptions(
+    //   apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
+    //   appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
+    //   messagingSenderId: "337585374916",
+    //   projectId: "dellenhauer-eae5f",
+    //   storageBucket: "dellenhauer-eae5f.appspot.com",
+    // ),
+
+    // Development Options
     options: const FirebaseOptions(
-      apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
-      appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
-      messagingSenderId: "337585374916",
-      projectId: "dellenhauer-eae5f",
-      storageBucket: "dellenhauer-eae5f.appspot.com",
+      apiKey: "AIzaSyAaRUuuIIbpBmVLds4AljLPNg5Vw3Eo4-E",
+      authDomain: "dellenhauerdev.firebaseapp.com",
+      projectId: "dellenhauerdev",
+      storageBucket: "dellenhauerdev.appspot.com",
+      messagingSenderId: "728511266197",
+      appId: "1:728511266197:web:06b9aa9b37fefe3c0c8a9c",
+      measurementId: "G-Q06DJ22R7S",
     ),
   );
   setUrlStrategy(PathUrlStrategy());
@@ -61,6 +73,8 @@ class MyApp extends StatelessWidget {
             create: (_) => PushNotificationMainProvider()),
         ChangeNotifierProvider<PendingUsersProvider>(
             create: (_) => PendingUsersProvider()),
+        ChangeNotifierProvider<PushNotificationArticleProvider>(
+            create: (_) => PushNotificationArticleProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
