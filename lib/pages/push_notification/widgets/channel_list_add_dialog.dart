@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
+import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -9,7 +10,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 class ChannelListAddDialog extends StatefulWidget {
-  const ChannelListAddDialog({super.key});
+  final bool selectMultipleChannels;
+  const ChannelListAddDialog({super.key, this.selectMultipleChannels = false});
 
   @override
   State<ChannelListAddDialog> createState() => _ChannelListAddDialogState();
@@ -20,6 +22,7 @@ class _ChannelListAddDialogState extends State<ChannelListAddDialog> {
   List<DocumentSnapshot<Object?>>? _searchedChannel;
   String _searchQuery = '';
   final TextEditingController _textEditingController = TextEditingController();
+  final _debouncer = Debouncer(milliseconds: 100);
 
   @override
   void initState() {
@@ -35,6 +38,12 @@ class _ChannelListAddDialogState extends State<ChannelListAddDialog> {
         descending: true,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    super.dispose();
   }
 
   @override
@@ -106,23 +115,63 @@ class _ChannelListAddDialogState extends State<ChannelListAddDialog> {
                 ),
               ),
               Expanded(
-                  child: channelProvider.isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: kPrimaryColor,
-                          ),
-                        )
-                      : !channelProvider.hasData
-                          ? emptyPage(
-                              FontAwesomeIcons.peopleGroup,
-                              'No Channel Found!',
-                            )
-                          : ListView.builder(
+                child: channelProvider.isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: kPrimaryColor,
+                        ),
+                      )
+                    : !channelProvider.hasData
+                        ? emptyPage(
+                            FontAwesomeIcons.peopleGroup,
+                            'No Channel Found!',
+                          )
+                        : NotificationListener<ScrollUpdateNotification>(
+                            onNotification: (notification) {
+                              if (_searchedChannel == null &&
+                                  !channelProvider.isLoading) {
+                                if (notification.metrics.pixels ==
+                                        notification.metrics.maxScrollExtent &&
+                                    notification.scrollDelta! > 0) {
+                                  _debouncer.run(() {
+                                    channelProvider.loadingMoreContent(
+                                        isLoading: true);
+                                    channelProvider.getChannelData(
+                                      orderBy: 'created_timestamp',
+                                      descending: true,
+                                    );
+                                  });
+                                }
+                              }
+                              return false;
+                            },
+                            child: ListView.builder(
                               itemCount: _searchedChannel?.length ??
-                                  channelProvider.channelData.length,
+                                  channelProvider.channelData.length +
+                                      (channelProvider.isLoadingMoreContent
+                                          ? 1
+                                          : 0),
                               shrinkWrap: true,
                               padding: EdgeInsets.zero,
                               itemBuilder: (context, index) {
+                                if (_searchedChannel == null &&
+                                    index >=
+                                        channelProvider.channelData.length) {
+                                  return Center(
+                                    child: Opacity(
+                                      opacity:
+                                          channelProvider.isLoadingMoreContent
+                                              ? 1.0
+                                              : 0.0,
+                                      child: const SizedBox(
+                                        width: 32,
+                                        height: 32,
+                                        child: CircularProgressIndicator(
+                                            color: kPrimaryColor),
+                                      ),
+                                    ),
+                                  );
+                                }
                                 ChannelModel currentChannel =
                                     ChannelModel.fromMap(
                                   (_searchedChannel ??
@@ -294,37 +343,71 @@ class _ChannelListAddDialogState extends State<ChannelListAddDialog> {
                                                   ),
                                                   const SizedBox(width: 10),
                                                   const Spacer(),
-                                                  Checkbox(
-                                                      activeColor:
-                                                          kPrimaryColor,
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(20),
-                                                      ),
-                                                      value: channelProvider
-                                                                  .selectedChannelPushNotification !=
-                                                              null &&
-                                                          channelProvider
-                                                                  .selectedChannelPushNotification!
-                                                                  .groupId ==
-                                                              currentChannel
-                                                                  .groupId,
-                                                      onChanged: (value) {
-                                                        if (value != null &&
-                                                            value == true) {
-                                                          channelProvider
-                                                              .setSingleSelectedNotificationChannel(
-                                                            currentChannel,
-                                                          );
-                                                        } else {
-                                                          channelProvider
-                                                              .setSingleSelectedNotificationChannel(
-                                                            null,
-                                                          );
-                                                        }
-                                                      })
+                                                  widget.selectMultipleChannels
+                                                      ? Checkbox(
+                                                          activeColor:
+                                                              kPrimaryColor,
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        20),
+                                                          ),
+                                                          value: channelProvider
+                                                              .selectedNotificationChannels
+                                                              .contains(
+                                                            currentChannel
+                                                                .groupId,
+                                                          ),
+                                                          onChanged: (value) {
+                                                            if (value != null &&
+                                                                value == true) {
+                                                              channelProvider
+                                                                  .setSelectedNotificationChannels(
+                                                                currentChannel
+                                                                    .groupId!,
+                                                              );
+                                                            } else {
+                                                              channelProvider
+                                                                  .removeSelectedNotificationChannels(
+                                                                currentChannel
+                                                                    .groupId!,
+                                                              );
+                                                            }
+                                                          })
+                                                      : Checkbox(
+                                                          activeColor:
+                                                              kPrimaryColor,
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        20),
+                                                          ),
+                                                          value: channelProvider
+                                                                      .selectedChannelPushNotification !=
+                                                                  null &&
+                                                              channelProvider
+                                                                      .selectedChannelPushNotification!
+                                                                      .groupId ==
+                                                                  currentChannel
+                                                                      .groupId,
+                                                          onChanged: (value) {
+                                                            if (value != null &&
+                                                                value == true) {
+                                                              channelProvider
+                                                                  .setSingleSelectedNotificationChannel(
+                                                                currentChannel,
+                                                              );
+                                                            } else {
+                                                              channelProvider
+                                                                  .setSingleSelectedNotificationChannel(
+                                                                null,
+                                                              );
+                                                            }
+                                                          })
                                                 ],
                                               )
                                             ],
@@ -335,7 +418,9 @@ class _ChannelListAddDialogState extends State<ChannelListAddDialog> {
                                   ),
                                 );
                               },
-                            ))
+                            ),
+                          ),
+              )
             ],
           ),
         ),

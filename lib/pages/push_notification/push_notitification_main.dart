@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/pages/channels/user_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/article_list_add_dialog.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_article_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/channel_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
@@ -32,7 +31,6 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   late ChannelProvider channelProvider;
   late PushNotificationMainProvider pushNotificationMainProvider;
   late OverviewProvider overviewProvider;
-  late PushNotificationArticleProvider articleProvider;
 
   bool _isSent = false;
   bool _allUsers = false;
@@ -55,8 +53,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
     usersProvider = Provider.of<UsersProvider>(context, listen: true);
     channelProvider = Provider.of<ChannelProvider>(context, listen: true);
     overviewProvider = Provider.of<OverviewProvider>(context, listen: true);
-    articleProvider =
-        Provider.of<PushNotificationArticleProvider>(context, listen: true);
+
     return Container(
       width: MediaQuery.of(context).size.width,
       margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
@@ -345,42 +342,63 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                             }
                           },
                         ),
-                        const Text('Select Users'),
+                        _selectedUsers
+                            ? Text(
+                                'Select Users (${usersProvider.selectedNotificationUser.length})',
+                              )
+                            : const Text('Select Users'),
                         if (_selectedUsers)
                           Expanded(
-                            child: Container(
-                              margin: EdgeInsets.only(
-                                right: MediaQuery.of(context).size.width * 0.3,
-                                left: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: const Color(0xffD9D9D9)),
-                                borderRadius: BorderRadius.circular(0),
-                                color: const Color(0xffFCFCFC),
-                              ),
-                              padding: const EdgeInsets.only(
-                                left: 10,
-                                right: 5,
-                                top: 7,
-                                bottom: 7,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: const [
-                                  Text(
-                                    'Select Users',
-                                    style: TextStyle(color: Color(0xff6B6B6B)),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_drop_down_sharp,
-                                    color: kPrimaryColor,
-                                  ),
-                                ],
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                showDialog(
+                                  barrierDismissible: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return const UserListDialog(
+                                      selectMultipleUsers: true,
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: 20,
+                                  right:
+                                      MediaQuery.of(context).size.width * 0.3,
+                                ),
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: const Color(0xffD9D9D9)),
+                                  borderRadius: BorderRadius.circular(0),
+                                  color: const Color(0xffFCFCFC),
+                                ),
+                                padding: const EdgeInsets.only(
+                                  left: 10,
+                                  right: 5,
+                                  top: 7,
+                                  bottom: 7,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: const [
+                                    Text(
+                                      'Select Users',
+                                      style:
+                                          TextStyle(color: Color(0xff6B6B6B)),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down_sharp,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          )
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -404,39 +422,59 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                             }
                           },
                         ),
-                        const Text('Select Channels'),
+                        _selectedChannels
+                            ? Text(
+                                'Select Channels (${channelProvider.selectedNotificationChannels.length})',
+                              )
+                            : const Text('Select Channels'),
                         if (_selectedChannels)
                           Expanded(
-                            child: Container(
-                              margin: EdgeInsets.only(
-                                right: MediaQuery.of(context).size.width * 0.3,
-                                left: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: const Color(0xffD9D9D9)),
-                                borderRadius: BorderRadius.circular(0),
-                                color: const Color(0xffFCFCFC),
-                              ),
-                              padding: const EdgeInsets.only(
-                                left: 10,
-                                right: 5,
-                                top: 7,
-                                bottom: 7,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: const [
-                                  Text(
-                                    'Select Channels',
-                                    style: TextStyle(color: Color(0xff6B6B6B)),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_drop_down_sharp,
-                                    color: kPrimaryColor,
-                                  ),
-                                ],
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                showDialog(
+                                  barrierDismissible: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return const ChannelListAddDialog(
+                                      selectMultipleChannels: true,
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  right:
+                                      MediaQuery.of(context).size.width * 0.3,
+                                  left: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: const Color(0xffD9D9D9)),
+                                  borderRadius: BorderRadius.circular(0),
+                                  color: const Color(0xffFCFCFC),
+                                ),
+                                padding: const EdgeInsets.only(
+                                  left: 10,
+                                  right: 5,
+                                  top: 7,
+                                  bottom: 7,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: const [
+                                    Text(
+                                      'Select Channels',
+                                      style:
+                                          TextStyle(color: Color(0xff6B6B6B)),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down_sharp,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           )
@@ -484,22 +522,15 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                                           child: GestureDetector(
                                             behavior: HitTestBehavior.opaque,
                                             onTap: () {
-                                              if (usersProvider
-                                                      .selectedTestNotificationUser ==
-                                                  null) {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return const UserListNotificationSelection(
-                                                      isUser: true,
-                                                      isTestUser: true,
-                                                    );
-                                                  },
-                                                );
-                                              } else {
-                                                usersProvider
-                                                    .removeSelectedTestUser();
-                                              }
+                                              showDialog(
+                                                barrierDismissible: true,
+                                                context: context,
+                                                builder: (context) {
+                                                  return const UserListDialog(
+                                                    isTestUser: true,
+                                                  );
+                                                },
+                                              );
                                             },
                                             child: Container(
                                               padding:
@@ -536,11 +567,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                                             ),
                                           ),
                                         )
-                                      : const SizedBox.shrink(),
-                                  // list tile
-                                  usersProvider.selectedTestNotificationUser !=
-                                          null
-                                      ? Container(
+                                      : Container(
                                           margin: const EdgeInsets.symmetric(
                                             horizontal: 10,
                                           ),
@@ -621,8 +648,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                                               maxLines: 1,
                                             ),
                                           ),
-                                        )
-                                      : const SizedBox.shrink(),
+                                        ),
                                 ],
                               ),
                             ),
@@ -981,87 +1007,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
         },
       );
     } else if (_selectedTargets.trim() == 'URL') {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Enter URL here'),
-            content: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    cursorColor: kPrimaryColor,
-                    style: const TextStyle(color: Colors.black54),
-                    decoration: InputDecoration(
-                      suffix: urlController.text.isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  urlController.clear();
-                                });
-                              },
-                              icon: const Icon(
-                                FontAwesomeIcons.solidCircleXmark,
-                                size: 20,
-                                color: kPrimaryColor,
-                              ),
-                            )
-                          : null,
-                      hintText: 'https://',
-                      hintStyle: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 20),
-                      fillColor: const Color.fromRGBO(232, 232, 232, 1),
-                      filled: true,
-                      prefixIcon: const Icon(
-                        FontAwesomeIcons.earthAmericas,
-                        size: 16,
-                        color: kPrimaryColor,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.transparent),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.transparent),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.redAccent),
-                      ),
-                      border: InputBorder.none,
-                    ),
-                    controller: urlController,
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          setState(() {});
-                        },
-                        child: const Text('Save')),
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-        barrierDismissible: true,
-      );
+      return showURLDialog();
     }
   }
 
@@ -1080,8 +1026,8 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   String currentSelected() {
     switch (_selectedTargets.trim()) {
       case 'Article':
-        if (articleProvider.selectedArticle != null) {
-          return articleProvider.selectedArticle!.headline!;
+        if (pushNotificationMainProvider.selectedArticle != null) {
+          return pushNotificationMainProvider.selectedArticle!.headline!;
         } else {
           return '';
         }
@@ -1106,5 +1052,88 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
       default:
         return '';
     }
+  }
+
+  void showURLDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Enter URL here'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  cursorColor: kPrimaryColor,
+                  style: const TextStyle(color: Colors.black54),
+                  decoration: InputDecoration(
+                    suffix: urlController.text.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              setState(() {
+                                urlController.clear();
+                              });
+                            },
+                            icon: const Icon(
+                              FontAwesomeIcons.solidCircleXmark,
+                              size: 20,
+                              color: kPrimaryColor,
+                            ),
+                          )
+                        : null,
+                    hintText: 'https://',
+                    hintStyle: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    fillColor: const Color.fromRGBO(232, 232, 232, 1),
+                    filled: true,
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.earthAmericas,
+                      size: 16,
+                      color: kPrimaryColor,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.transparent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.transparent),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.redAccent),
+                    ),
+                    border: InputBorder.none,
+                  ),
+                  controller: urlController,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() {});
+                      },
+                      child: const Text('Save')),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+      barrierDismissible: true,
+    );
   }
 }

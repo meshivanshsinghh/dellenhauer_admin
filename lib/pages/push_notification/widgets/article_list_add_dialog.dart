@@ -1,5 +1,5 @@
 import 'package:dellenhauer_admin/pages/push_notification/model/push_notification_article_model.dart';
-import 'package:dellenhauer_admin/pages/push_notification/push_notification_article_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/shimmer_image.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -16,7 +16,7 @@ class ArticleListAddDialog extends StatefulWidget {
 }
 
 class _ArticleListAddDialogState extends State<ArticleListAddDialog> {
-  late PushNotificationArticleProvider articleProvider;
+  late PushNotificationMainProvider articleProvider;
   final TextEditingController _textEditingController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   List<PushNotificationArticleModel>? _searchedArticles;
@@ -37,7 +37,7 @@ class _ArticleListAddDialogState extends State<ArticleListAddDialog> {
   @override
   Widget build(BuildContext context) {
     articleProvider =
-        Provider.of<PushNotificationArticleProvider>(context, listen: true);
+        Provider.of<PushNotificationMainProvider>(context, listen: true);
     return FractionallySizedBox(
       heightFactor: 0.85,
       widthFactor: 0.85,

@@ -8,6 +8,7 @@ import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/notification/job_model.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/push_notification/model/push_notification_article_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,17 @@ class PushNotificationMainProvider extends ChangeNotifier {
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
   bool _isSendingNotification = false;
   bool get isSendingNotification => _isSendingNotification;
+  List<PushNotificationArticleModel> _articleData = [];
+  List<PushNotificationArticleModel> get articleData => _articleData;
+  PushNotificationArticleModel? _selectedArticle;
+  PushNotificationArticleModel? get selectedArticle => _selectedArticle;
+  bool _loading = false;
+  bool get loading => _loading;
+
+  void setLoading(bool setLoading) {
+    _loading = setLoading;
+    notifyListeners();
+  }
 
   void setNotificationSending(bool isLoading) {
     _isSendingNotification = isLoading;
@@ -27,6 +39,34 @@ class PushNotificationMainProvider extends ChangeNotifier {
 
   void attachContext(BuildContext context) {
     this.context = context;
+  }
+
+  void setSelectedArticle(PushNotificationArticleModel article) {
+    _selectedArticle = article;
+    notifyListeners();
+  }
+
+  Future<void> getArticleData() async {
+    try {
+      _articleData.clear();
+      const String url = 'https://dellenhauer.com/wp-json/bestcms/v1/article';
+      final http.Response response = await http.get(Uri.parse(url), headers: {
+        'X-API-KEY': 'WPAObiq6mx57kW9kpZFhOERymRu3SHin',
+        'Connection': 'keep-alive',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip,defalte,br',
+      });
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        for (var a in data) {
+          _articleData.add(PushNotificationArticleModel.fromJson(a));
+        }
+      }
+      notifyListeners();
+    } catch (error) {
+      _articleData = [];
+      notifyListeners();
+    }
   }
 
   // send push notification to selected channels
