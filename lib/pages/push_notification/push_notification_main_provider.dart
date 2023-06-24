@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/constants.dart';
-import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/notification/job_model.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
@@ -69,582 +68,224 @@ class PushNotificationMainProvider extends ChangeNotifier {
     }
   }
 
-  // send push notification to selected channels
-  Future<void> sendPushNotificationToSelectedChannels({
+  // final push notification code
+  Future<void> sendPushNotification({
+    required bool allUsers,
+    required bool selectedUsers,
+    required bool selectedChannels,
+    required List<String> selectedChannelID,
+    required List<String> selectedUserID,
+    required String target,
+    required String href,
     required String title,
+    required bool badge,
     required String message,
-    required bool badgeCount,
-    DateTime? selectedDateTime,
-    required List<ChannelModel> selectedChannels,
+    required DateTime? selectedDateTime,
+    required String name,
   }) async {
+    const int maxTokensPerRequest = 500;
     List<String> fcmToken = [];
-    try {
-      for (var channelData in selectedChannels) {
-        QuerySnapshot moderatorsQuery = await firebaseFirestore
-            .collection('channels')
-            .doc(channelData.groupId)
-            .collection('moderators')
-            .limit(10)
-            .get();
-        QuerySnapshot membersQuery = await firebaseFirestore
-            .collection('channels')
-            .doc(channelData.groupId)
-            .collection('members')
-            .limit(10)
-            .get();
+    List<String> receiverId = [];
 
-        if (moderatorsQuery.docs.isEmpty && membersQuery.docs.isEmpty) {
-          continue;
+    if (allUsers) {
+      QuerySnapshot<Map<String, dynamic>> snapshpot =
+          await firebaseFirestore.collection('users').get();
+      for (var a in snapshpot.docs) {
+        UserModel userModel = UserModel.fromJson(a.data());
+        if (userModel.fcmToken != null &&
+            userModel.fcmToken!.trim().isNotEmpty) {
+          fcmToken.add(userModel.fcmToken!);
         }
-
-        var userIds = [
-          ...{
-            ...moderatorsQuery.docs.map((doc) => doc.id),
-            ...membersQuery.docs.map((doc) => doc.id)
-          }
-        ];
-        if (userIds.isNotEmpty) {
-          var userDocs = await firebaseFirestore
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: userIds)
-              .get();
-          for (var userDoc in userDocs.docs) {
-            UserModel userModel = UserModel.fromJson(userDoc.data());
-            if (userModel.fcmToken == null ||
-                userModel.fcmToken!.trim().isEmpty) {
-              continue;
-            }
+        receiverId.add(a.id);
+      }
+    } else if (selectedUsers) {
+      for (var id in selectedUserID) {
+        DocumentSnapshot snapshot =
+            await firebaseFirestore.collection('users').doc(id).get();
+        if (snapshot.exists) {
+          UserModel userModel = UserModel.fromJson(snapshot.data() as dynamic);
+          if (userModel.fcmToken != null &&
+              userModel.fcmToken!.trim().isNotEmpty) {
             fcmToken.add(userModel.fcmToken!);
           }
-
-          // notification model
-          NotificationModel notificationModel = NotificationModel(
-            badgeCount: badgeCount,
-            receiverId: userIds.take(15).toList(),
-            createdBy: 'admin',
-            notificationImage: channelData.channelPhoto,
-            notificationTitle: title,
-            notificationMessage: message,
-            lowerVersionNotificationMessage: message.toString().toLowerCase(),
-            notificationOpened: false,
-            target: 'channel',
-            href: channelData.groupId,
-          );
-          List<String> updatedFcmTokens = fcmToken
-              .where(
-                  (element) => element.trim().isNotEmpty && element.isNotEmpty)
-              .toList();
-          if (selectedDateTime != null) {
-            DocumentReference documentReference =
-                firebaseFirestore.collection('jobs').doc();
-            JobModel jobModel = JobModel(
-              id: documentReference.id,
-              title: title,
-              message: message,
-              badgeCount: badgeCount,
-              selectedDateTime: selectedDateTime,
-              fcmTokens: updatedFcmTokens,
-              notificationModel: notificationModel,
-            );
-            await firebaseFirestore
-                .collection('jobs')
-                .doc(jobModel.id)
-                .set(jobModel.toMap());
-          } else {
-            // payload
-            var notificationPayload = {
-              'notification': {
-                'title': title,
-                'body': message,
-                'sound': 'default',
-              },
-              'data': {
-                'badgeCount': badgeCount,
-                'target': 'channel',
-                'href': channelData.groupId,
-                'notificationImage': channelData.channelPhoto,
-                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-                'senderId': 'admin',
-                'name': channelData.channelName,
-              },
-              'registration_ids': updatedFcmTokens
-            };
-            var res = await http.post(
-              Uri.parse(Contants.firebaseUrl),
-              headers: {
-                HttpHeaders.contentTypeHeader: 'application/json',
-                HttpHeaders.authorizationHeader:
-                    Contants.authorizationHeaderFCMDev,
-              },
-              body: jsonEncode(notificationPayload),
-            );
-            if (res.statusCode == 200) {
-              Map<String, dynamic> data = jsonDecode(res.body);
-              if (data['results'][0]['message_id'] != null) {
-                notificationModel.id = data['results'][0]['message_id'];
-              } else {
-                notificationModel.id = data['multicast_id'];
+          receiverId.add(id);
+        }
+      }
+    } else if (selectedChannels) {
+      for (var id in selectedChannelID) {
+        DocumentSnapshot snapshot =
+            await firebaseFirestore.collection('channels').doc(id).get();
+        if (snapshot.exists) {
+          QuerySnapshot<Map<String, dynamic>> membersCollection =
+              await firebaseFirestore
+                  .collection('channels')
+                  .doc(id)
+                  .collection('members')
+                  .get();
+          for (var docId in membersCollection.docs) {
+            DocumentSnapshot userSnapshot =
+                await firebaseFirestore.collection('users').doc(docId.id).get();
+            if (userSnapshot.exists) {
+              UserModel userModel =
+                  UserModel.fromJson(userSnapshot.data() as dynamic);
+              if (userModel.fcmToken != null &&
+                  userModel.fcmToken!.trim().isNotEmpty) {
+                fcmToken.add(userModel.fcmToken!);
               }
-              notificationModel.notificationSend = true;
-              notificationModel.notificationSendTimestamp = DateTime.now();
-              await firebaseFirestore.collection('notifications').add(
-                    notificationModel.toMap(),
-                  );
+              receiverId.add(id);
             }
           }
         }
       }
-    } on FirebaseException catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
     }
-  }
 
-  // send push notification to selected users
-  Future<void> sendPushNotificationToSelectedUsers({
-    required String title,
-    required String message,
-    required bool badgeCount,
-    DateTime? selectedDateTime,
-    required List<UserModel> selectedUsers,
-  }) async {
     try {
-      List<String> fcmTokens = [];
-      List<String> receiverId = [];
-      for (var userData in selectedUsers) {
-        if (userData.fcmToken == null || userData.fcmToken!.trim().isEmpty) {
-          continue;
-        }
-        fcmTokens.add(userData.fcmToken!);
-        receiverId.add(userData.userId!);
-      }
-
-      List<String> updatedFcmTokens = fcmTokens
-          .where((element) => element.trim().isNotEmpty && element.isNotEmpty)
-          .toList();
-
       NotificationModel notificationModel = NotificationModel(
-        badgeCount: badgeCount,
-        receiverId: receiverId,
+        badgeCount: badge,
+        receiverId: [...receiverId.take(15)],
         createdBy: 'admin',
+        notificationImage: '',
         notificationTitle: title,
         notificationMessage: message,
-        lowerVersionNotificationMessage: message.toLowerCase(),
+        lowerVersionNotificationMessage: message.toString().toLowerCase(),
         notificationOpened: false,
-        target: 'user',
-        notificationImage: '',
-        href: '',
+        target: getTarget(target),
+        href: href,
       );
       if (selectedDateTime != null) {
-        DocumentReference documentReference =
+        DocumentReference docRefrence =
             firebaseFirestore.collection('jobs').doc();
         JobModel jobModel = JobModel(
-          id: documentReference.id,
+          id: docRefrence.id,
           title: title,
           message: message,
-          fcmTokens: updatedFcmTokens,
+          badgeCount: badge,
           selectedDateTime: selectedDateTime,
+          fcmTokens: fcmToken,
           notificationModel: notificationModel,
-          badgeCount: badgeCount,
         );
         await firebaseFirestore
             .collection('jobs')
             .doc(jobModel.id)
             .set(jobModel.toMap());
       } else {
-        // payload
-        var notificationPayload = {
-          'notification': {
-            'title': title,
-            'body': message,
-            'sound': 'default',
-          },
-          'data': {
-            'badgeCount': badgeCount,
-            'target': 'user',
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            'notificationImage': '',
-            'href': '',
-            'name': title,
-          },
-          'registration_ids': updatedFcmTokens,
-        };
-        var res = await http.post(
-          Uri.parse(Contants.firebaseUrl),
-          headers: {
-            HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
-          },
-          body: jsonEncode(notificationPayload),
-        );
-        if (res.statusCode == 200) {
-          Map<String, dynamic> data = jsonDecode(res.body);
-          if (data['results'][0]['message_id'] != null) {
-            notificationModel.id = data['results'][0]['message_id'];
-          } else {
-            notificationModel.id = data['multicast_id'];
-          }
-          notificationModel.notificationSend = true;
-          notificationModel.notificationSendTimestamp = DateTime.now();
-          await firebaseFirestore.collection('notifications').add(
-                notificationModel.toMap(),
-              );
-        }
-      }
-    } on FirebaseException catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
-    }
-  }
-
-  // send push notiication to all channels
-  Future<void> sendPushNotificationToAllChannels({
-    required String title,
-    required String message,
-    required bool badgeCount,
-    DateTime? selectedDateTime,
-    required String target,
-  }) async {
-    try {
-      var channelDocs = await firebaseFirestore.collection('channels').get();
-      List<String> fcmTokens = [];
-
-      for (var channelDoc in channelDocs.docs) {
-        ChannelModel channelModel = ChannelModel.fromMap(channelDoc.data());
-        QuerySnapshot moderatorsQuery = await firebaseFirestore
-            .collection('channels')
-            .doc(channelModel.groupId)
-            .collection('moderators')
-            .limit(10)
-            .get();
-        QuerySnapshot membersQuery = await firebaseFirestore
-            .collection('channels')
-            .doc(channelModel.groupId)
-            .collection('members')
-            .limit(10)
-            .get();
-
-        if (moderatorsQuery.docs.isEmpty && membersQuery.docs.isEmpty) {
-          continue;
-        }
-        var userIds = [
-          ...{
-            ...moderatorsQuery.docs.map((doc) => doc.id),
-            ...membersQuery.docs.map((doc) => doc.id)
-          }
-        ];
-
-        if (userIds.isNotEmpty) {
-          fcmTokens.clear();
-          var userDocs = await firebaseFirestore
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: userIds)
-              .get();
-
-          for (var userDoc in userDocs.docs) {
-            UserModel userModel = UserModel.fromJson(userDoc.data());
-            if (userModel.fcmToken == null ||
-                userModel.fcmToken!.trim().isEmpty) {
-              continue;
-            }
-            fcmTokens.add(userModel.fcmToken!);
-          }
-          // notification model
-          NotificationModel notificationModel = NotificationModel(
-            badgeCount: badgeCount,
-            receiverId: userIds.take(15).toList(),
-            createdBy: 'admin',
-            notificationImage: channelModel.channelPhoto,
-            notificationTitle: title,
-            notificationMessage: message,
-            lowerVersionNotificationMessage: message.toLowerCase(),
-            notificationOpened: false,
-            target: target,
-            href: channelModel.groupId,
-          );
-          List<String> updatedFcmTokens = fcmTokens
-              .where((token) => token.trim().isNotEmpty && token.isNotEmpty)
-              .toList();
-          if (selectedDateTime != null) {
-            DocumentReference documentReference =
-                firebaseFirestore.collection('jobs').doc();
-            JobModel jobModel = JobModel(
-              id: documentReference.id,
-              title: title,
-              message: message,
-              fcmTokens: updatedFcmTokens,
-              selectedDateTime: selectedDateTime,
-              notificationModel: notificationModel,
-              badgeCount: badgeCount,
-            );
-            await firebaseFirestore
-                .collection('jobs')
-                .doc(jobModel.id)
-                .set(jobModel.toMap());
-          } else {
-            // payload
-            var notificationPayload = {
-              'notification': {
-                'title': title,
-                'body': message,
-                'sound': 'default',
-              },
-              'data': {
-                'badgeCount': badgeCount,
-                'target': target,
-                'href': channelModel.groupId,
-                'notificationImage': channelModel.channelPhoto,
-                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-                'senderId': 'admin',
-                'name': channelModel.channelName,
-              },
-              'registration_ids': updatedFcmTokens,
-            };
-            var res = await http.post(
-              Uri.parse(Contants.firebaseUrl),
-              headers: {
-                HttpHeaders.contentTypeHeader: 'application/json',
-                HttpHeaders.authorizationHeader:
-                    Contants.authorizationHeaderFCMDev,
-              },
-              body: jsonEncode(notificationPayload),
-            );
-
-            if (res.statusCode == 200) {
-              Map<String, dynamic> data = jsonDecode(res.body);
-              if (data['results'][0]['message_id'] != null) {
-                notificationModel.id = data['results'][0]['message_id'];
-              } else {
-                notificationModel.id = data['multicast_id'];
-              }
-              notificationModel.notificationSend = true;
-              notificationModel.notificationSendTimestamp = DateTime.now();
-              await firebaseFirestore.collection('notifications').add(
-                    notificationModel.toMap(),
-                  );
-            }
-          }
-        }
-      }
-    } on FirebaseException catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
-    }
-  }
-
-  Future<void> sendPushNotificationToAllUsers({
-    required String title,
-    required String message,
-    required bool badgeCount,
-    DateTime? selectedDateTime,
-    required String target,
-    Map<String, dynamic>? payload,
-  }) async {
-    try {
-      List<String> fcmTokens = [];
-      List<String> receiverId = [];
-      var userDocs = await firebaseFirestore.collection('users').get();
-      for (var userDoc in userDocs.docs) {
-        UserModel userModel = UserModel.fromJson(userDoc.data());
-        if (userModel.fcmToken == null || userModel.fcmToken!.trim().isEmpty) {
-          continue;
-        }
-        fcmTokens.add(userModel.fcmToken!);
-        receiverId.add(userModel.userId!);
-      }
-      List<String> updatedFcmTokens = fcmTokens
-          .where((element) => element.trim().isNotEmpty && element.isNotEmpty)
-          .toList();
-
-      NotificationModel notificationModel = NotificationModel(
-        badgeCount: badgeCount,
-        receiverId: receiverId,
-        createdBy: 'admin',
-        notificationTitle: title,
-        notificationMessage: message,
-        lowerVersionNotificationMessage: message.toLowerCase(),
-        notificationOpened: false,
-        target: target,
-        notificationImage: '',
-        href: payload == null ? '' : payload['data']['href'],
-      );
-      if (selectedDateTime != null) {
-        DocumentReference documentReference =
-            firebaseFirestore.collection('jobs').doc();
-        JobModel jobModel = JobModel(
-          id: documentReference.id,
-          title: title,
-          message: message,
-          fcmTokens: updatedFcmTokens,
-          selectedDateTime: selectedDateTime,
-          notificationModel: notificationModel,
-          badgeCount: badgeCount,
-        );
-        await firebaseFirestore
-            .collection('jobs')
-            .doc(jobModel.id)
-            .set(jobModel.toMap());
-      } else {
-        // payload
-        Map<String, dynamic> notificationPayload;
-        if (payload == null) {
-          notificationPayload = {
+        for (var i = 0; i < fcmToken.length; i += maxTokensPerRequest) {
+          var end = (i + maxTokensPerRequest < fcmToken.length)
+              ? i + maxTokensPerRequest
+              : fcmToken.length;
+          var tokensChunk = fcmToken.sublist(i, end);
+          var notificationPayload = {
             'notification': {
               'title': title,
               'body': message,
               'sound': 'default',
             },
             'data': {
-              'badgeCount': badgeCount,
-              'target': target,
-              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'badgeCount': badge,
+              'target': getTarget(target),
+              'href': href,
               'notificationImage': '',
-              'href': '',
-              'name': title,
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'senderId': 'admin',
+              'name': name,
             },
-            'registration_ids': updatedFcmTokens,
+            'registration_ids': tokensChunk,
           };
-        } else {
-          notificationPayload = payload;
-          notificationPayload['registration_ids'] = updatedFcmTokens;
-        }
-        var res = await http.post(
-          Uri.parse(Contants.firebaseUrl),
-          headers: {
-            HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
-          },
-          body: jsonEncode(notificationPayload),
-        );
-
-        if (res.statusCode == 200) {
-          Map<String, dynamic> data = jsonDecode(res.body);
-          if (data['results'][0]['message_id'] != null) {
-            notificationModel.id = data['results'][0]['message_id'];
-          } else {
-            notificationModel.id = data['multicast_id'];
+          var res = await http.post(
+            Uri.parse(Contants.firebaseUrl),
+            headers: {
+              HttpHeaders.contentTypeHeader: 'application/json',
+              HttpHeaders.authorizationHeader:
+                  Contants.authorizationHeaderFCMDev,
+            },
+            body: jsonEncode(notificationPayload),
+          );
+          if (res.statusCode == 200) {
+            Map<String, dynamic> data = jsonDecode(res.body);
+            if (data['results'][0]['message_id'] != null) {
+              notificationModel.id = data['results'][0]['message_id'];
+            } else {
+              notificationModel.id = data['multicast_id'];
+            }
+            notificationModel.notificationSend = true;
+            notificationModel.notificationSendTimestamp = DateTime.now();
+            await firebaseFirestore.collection('notifications').add(
+                  notificationModel.toMap(),
+                );
           }
-          notificationModel.notificationSend = true;
-          notificationModel.notificationSendTimestamp = DateTime.now();
-          await firebaseFirestore.collection('notifications').add(
-                notificationModel.toMap(),
-              );
         }
       }
-    } on FirebaseException catch (e) {
+    } catch (e) {
       if (kDebugMode) {
         print(e);
       }
     }
   }
 
-  // send notification to article
-  Future<void> sendNotificationToArticle({
+  Future<bool> sendPushNotificationToTestUser({
+    required UserModel userModel,
     required String title,
     required String message,
-    DateTime? selectedTime,
-    required String articleUrl,
+    required String target,
     required bool badgeCount,
+    required String href,
+    required String name,
   }) async {
-    await sendPushNotificationToAllUsers(
-      title: title,
-      target: 'article',
-      message: message,
-      payload: {
-        'notification': {
-          'title': title,
-          'body': message,
-          'sound': 'default',
-        },
-        'data': {
-          'badgeCount': badgeCount,
-          'target': 'article',
-          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          'notificationImage': '',
-          'href': articleUrl,
-          'name': title,
-        },
-      },
-      badgeCount: badgeCount,
-    );
-  }
-
-  // send notification to url
-  Future<void> sendNotificationToUrl({
-    required String title,
-    required String message,
-    required String url,
-    DateTime? selectedTime,
-    required bool badgeCount,
-  }) async {
-    await sendPushNotificationToAllUsers(
-      title: title,
-      target: 'website',
-      message: message,
-      payload: {
-        'notification': {
-          'title': title,
-          'body': message,
-          'sound': 'default',
-        },
-        'data': {
-          'badgeCount': badgeCount,
-          'target': 'website',
-          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          'notificationImage': '',
-          'href': url,
-          'name': title,
-        },
-      },
-      badgeCount: badgeCount,
-    );
-  }
-
-  // send noticiation to test user
-  Future<void> sendPushNotificationToTestUser({
-    required UserModel user,
-    required String title,
-    required String message,
-    required bool badgeCount,
-  }) async {
-    if (user.fcmToken == null || user.fcmToken!.trim().isEmpty) {
-      return;
+    if (userModel.fcmToken == null || userModel.fcmToken!.trim().isEmpty) {
+      return false;
     }
-    // payload
-    var notificationPayload = {
-      'notification': {
-        'title': title,
-        'body': message,
-        'sound': 'default',
-      },
-      'data': {
-        'badgeCount': badgeCount,
-        'target': 'user',
-        'href': user.userId,
-        'notificationImage': user.profilePic,
-        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-        'senderId': 'admin',
-        'name': '${user.firstName!} ${user.lastName!}',
-      },
-      'to': user.fcmToken,
-    };
-    var res = await http.post(
-      Uri.parse(Contants.firebaseUrl),
-      headers: {
-        HttpHeaders.contentTypeHeader: 'application/json',
-        HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
-      },
-      body: jsonEncode(notificationPayload),
-    );
-
-    if (res.statusCode == 200) {
-      Map<String, dynamic> data = jsonDecode(res.body);
-      if (kDebugMode) {
-        print(data);
+    try {
+      // payload for notification
+      var notificationPayload = {
+        'notification': {
+          'title': title,
+          'body': message,
+          'sound': 'default',
+        },
+        'data': {
+          'badgeCount': badgeCount,
+          'target': getTarget(target),
+          'href': href,
+          'notificationImage': userModel.profilePic,
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+          'senderId': 'admin',
+          'name': name,
+        },
+        'to': userModel.fcmToken,
+      };
+      var res = await http.post(
+        Uri.parse(Contants.firebaseUrl),
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/json',
+          HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
+        },
+        body: jsonEncode(notificationPayload),
+      );
+      if (res.statusCode == 200) {
+        return true;
+      } else {
+        return false;
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return false;
+    }
+  }
+
+  String getTarget(String target) {
+    switch (target) {
+      case 'Article':
+        return 'article';
+      case 'URL':
+        return 'website';
+      case 'User':
+        return 'user';
+      case 'Channel':
+        return 'channel';
+      default:
+        return 'home';
     }
   }
 }

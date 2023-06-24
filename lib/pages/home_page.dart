@@ -90,11 +90,11 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[10], icons[10]) as Tab,
                     ],
                     contents: const [
-                      PushNotificationMain(),
                       OverviewScreen(),
                       ChannelsScreen(),
                       UserScreen(),
                       PendingUsers(),
+                      PushNotificationMain(),
                       PushNotificationLogsScreen(),
                       RequestsScreenList(),
                       ServicesScreen(),

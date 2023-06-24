@@ -1,15 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dellenhauer_admin/pages/channels/user_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/article_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/channel_list_add_dialog.dart';
-import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_list_dialog.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/providers/overview_provider.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -23,9 +23,9 @@ class PushNotificationMain extends StatefulWidget {
 }
 
 class _PushNotificationMainState extends State<PushNotificationMain> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController titleController = TextEditingController();
   TextEditingController messageController = TextEditingController();
-  TextEditingController articleController = TextEditingController();
   TextEditingController urlController = TextEditingController();
   late UsersProvider usersProvider;
   late ChannelProvider channelProvider;
@@ -36,14 +36,47 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
   bool _allUsers = false;
   bool _selectedUsers = false;
   bool _selectedChannels = false;
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _badgeCount = true;
   bool _sendNow = false;
   DateTime? _selectedDateTime;
   String? _formatedDateTime;
   final targets = ['Article', 'Channel', 'User', 'URL'];
   String _selectedTargets = '';
+
+  // select date time
+  Future<void> selectDateTime(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      // ignore: use_build_context_synchronously
+      final TimeOfDay? timePicked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (timePicked != null) {
+        final DateTime localDateTime = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          timePicked.hour,
+          timePicked.minute,
+        );
+
+        final formattedDateTime = DateFormat('dd\'th\' MMMM yyyy \'at\' h:mm a')
+            .format(localDateTime);
+
+        setState(() {
+          _selectedDateTime = localDateTime;
+          _formatedDateTime = formattedDateTime;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +228,8 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                     const SizedBox(height: 20),
                     const Divider(color: Color(0xffCDCDCD)),
                     const SizedBox(height: 20),
+
+                    // target section
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
@@ -217,7 +252,6 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                         ),
                       ],
                     ),
-                    // list of target items
                     Container(
                       width: MediaQuery.of(context).size.width,
                       margin: const EdgeInsets.symmetric(vertical: 20),
@@ -288,7 +322,8 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                     const SizedBox(height: 20),
                     const Divider(color: Color(0xffCDCDCD)),
                     const SizedBox(height: 20),
-                    // showcasing sent to option
+
+                    // selecting the recipients
                     const Text(
                       'Select the recipients',
                       style: TextStyle(
@@ -656,7 +691,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                               children: [
                                 ElevatedButton(
                                   onPressed: () =>
-                                      sendPublishClicked(isTest: true),
+                                      publishNotification(isTest: true),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: kPrimaryColor,
                                     shape: RoundedRectangleBorder(
@@ -685,7 +720,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                     SizedBox(
                       width: 100,
                       child: ElevatedButton(
-                        onPressed: () => sendPublishClicked(isTest: false),
+                        onPressed: () => publishNotification(isTest: false),
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -705,281 +740,20 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
     );
   }
 
-  Future<void> selectDateTime(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      // ignore: use_build_context_synchronously
-      final TimeOfDay? timePicked = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (timePicked != null) {
-        final DateTime localDateTime = DateTime(
-          picked.year,
-          picked.month,
-          picked.day,
-          timePicked.hour,
-          timePicked.minute,
-        );
-
-        final formattedDateTime = DateFormat('dd\'th\' MMMM yyyy \'at\' h:mm a')
-            .format(localDateTime);
-
-        setState(() {
-          _selectedDateTime = localDateTime;
-          _formatedDateTime = formattedDateTime;
-        });
-      }
+  String generateHref() {
+    switch (_selectedTargets) {
+      case 'Article':
+        return pushNotificationMainProvider.selectedArticle!.id.toString();
+      case 'URL':
+        return urlController.text.trim();
+      case 'Channel':
+        return channelProvider.selectedChannelPushNotification!.groupId
+            .toString();
+      case 'User':
+        return usersProvider.selectedUserForPushNotification!.userId!;
+      default:
+        return 'home';
     }
-  }
-
-  Future<void> sendNotification({required bool isTest}) async {
-    // if (isTest) {
-    //   await pushNotificationMainProvider
-    //       .sendPushNotificationToTestUser(
-    //     user: usersProvider.selectedTestNotificationUser!,
-    //     title: titleController.text.trim(),
-    //     message: messageController.text.trim(),
-    //     badgeCount: _badgeCount,
-    //   )
-    //       .whenComplete(() {
-    //     setState(() {
-    //       _isSent = true;
-    //     });
-    //   });
-    // } else {
-    //   pushNotificationMainProvider.setNotificationSending(true);
-    //   try {
-    //     for (var a in _selectedTargets) {
-    //       if (a == 'Article') {
-    //         await pushNotificationMainProvider.sendNotificationToArticle(
-    //           title: titleController.text.trim(),
-    //           message: messageController.text.trim(),
-    //           articleUrl: articleController.text.trim(),
-    //           selectedTime: _selectedDateTime,
-    //           badgeCount: _badgeCount,
-    //         );
-    //       } else if (a == 'URL') {
-    //         await pushNotificationMainProvider.sendNotificationToUrl(
-    //           title: titleController.text.trim(),
-    //           message: messageController.text.trim(),
-    //           url: urlController.text.trim(),
-    //           badgeCount: _badgeCount,
-    //           selectedTime: _selectedDateTime,
-    //         );
-    //       } else if (a == 'Channels') {
-    //         if (_allChannels == true) {
-    //           await pushNotificationMainProvider
-    //               .sendPushNotificationToAllChannels(
-    //             title: titleController.text.trim(),
-    //             target: 'channel',
-    //             message: messageController.text.trim(),
-    //             badgeCount: _badgeCount,
-    //             selectedDateTime: _selectedDateTime,
-    //           );
-    //         } else if (_singleChannel == true) {
-    //           await pushNotificationMainProvider
-    //               .sendPushNotificationToSelectedChannels(
-    //             title: titleController.text.trim(),
-    //             message: messageController.text.trim(),
-    //             badgeCount: _badgeCount,
-    //             selectedChannels: channelProvider.selectedNotificationChannels,
-    //             selectedDateTime: _selectedDateTime,
-    //           );
-    //         }
-    //       } else if (a == 'Users') {
-    //         if (_allUsers == true) {
-    //           await pushNotificationMainProvider.sendPushNotificationToAllUsers(
-    //             title: titleController.text.trim(),
-    //             target: 'user',
-    //             message: messageController.text.trim(),
-    //             badgeCount: _badgeCount,
-    //             selectedDateTime: _selectedDateTime,
-    //           );
-    //         } else if (_singleUser == true) {
-    //           await pushNotificationMainProvider
-    //               .sendPushNotificationToSelectedUsers(
-    //             title: titleController.text.trim(),
-    //             message: messageController.text.trim(),
-    //             badgeCount: _badgeCount,
-    //             selectedDateTime: _selectedDateTime,
-    //             selectedUsers: usersProvider.selectedNotificationUser,
-    //           );
-    //         }
-    //       }
-    //     }
-    //   } catch (e) {
-    //     if (kDebugMode) {
-    //       print(e);
-    //     }
-    //   } finally {
-    //     pushNotificationMainProvider.setNotificationSending(false);
-    //   }
-    // }
-  }
-
-  void checkValidation({required bool isTest}) {
-    // if (_formKey.currentState!.validate()) {
-    //   if (_selectedTargets.isEmpty) {
-    //     showSnackbar(context, 'Please select at least one target');
-    //   } else if (_selectedTargets.length == 4) {
-    //     // all four items are selected
-    //     bool allFieldsFilled = true;
-    //     if (articleController.text.isEmpty) {
-    //       allFieldsFilled = false;
-    //       showSnackbar(context, 'Please enter article details');
-    //     }
-    //     if (urlController.text.isEmpty) {
-    //       allFieldsFilled = false;
-    //       showSnackbar(context, 'Please enter URL details');
-    //     }
-
-    //     if (_selectedTargets.contains('Channels')) {
-    //       if (_allChannels == false && _singleChannel == true) {
-    //         if (channelProvider.selectedNotificationChannels.isEmpty) {
-    //           allFieldsFilled = false;
-    //           showSnackbar(context, 'Please select atleast one single channel');
-    //         }
-    //       } else if (_allChannels == null && _singleChannel == null) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select channel type');
-    //       } else if (_allChannels == false && _singleChannel == false) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select channel type');
-    //       }
-    //     }
-    //     if (_selectedTargets.contains('Users')) {
-    //       if (_allUsers == false && _singleUser == true) {
-    //         if (usersProvider.selectedNotificationUser.isEmpty) {
-    //           allFieldsFilled = false;
-    //           showSnackbar(context, 'Please select atleast one single user');
-    //         }
-    //       } else if (_allUsers == null && _singleUser == null) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select user type');
-    //       } else if (_allUsers == false && _singleUser == false) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select user type');
-    //       }
-    //     }
-    //     if (allFieldsFilled) {
-    //       sendNotification(isTest: isTest);
-    //     }
-    //   } else if (_selectedTargets.length == 1) {
-    //     // only one target is selected
-    //     String target = _selectedTargets.first;
-    //     switch (target) {
-    //       case 'Article':
-    //         if (articleController.text.isNotEmpty) {
-    //           // required fields are filled
-    //           sendNotification(isTest: isTest);
-    //         } else {
-    //           showSnackbar(context, 'Please enter article details');
-    //         }
-    //         break;
-    //       case 'URL':
-    //         if (urlController.text.isNotEmpty) {
-    //           // required fields are filled
-    //           sendNotification(isTest: isTest);
-    //         } else {
-    //           showSnackbar(context, 'Please enter URL details');
-    //         }
-    //         break;
-    //       case 'Channels':
-    //         if (_allChannels! ||
-    //             channelProvider.selectedNotificationChannels.isNotEmpty) {
-    //           // required fields are filled
-    //           sendNotification(isTest: isTest);
-    //         } else {
-    //           showSnackbar(
-    //             context,
-    //             'Please select at least one channel by clicking on plus icon on right side',
-    //           );
-    //         }
-    //         break;
-    //       case 'Users':
-    //         if (_allUsers! ||
-    //             usersProvider.selectedNotificationUser.isNotEmpty) {
-    //           // required fields are filled
-    //           sendNotification(isTest: isTest);
-    //         } else {
-    //           showSnackbar(
-    //             context,
-    //             'Please select at least one user by clicking on plus icon on right side',
-    //           );
-    //         }
-    //         break;
-    //     }
-    //   } else {
-    //     // multiple targets are selected
-    //     bool allFieldsFilled = true;
-    //     if (_selectedTargets.contains('Article') &&
-    //         articleController.text.isEmpty) {
-    //       allFieldsFilled = false;
-    //       showSnackbar(context, 'Please enter article details');
-    //     }
-    //     if (_selectedTargets.contains('URL') && urlController.text.isEmpty) {
-    //       allFieldsFilled = false;
-    //       showSnackbar(context, 'Please enter URL details');
-    //     }
-    //     if (_selectedTargets.contains('Channels')) {
-    //       if (_allChannels == false && _singleChannel == true) {
-    //         if (channelProvider.selectedNotificationChannels.isEmpty) {
-    //           allFieldsFilled = false;
-    //           showSnackbar(context, 'Please select atleast one single channel');
-    //         }
-    //       } else if (_allChannels == null && _singleChannel == null) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select channel type');
-    //       } else if (_allChannels == false && _singleChannel == false) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select channel type');
-    //       }
-    //     }
-    //     if (_selectedTargets.contains('Users')) {
-    //       if (_allUsers == false && _singleUser == true) {
-    //         if (usersProvider.selectedNotificationUser.isEmpty) {
-    //           allFieldsFilled = false;
-    //           showSnackbar(context, 'Please select atleast one single user');
-    //         }
-    //       } else if (_allUsers == null && _singleUser == null) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select user type');
-    //       } else if (_allUsers == false && _singleUser == false) {
-    //         allFieldsFilled = false;
-    //         showSnackbar(context, 'Please select user type');
-    //       }
-    //     }
-    //     if (allFieldsFilled) {
-    //       sendNotification(isTest: isTest);
-    //     }
-    //   }
-    // }
-  }
-
-  void sendPublishClicked({required bool isTest}) {
-    // if (isTest) {
-    //   sendNotification(isTest: isTest);
-    // } else {
-    //   if (_sendNow) {
-    //     checkValidation(isTest: isTest);
-    //   } else if (_sendLater) {
-    //     if (_selectedDateTime != null) {
-    //       checkValidation(isTest: isTest);
-    //     } else {
-    //       showSnackbar(
-    //         context,
-    //         'Please select date and time when opting for send-later notifications',
-    //       );
-    //     }
-    //   }
-    // }
   }
 
   void handleCurrentTarget() {
@@ -1135,5 +909,129 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
       },
       barrierDismissible: true,
     );
+  }
+
+// ====== PUSHNOTIFICATION CODE ====== //
+  void publishNotification({bool isTest = false}) {
+    if (isTest) {
+      sendNotification(true);
+    } else {
+      if (_sendNow) {
+        validateTarget();
+      } else {
+        if (_selectedDateTime != null) {
+          validateTarget();
+        } else {
+          showSnackbar(
+            context,
+            'Please select date and time when opting for notifications',
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> validateTarget() async {
+    if (_formKey.currentState!.validate()) {
+      if (_selectedTargets.trim() == '' || _selectedTargets.trim().isEmpty) {
+        showSnackbar(context, 'Please select at-least one target');
+      } else {
+        if (_selectedTargets == 'Article') {
+          if (pushNotificationMainProvider.selectedArticle == null) {
+            showSnackbar(
+              context,
+              'When opting for Article target, please select the article too',
+            );
+          }
+        } else if (_selectedTargets == 'Channel') {
+          if (channelProvider.selectedChannelPushNotification == null) {
+            showSnackbar(
+              context,
+              'When opting for Channel target, please select the channel too',
+            );
+          }
+        } else if (_selectedTargets == 'URL') {
+          if (urlController.text.trim() == '' ||
+              urlController.text.trim().isEmpty) {
+            showSnackbar(
+              context,
+              'When opting for URL target, please select the url too',
+            );
+          }
+        } else if (_selectedTargets == 'User') {
+          if (usersProvider.selectedUserForPushNotification == null) {
+            showSnackbar(
+              context,
+              'When optino for User target, please select the user too',
+            );
+          }
+        }
+        // final validation for recipients, once target is set
+        if (!_allUsers && !_selectedUsers && !_selectedChannels) {
+          showSnackbar(context, 'Please select at-least one recipient');
+        } else {
+          sendNotification(false);
+        }
+      }
+    }
+  }
+
+  Future<void> sendNotification(bool isTest) async {
+    if (isTest) {
+      await pushNotificationMainProvider
+          .sendPushNotificationToTestUser(
+        userModel: usersProvider.selectedTestNotificationUser!,
+        title: titleController.text.trim(),
+        message: messageController.text.trim(),
+        target: _selectedTargets,
+        badgeCount: true,
+        href: generateHref(),
+        name: buildName(),
+      )
+          .then((value) {
+        setState(() {
+          _isSent = value;
+        });
+      });
+    } else {
+      pushNotificationMainProvider.setNotificationSending(true);
+      try {
+        await pushNotificationMainProvider.sendPushNotification(
+          allUsers: _allUsers,
+          selectedUsers: _selectedUsers,
+          title: titleController.text.trim(),
+          message: messageController.text.trim(),
+          badge: _badgeCount,
+          selectedDateTime: _selectedDateTime,
+          name: buildName(),
+          selectedChannels: _selectedChannels,
+          selectedChannelID: channelProvider.selectedNotificationChannels,
+          selectedUserID: usersProvider.selectedNotificationUser,
+          target: _selectedTargets,
+          href: generateHref(),
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      } finally {
+        pushNotificationMainProvider.setNotificationSending(false);
+      }
+    }
+  }
+
+  String buildName() {
+    switch (_selectedTargets.trim()) {
+      case 'Article':
+        return pushNotificationMainProvider.selectedArticle!.headline!;
+      case 'Channel':
+        return channelProvider.selectedChannelPushNotification!.channelName!;
+      case 'User':
+        return '${usersProvider.selectedUserForPushNotification!.firstName!} ${usersProvider.selectedUserForPushNotification!.lastName!}';
+      case 'URL':
+        return 'url';
+      default:
+        return '';
+    }
   }
 }
