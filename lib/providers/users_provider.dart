@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
@@ -30,6 +28,16 @@ class UsersProvider extends ChangeNotifier {
   UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
   UserModel? _invitedByUser;
   UserModel? get invitedByUser => _invitedByUser;
+
+  // targets
+  UserModel? _selectedUserForPushNotification;
+  UserModel? get selectedUserForPushNotification =>
+      _selectedUserForPushNotification;
+
+  void setSelectedPushNotificationUser(UserModel? userModel) {
+    _selectedUserForPushNotification = userModel;
+    notifyListeners();
+  }
 
   void setSelectedTestUser(UserModel userModel) {
     _selectedTestNotificationUser = userModel;

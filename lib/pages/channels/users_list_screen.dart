@@ -158,7 +158,6 @@ class _UserListScreenState extends State<UserListScreen> {
                     ),
                   ),
                 )),
-
             // streambuilder for displaying user list
             StreamBuilder<List<UserModel>>(
               stream: channelProvider.getUserStream(

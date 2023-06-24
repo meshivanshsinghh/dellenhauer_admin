@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dellenhauer_admin/pages/push_notification/article/push_notification_article_model.dart';
+import 'package:dellenhauer_admin/pages/push_notification/model/push_notification_article_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -10,6 +10,8 @@ class PushNotificationArticleProvider extends ChangeNotifier {
   bool get loading => _loading;
   List<PushNotificationArticleModel> _articleData = [];
   List<PushNotificationArticleModel> get articleData => _articleData;
+  PushNotificationArticleModel? _selectedArticle;
+  PushNotificationArticleModel? get selectedArticle => _selectedArticle;
 
   void attachContext(BuildContext context) {
     buildContext = context;
@@ -17,6 +19,11 @@ class PushNotificationArticleProvider extends ChangeNotifier {
 
   void setLoading(bool isLoading) {
     _loading = isLoading;
+    notifyListeners();
+  }
+
+  void setSelectedArticle(PushNotificationArticleModel article) {
+    _selectedArticle = article;
     notifyListeners();
   }
 
@@ -30,7 +37,6 @@ class PushNotificationArticleProvider extends ChangeNotifier {
         'Accept': '*/*',
         'Accept-Encoding': 'gzip,defalte,br',
       });
-      print('response: $response');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         for (var a in data) {
@@ -39,7 +45,6 @@ class PushNotificationArticleProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (error) {
-      print('error: $error');
       _articleData = [];
       notifyListeners();
     }

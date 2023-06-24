@@ -1,5 +1,5 @@
 import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
-import 'package:dellenhauer_admin/pages/push_notification/article/push_notification_article_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/push_notification_article_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';

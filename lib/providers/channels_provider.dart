@@ -31,6 +31,14 @@ class ChannelProvider extends ChangeNotifier {
   final List<ChannelModel> _selectedNotificationChannels = [];
   List<ChannelModel> get selectedNotificationChannels =>
       _selectedNotificationChannels;
+  ChannelModel? _selectedChannelPushNotification;
+  ChannelModel? get selectedChannelPushNotification =>
+      _selectedChannelPushNotification;
+
+  void setSingleSelectedNotificationChannel(ChannelModel? channelModel) {
+    _selectedChannelPushNotification = channelModel;
+    notifyListeners();
+  }
 
   void setSelectedNotificationChannels(ChannelModel channelModel) {
     _selectedNotificationChannels.add(channelModel);
