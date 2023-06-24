@@ -50,7 +50,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
       _articleData.clear();
       const String url = 'https://dellenhauer.com/wp-json/bestcms/v1/article';
       final http.Response response = await http.get(Uri.parse(url), headers: {
-        'X-API-KEY': 'WPAObiq6mx57kW9kpZFhOERymRu3SHin',
+        'X-API-KEY': Contants.dellenhauereBestCMSKey,
         'Connection': 'keep-alive',
         'Accept': '*/*',
         'Accept-Encoding': 'gzip,defalte,br',

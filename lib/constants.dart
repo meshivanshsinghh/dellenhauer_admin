@@ -5,4 +5,6 @@ class Contants {
       'key=AAAAqZ6nvZU:APA91bENicL_JbGD1EmS63KGgY5vf6yardkgkc9DF7Hq82A-2dd1vo71UG9vlUmEQTps34tHyfl8tHJKgDPNa39YBz3b89Yt4CnDUnrCyhobqtGup72OQkNkuwxXDf1yR4M7PyS7L4Uz';
   static const String authorizationHeaderFCMPro =
       'key=AAAAqZ6nvZU:APA91bENicL_JbGD1EmS63KGgY5vf6yardkgkc9DF7Hq82A-2dd1vo71UG9vlUmEQTps34tHyfl8tHJKgDPNa39YBz3b89Yt4CnDUnrCyhobqtGup72OQkNkuwxXDf1yR4M7PyS7L4Uz';
+  static const String dellenhauereBestCMSKey =
+      'WPAObiq6mx57kW9kpZFhOERymRu3SHin';
 }
