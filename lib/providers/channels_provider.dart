@@ -28,18 +28,27 @@ class ChannelProvider extends ChangeNotifier {
   bool get isLoadingMoreContent => _isLoadingMoreContent;
   final List<String> _relatedChannels = [];
   List<String> get relatedChannels => _relatedChannels;
-  final List<ChannelModel> _selectedNotificationChannels = [];
-  List<ChannelModel> get selectedNotificationChannels =>
+  // select notification channels
+  final List<String> _selectedNotificationChannels = [];
+  List<String> get selectedNotificationChannels =>
       _selectedNotificationChannels;
+  ChannelModel? _selectedChannelPushNotification;
+  ChannelModel? get selectedChannelPushNotification =>
+      _selectedChannelPushNotification;
 
-  void setSelectedNotificationChannels(ChannelModel channelModel) {
-    _selectedNotificationChannels.add(channelModel);
+  void setSingleSelectedNotificationChannel(ChannelModel? channelModel) {
+    _selectedChannelPushNotification = channelModel;
+    notifyListeners();
+  }
+
+  void setSelectedNotificationChannels(String channelId) {
+    _selectedNotificationChannels.add(channelId);
     notifyListeners();
   }
 
   void removeSelectedNotificationChannels(String channelId) {
     _selectedNotificationChannels
-        .removeWhere((element) => element.groupId == channelId);
+        .removeWhere((element) => element == channelId);
     notifyListeners();
   }
 

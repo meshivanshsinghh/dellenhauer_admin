@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
@@ -24,12 +22,22 @@ class UsersProvider extends ChangeNotifier {
   List<AwardsModel> get selectedUserAwards => _selectedUserAwards;
   List<CoursesModel> _selectedCourses = [];
   List<CoursesModel> get selectedCourses => _selectedCourses;
-  List<UserModel> _selectedNotificationUser = [];
-  List<UserModel> get selectedNotificationUser => _selectedNotificationUser;
+  List<String> _selectedNotificationUser = [];
+  List<String> get selectedNotificationUser => _selectedNotificationUser;
   UserModel? _selectedTestNotificationUser;
   UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
   UserModel? _invitedByUser;
   UserModel? get invitedByUser => _invitedByUser;
+
+  // targets
+  UserModel? _selectedUserForPushNotification;
+  UserModel? get selectedUserForPushNotification =>
+      _selectedUserForPushNotification;
+
+  void setSelectedPushNotificationUser(UserModel? userModel) {
+    _selectedUserForPushNotification = userModel;
+    notifyListeners();
+  }
 
   void setSelectedTestUser(UserModel userModel) {
     _selectedTestNotificationUser = userModel;
@@ -51,14 +59,13 @@ class UsersProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSelectedUserForNotification(UserModel userModel) {
-    _selectedNotificationUser.add(userModel);
+  void setSelectedUserForNotification(String userId) {
+    _selectedNotificationUser.add(userId);
     notifyListeners();
   }
 
   void removeSelectedUserForNoticiation(String userId) {
-    _selectedNotificationUser
-        .removeWhere((element) => element.userId == userId);
+    _selectedNotificationUser.removeWhere((element) => element == userId);
     notifyListeners();
   }
 

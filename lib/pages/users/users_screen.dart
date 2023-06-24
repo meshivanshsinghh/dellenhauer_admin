@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_single_user_logs.dart';
 import 'package:dellenhauer_admin/pages/users/users_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
@@ -20,7 +21,7 @@ class UserScreen extends StatefulWidget {
 
 class _UserScreenState extends State<UserScreen> {
   late UsersProvider usersProvider;
-
+  final _debouncer = Debouncer(milliseconds: 100);
   late String orderBy;
   String? sortByText;
   late bool descending;
@@ -37,6 +38,12 @@ class _UserScreenState extends State<UserScreen> {
       usersProvider.setLoading(isLoading: true);
       usersProvider.getUsersData(orderBy: orderBy, descending: descending);
     });
+  }
+
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    super.dispose();
   }
 
   refreshData() {
@@ -73,7 +80,6 @@ class _UserScreenState extends State<UserScreen> {
         children: [
           SizedBox(height: MediaQuery.of(context).size.height * 0.05),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'All Users',
@@ -82,7 +88,21 @@ class _UserScreenState extends State<UserScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              const Spacer(),
               sortingPopup(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  refreshData();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  child: const Icon(
+                    FontAwesomeIcons.arrowsRotate,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              )
             ],
           ),
           Expanded(
@@ -94,53 +114,52 @@ class _UserScreenState extends State<UserScreen> {
                     )
                   : usersProvider.hasData == false
                       ? emptyPage(FontAwesomeIcons.solidUser, 'No User Found!')
-                      : NotificationListener<ScrollNotification>(
+                      : NotificationListener<ScrollUpdateNotification>(
                           onNotification: (notification) {
                             if (!usersProvider.isLoading) {
                               if (notification.metrics.pixels ==
-                                  notification.metrics.maxScrollExtent) {
-                                usersProvider.loadingMoreContent(
-                                    isLoading: true);
-                                usersProvider.getUsersData(
-                                    orderBy: orderBy, descending: descending);
+                                      notification.metrics.maxScrollExtent &&
+                                  notification.scrollDelta! > 0) {
+                                _debouncer.run(() {
+                                  usersProvider.loadingMoreContent(
+                                      isLoading: true);
+                                  usersProvider.getUsersData(
+                                    orderBy: orderBy,
+                                    descending: descending,
+                                  );
+                                });
                               }
                             }
                             return false;
                           },
-                          child: RefreshIndicator(
-                              color: kPrimaryColor,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding: const EdgeInsets.only(top: 20),
-                                itemCount: usersProvider.data.length + 1,
-                                itemBuilder: ((context, index) {
-                                  if (index < usersProvider.data.length) {
-                                    final UserModel u = UserModel.fromJson(
-                                        usersProvider.data[index].data()
-                                            as dynamic);
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.only(top: 20),
+                            itemCount: usersProvider.data.length + 1,
+                            itemBuilder: ((context, index) {
+                              if (index < usersProvider.data.length) {
+                                final UserModel u = UserModel.fromJson(
+                                    usersProvider.data[index].data()
+                                        as dynamic);
 
-                                    return buildUserData(u);
-                                  }
-                                  return Center(
-                                    child: Opacity(
-                                      opacity:
-                                          usersProvider.isLoadingMoreContent
-                                              ? 1.0
-                                              : 0.0,
-                                      child: const SizedBox(
-                                        width: 32,
-                                        height: 32,
-                                        child: CircularProgressIndicator(
-                                          color: kPrimaryColor,
-                                        ),
-                                      ),
+                                return buildUserData(u);
+                              }
+                              return Center(
+                                child: Opacity(
+                                  opacity: usersProvider.isLoadingMoreContent
+                                      ? 1.0
+                                      : 0.0,
+                                  child: const SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                      color: kPrimaryColor,
                                     ),
-                                  );
-                                }),
-                              ),
-                              onRefresh: () async {
-                                refreshData();
-                              }),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
                         ))
         ],
       ),

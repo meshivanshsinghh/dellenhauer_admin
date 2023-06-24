@@ -318,12 +318,13 @@ class _UserListNotificationSelectionState
                   : const SizedBox.shrink()
               : IgnorePointer(
                   ignoring: usersProvider.selectedNotificationUser
-                      .any((element) => element.userId == userData.userId),
+                      .any((element) => element == userData.userId),
                   child: IconButton(
                     color: kPrimaryColor,
                     icon: const Icon(FontAwesomeIcons.circlePlus),
                     onPressed: () {
-                      usersProvider.setSelectedUserForNotification(userData);
+                      usersProvider
+                          .setSelectedUserForNotification(userData.userId!);
                     },
                   ),
                 ),
@@ -386,15 +387,16 @@ class _UserListNotificationSelectionState
       isThreeLine: true,
       trailing: IgnorePointer(
         ignoring: channelProvider.selectedNotificationChannels
-            .any((element) => element.groupId == channelModel.groupId),
+            .any((element) => element == channelModel.groupId),
         child: IconButton(
           color: channelProvider.selectedNotificationChannels
-                  .any((element) => element.groupId == channelModel.groupId)
+                  .any((element) => element == channelModel.groupId)
               ? Colors.grey
               : kPrimaryColor,
           icon: const Icon(FontAwesomeIcons.circlePlus),
           onPressed: () {
-            channelProvider.setSelectedNotificationChannels(channelModel);
+            channelProvider
+                .setSelectedNotificationChannels(channelModel.groupId!);
           },
         ),
       ),

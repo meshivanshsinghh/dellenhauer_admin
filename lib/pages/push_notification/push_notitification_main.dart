@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dellenhauer_admin/pages/push_notification/article/article_list_add_dialog.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/article_list_add_dialog.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
-import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_channel_widget.dart';
-import 'package:dellenhauer_admin/pages/push_notification/widgets/send_to_user_widget.dart';
-import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/channel_list_add_dialog.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/user_list_dialog.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
+import 'package:dellenhauer_admin/providers/overview_provider.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
@@ -23,28 +23,61 @@ class PushNotificationMain extends StatefulWidget {
 }
 
 class _PushNotificationMainState extends State<PushNotificationMain> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController titleController = TextEditingController();
   TextEditingController messageController = TextEditingController();
-  TextEditingController articleController = TextEditingController();
   TextEditingController urlController = TextEditingController();
   late UsersProvider usersProvider;
   late ChannelProvider channelProvider;
   late PushNotificationMainProvider pushNotificationMainProvider;
+  late OverviewProvider overviewProvider;
 
   bool _isSent = false;
-  bool? _allUsers;
-  bool? _singleUser;
-  bool? _allChannels;
-  bool? _singleChannel;
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _allUsers = false;
+  bool _selectedUsers = false;
+  bool _selectedChannels = false;
   bool _badgeCount = true;
-  bool _sendNow = true;
-  bool _sendLater = false;
+  bool _sendNow = false;
   DateTime? _selectedDateTime;
   String? _formatedDateTime;
-  final targets = ['Article', 'Channels', 'Users', 'URL'];
-  final List<String> _selectedTargets = [];
+  final targets = ['Article', 'Channel', 'User', 'URL'];
+  String _selectedTargets = '';
+
+  // select date time
+  Future<void> selectDateTime(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      // ignore: use_build_context_synchronously
+      final TimeOfDay? timePicked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (timePicked != null) {
+        final DateTime localDateTime = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          timePicked.hour,
+          timePicked.minute,
+        );
+
+        final formattedDateTime = DateFormat('dd\'th\' MMMM yyyy \'at\' h:mm a')
+            .format(localDateTime);
+
+        setState(() {
+          _selectedDateTime = localDateTime;
+          _formatedDateTime = formattedDateTime;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -52,12 +85,14 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
         Provider.of<PushNotificationMainProvider>(context, listen: true);
     usersProvider = Provider.of<UsersProvider>(context, listen: true);
     channelProvider = Provider.of<ChannelProvider>(context, listen: true);
+    overviewProvider = Provider.of<OverviewProvider>(context, listen: true);
+
     return Container(
       width: MediaQuery.of(context).size.width,
       margin: const EdgeInsets.only(left: 30, top: 30, bottom: 30),
       padding: EdgeInsets.only(
         left: w * 0.05,
-        right: w * 0.20,
+        right: w * 0.15,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -96,9 +131,9 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                   children: [
                     SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                     const Text(
-                      'Send Push Notification',
+                      'Create a new Push Notification',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -106,7 +141,8 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                     TextFormField(
                       controller: titleController,
                       cursorColor: kPrimaryColor,
-                      decoration: inputDecoration(
+                      maxLength: 40,
+                      decoration: inputDecorationPushNotification(
                           'Enter Title', 'Title', titleController),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -115,12 +151,15 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 20),
                     TextFormField(
                       controller: messageController,
+                      maxLength: 60,
                       cursorColor: kPrimaryColor,
-                      decoration: inputDecoration(
-                          'Enter Message', 'Message', messageController),
+                      decoration: inputDecorationPushNotification(
+                        'Enter Message',
+                        'Message (Max 60 characters)',
+                        messageController,
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return "Message text cannot be empty";
@@ -128,71 +167,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                         return null;
                       },
                     ),
-                    // todo
-                    _selectedTargets.contains('Article')
-                        ? Container(
-                            width: MediaQuery.of(context).size.width,
-                            margin: const EdgeInsets.only(top: 20),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: articleController,
-                                    cursorColor: kPrimaryColor,
-                                    decoration: inputDecoration(
-                                        'Enter Article Url',
-                                        'https://articleurl.com',
-                                        articleController),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return "Article url cannot be empty";
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: true,
-                                      builder: (context) {
-                                        return const ArticleListAddDialog();
-                                      },
-                                    );
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.only(left: 20),
-                                    child: const Icon(
-                                      FontAwesomeIcons.circlePlus,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                    _selectedTargets.contains('URL')
-                        ? Container(
-                            margin: const EdgeInsets.only(top: 20),
-                            child: TextFormField(
-                              controller: urlController,
-                              cursorColor: kPrimaryColor,
-                              decoration: inputDecoration('Enter Url',
-                                  'https://url.com', urlController),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Url address cannot be empty";
-                                }
-                                return null;
-                              },
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Checkbox(
@@ -205,10 +180,11 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                           },
                         ),
                         const SizedBox(width: 10),
-                        const Text('Badge Count')
+                        const Text('Count Badge?')
                       ],
                     ),
                     const SizedBox(height: 10),
+                    // send now or send late row
                     Row(
                       children: [
                         Checkbox(
@@ -218,37 +194,16 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                             setState(() {
                               _sendNow = value!;
                               if (_sendNow) {
-                                _sendLater = false;
                                 _selectedDateTime = null;
                               }
                             });
                           },
                         ),
                         const SizedBox(width: 10),
-                        const Text('Send Now!')
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // checkbox
-                    Row(
-                      children: [
-                        Checkbox(
-                          activeColor: kPrimaryColor,
-                          value: _sendLater,
-                          onChanged: (value) {
-                            setState(() {
-                              _sendLater = value!;
-                              if (_sendLater) {
-                                _sendNow = false;
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 10),
-                        const Text('Send Later:'),
-                        const SizedBox(width: 10),
+                        const Text('Send Now!'),
+                        const SizedBox(width: 50),
                         // date time picker
-                        if (!_sendNow && _sendLater)
+                        if (!_sendNow)
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: kPrimaryColor,
@@ -257,135 +212,310 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                               ),
                             ),
                             onPressed: () {
-                              setState(() {
-                                _sendLater = true;
-                              });
                               selectDateTime(context);
                             },
                             child: const Text('Select Date & Time'),
                           ),
                         const SizedBox(width: 10),
-                        if (!_sendNow &&
-                            _selectedDateTime != null &&
-                            _sendLater)
+                        if (!_sendNow && _selectedDateTime != null)
                           Expanded(
                             child: Text(
-                              '$_formatedDateTime',
+                              'Geplant um: $_formatedDateTime',
                             ),
                           ),
                       ],
                     ),
-                    // target
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Text(
-                          'Target:',
+                    const Divider(color: Color(0xffCDCDCD)),
+                    const SizedBox(height: 20),
+
+                    // target section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Target / Action',
                           style: TextStyle(
                             fontSize: 15,
+                            color: Color(0xff6B6B6B),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(0),
-                              border: Border.all(color: Colors.grey.shade400),
-                            ),
-                            height: 50,
-                            padding: const EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                ..._selectedTargets.map(
-                                  (e) => Text('$e '),
-                                )
-                              ],
-                            ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Which view will be open, when the user opens the push notification?',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xff6B6B6B),
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ],
                     ),
-                    // list of target items
                     Container(
                       width: MediaQuery.of(context).size.width,
-                      margin: const EdgeInsets.symmetric(vertical: 30),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      margin: const EdgeInsets.symmetric(vertical: 20),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        alignment: WrapAlignment.spaceBetween,
                         children: [
                           ...targets.map((e) {
-                            return Row(
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Checkbox(
-                                  activeColor: kPrimaryColor,
-                                  value: _selectedTargets.contains(e),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      if (value == true) {
-                                        _selectedTargets.add(e);
-                                      } else {
-                                        _selectedTargets.remove(e);
-                                      }
-                                    });
-                                  },
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Checkbox(
+                                      activeColor: kPrimaryColor,
+                                      value: _selectedTargets == e,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            _selectedTargets = e;
+                                          } else {
+                                            _selectedTargets = '';
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    Text(e)
+                                  ],
                                 ),
-                                Text(e)
+                                if (_selectedTargets == e)
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: handleCurrentTarget,
+                                    child: Container(
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: const Color(0xffD9D9D9)),
+                                      ),
+                                      alignment: Alignment.center,
+                                      height: 40,
+                                      margin: const EdgeInsets.only(
+                                        left: 5,
+                                        top: 5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                      ),
+                                      child: Text(
+                                        'Select $_selectedTargets',
+                                        style: const TextStyle(
+                                          color: Color(0xff6B6B6B),
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ),
+                                  )
                               ],
                             );
                           })
                         ],
                       ),
                     ),
+                    if (_selectedTargets.trim().isNotEmpty)
+                      buildSelectedWidget(),
+                    const SizedBox(height: 20),
+                    const Divider(color: Color(0xffCDCDCD)),
+                    const SizedBox(height: 20),
 
-                    // showcasing sent to option
+                    // selecting the recipients
                     const Text(
-                      'Send To:',
+                      'Select the recipients',
                       style: TextStyle(
                         fontSize: 15,
+                        color: Color(0xff6B6B6B),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _selectedTargets.contains('Users')
-                        ? SendToUserWidget(
-                            isActive: true,
-                            onCheckboxAllUsers: (value) {
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          activeColor: kPrimaryColor,
+                          value: _allUsers,
+                          onChanged: (value) {
+                            if (value != null && value == true) {
                               setState(() {
-                                _allUsers = value;
+                                _allUsers = true;
+                                _selectedUsers = false;
+                                _selectedChannels = false;
                               });
-                            },
-                            onCheckboxSingleUser: (value) {
+                            } else {
                               setState(() {
-                                _singleUser = value;
+                                _allUsers = false;
                               });
-                            },
-                          )
-                        : SendToUserWidget(
-                            isActive: false,
-                            onCheckboxAllUsers: (value) {},
-                            onCheckboxSingleUser: (value) {},
+                            }
+                          },
+                        ),
+                        Text('All Users (${overviewProvider.userCount} Users)'),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          activeColor: kPrimaryColor,
+                          value: _selectedUsers,
+                          onChanged: (value) {
+                            if (value != null && value == true) {
+                              setState(() {
+                                _selectedUsers = true;
+                                _selectedChannels = false;
+                                _allUsers = false;
+                              });
+                            } else {
+                              setState(() {
+                                _selectedUsers = false;
+                              });
+                            }
+                          },
+                        ),
+                        _selectedUsers
+                            ? Text(
+                                'Select Users (${usersProvider.selectedNotificationUser.length})',
+                              )
+                            : const Text('Select Users'),
+                        if (_selectedUsers)
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                showDialog(
+                                  barrierDismissible: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return const UserListDialog(
+                                      selectMultipleUsers: true,
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: 20,
+                                  right:
+                                      MediaQuery.of(context).size.width * 0.3,
+                                ),
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: const Color(0xffD9D9D9)),
+                                  borderRadius: BorderRadius.circular(0),
+                                  color: const Color(0xffFCFCFC),
+                                ),
+                                padding: const EdgeInsets.only(
+                                  left: 10,
+                                  right: 5,
+                                  top: 7,
+                                  bottom: 7,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: const [
+                                    Text(
+                                      'Select Users',
+                                      style:
+                                          TextStyle(color: Color(0xff6B6B6B)),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down_sharp,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          activeColor: kPrimaryColor,
+                          value: _selectedChannels,
+                          onChanged: (value) {
+                            if (value != null && value == true) {
+                              setState(() {
+                                _selectedUsers = false;
+                                _selectedChannels = true;
+                                _allUsers = false;
+                              });
+                            } else {
+                              setState(() {
+                                _selectedChannels = false;
+                              });
+                            }
+                          },
+                        ),
+                        _selectedChannels
+                            ? Text(
+                                'Select Channels (${channelProvider.selectedNotificationChannels.length})',
+                              )
+                            : const Text('Select Channels'),
+                        if (_selectedChannels)
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                showDialog(
+                                  barrierDismissible: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return const ChannelListAddDialog(
+                                      selectMultipleChannels: true,
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  right:
+                                      MediaQuery.of(context).size.width * 0.3,
+                                  left: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: const Color(0xffD9D9D9)),
+                                  borderRadius: BorderRadius.circular(0),
+                                  color: const Color(0xffFCFCFC),
+                                ),
+                                padding: const EdgeInsets.only(
+                                  left: 10,
+                                  right: 5,
+                                  top: 7,
+                                  bottom: 7,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: const [
+                                    Text(
+                                      'Select Channels',
+                                      style:
+                                          TextStyle(color: Color(0xff6B6B6B)),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down_sharp,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                      ],
+                    ),
                     const SizedBox(height: 20),
-                    _selectedTargets.contains('Channels')
-                        ? SendToChannelWidget(
-                            isActive: true,
-                            onCheckboxAllChannels: (value) {
-                              setState(() {
-                                _allChannels = value;
-                              });
-                            },
-                            onCheckboxSingleChannel: (value) {
-                              setState(() {
-                                _singleChannel = value;
-                              });
-                            },
-                          )
-                        : SendToChannelWidget(
-                            isActive: false,
-                            onCheckboxAllChannels: (value) {},
-                            onCheckboxSingleChannel: (value) {},
-                          ),
-                    // sending test notification section
                     Container(
                       width: MediaQuery.of(context).size.width,
                       padding: const EdgeInsets.all(10),
@@ -423,40 +553,56 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                                   // button
                                   usersProvider.selectedTestNotificationUser ==
                                           null
-                                      ? SizedBox(
-                                          child: TextButton(
-                                              style: TextButton.styleFrom(
-                                                foregroundColor: kPrimaryColor,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            30)),
-                                              ),
-                                              onPressed: () {
-                                                if (usersProvider
-                                                        .selectedTestNotificationUser ==
-                                                    null) {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) {
-                                                      return const UserListNotificationSelection(
-                                                        isUser: true,
-                                                        isTestUser: true,
-                                                      );
-                                                    },
+                                      ? Expanded(
+                                          child: GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () {
+                                              showDialog(
+                                                barrierDismissible: true,
+                                                context: context,
+                                                builder: (context) {
+                                                  return const UserListDialog(
+                                                    isTestUser: true,
                                                   );
-                                                } else {
-                                                  usersProvider
-                                                      .removeSelectedTestUser();
-                                                }
-                                              },
-                                              child: const Text('Select User')),
+                                                },
+                                              );
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 5,
+                                              ),
+                                              margin: EdgeInsets.only(
+                                                right: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.30,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color:
+                                                      const Color(0xffD9D9D9),
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(0),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: const [
+                                                  Text('Select User'),
+                                                  Icon(
+                                                    Icons.arrow_drop_down_sharp,
+                                                    color: kPrimaryColor,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         )
-                                      : const SizedBox.shrink(),
-                                  // list tile
-                                  usersProvider.selectedTestNotificationUser !=
-                                          null
-                                      ? Container(
+                                      : Container(
                                           margin: const EdgeInsets.symmetric(
                                             horizontal: 10,
                                           ),
@@ -537,8 +683,7 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                                               maxLines: 1,
                                             ),
                                           ),
-                                        )
-                                      : const SizedBox.shrink(),
+                                        ),
                                 ],
                               ),
                             ),
@@ -546,14 +691,14 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                               children: [
                                 ElevatedButton(
                                   onPressed: () =>
-                                      sendPublishClicked(isTest: true),
+                                      publishNotification(isTest: true),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: kPrimaryColor,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
                                   ),
-                                  child: const Text('Send to Test-Device'),
+                                  child: const Text('Send'),
                                 ),
                                 const SizedBox(width: 10),
                                 _isSent
@@ -570,13 +715,20 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 20),
                     // publish button
-                    ElevatedButton(
-                      onPressed: () => sendPublishClicked(isTest: false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimaryColor,
+                    SizedBox(
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: () => publishNotification(isTest: false),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          backgroundColor: kPrimaryColor,
+                        ),
+                        child: const Text('Publish'),
                       ),
-                      child: const Text('Publish'),
                     ),
                     SizedBox(
                       height: MediaQuery.of(context).size.height * 0.10,
@@ -588,115 +740,276 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
     );
   }
 
-  Future<void> selectDateTime(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      // ignore: use_build_context_synchronously
-      final TimeOfDay? timePicked = await showTimePicker(
+  String generateHref() {
+    switch (_selectedTargets) {
+      case 'Article':
+        return pushNotificationMainProvider.selectedArticle!.id.toString();
+      case 'URL':
+        return urlController.text.trim();
+      case 'Channel':
+        return channelProvider.selectedChannelPushNotification!.groupId
+            .toString();
+      case 'User':
+        return usersProvider.selectedUserForPushNotification!.userId!;
+      default:
+        return 'home';
+    }
+  }
+
+  void handleCurrentTarget() {
+    if (_selectedTargets.trim() == 'Article') {
+      showDialog(
         context: context,
-        initialTime: TimeOfDay.now(),
+        barrierDismissible: true,
+        builder: (context) {
+          return const ArticleListAddDialog();
+        },
       );
+    } else if (_selectedTargets.trim() == 'Channel') {
+      showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (context) {
+          return const ChannelListAddDialog();
+        },
+      );
+    } else if (_selectedTargets.trim() == 'User') {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const UserListDialog();
+        },
+      );
+    } else if (_selectedTargets.trim() == 'URL') {
+      return showURLDialog();
+    }
+  }
 
-      if (timePicked != null) {
-        final DateTime localDateTime = DateTime(
-          picked.year,
-          picked.month,
-          picked.day,
-          timePicked.hour,
-          timePicked.minute,
+  Widget buildSelectedWidget() {
+    return Row(
+      children: [
+        Text('Selected $_selectedTargets: '),
+        Text(
+          currentSelected(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  String currentSelected() {
+    switch (_selectedTargets.trim()) {
+      case 'Article':
+        if (pushNotificationMainProvider.selectedArticle != null) {
+          return pushNotificationMainProvider.selectedArticle!.headline!;
+        } else {
+          return '';
+        }
+      case 'Channel':
+        if (channelProvider.selectedChannelPushNotification != null) {
+          return channelProvider.selectedChannelPushNotification!.channelName!;
+        } else {
+          return '';
+        }
+      case 'User':
+        if (usersProvider.selectedUserForPushNotification != null) {
+          return '${usersProvider.selectedUserForPushNotification!.firstName!} ${usersProvider.selectedUserForPushNotification!.lastName!}';
+        } else {
+          return '';
+        }
+      case 'URL':
+        if (urlController.text.trim().isNotEmpty) {
+          return urlController.text;
+        } else {
+          return '';
+        }
+      default:
+        return '';
+    }
+  }
+
+  void showURLDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Enter URL here'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  cursorColor: kPrimaryColor,
+                  style: const TextStyle(color: Colors.black54),
+                  decoration: InputDecoration(
+                    suffix: urlController.text.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              setState(() {
+                                urlController.clear();
+                              });
+                            },
+                            icon: const Icon(
+                              FontAwesomeIcons.solidCircleXmark,
+                              size: 20,
+                              color: kPrimaryColor,
+                            ),
+                          )
+                        : null,
+                    hintText: 'https://',
+                    hintStyle: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    fillColor: const Color.fromRGBO(232, 232, 232, 1),
+                    filled: true,
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.earthAmericas,
+                      size: 16,
+                      color: kPrimaryColor,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.transparent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.transparent),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.redAccent),
+                    ),
+                    border: InputBorder.none,
+                  ),
+                  controller: urlController,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() {});
+                      },
+                      child: const Text('Save')),
+                )
+              ],
+            ),
+          ),
         );
+      },
+      barrierDismissible: true,
+    );
+  }
 
-        final formattedDateTime = DateFormat('dd\'th\' MMMM yyyy \'at\' h:mm a')
-            .format(localDateTime);
-
-        setState(() {
-          _selectedDateTime = localDateTime;
-          _formatedDateTime = formattedDateTime;
-        });
+// ====== PUSHNOTIFICATION CODE ====== //
+  void publishNotification({bool isTest = false}) {
+    if (isTest) {
+      sendNotification(true);
+    } else {
+      if (_sendNow) {
+        validateTarget();
+      } else {
+        if (_selectedDateTime != null) {
+          validateTarget();
+        } else {
+          showSnackbar(
+            context,
+            'Please select date and time when opting for notifications',
+          );
+        }
       }
     }
   }
 
-  Future<void> sendNotification({required bool isTest}) async {
+  Future<void> validateTarget() async {
+    if (_formKey.currentState!.validate()) {
+      if (_selectedTargets.trim() == '' || _selectedTargets.trim().isEmpty) {
+        showSnackbar(context, 'Please select at-least one target');
+      } else {
+        if (_selectedTargets == 'Article') {
+          if (pushNotificationMainProvider.selectedArticle == null) {
+            showSnackbar(
+              context,
+              'When opting for Article target, please select the article too',
+            );
+          }
+        } else if (_selectedTargets == 'Channel') {
+          if (channelProvider.selectedChannelPushNotification == null) {
+            showSnackbar(
+              context,
+              'When opting for Channel target, please select the channel too',
+            );
+          }
+        } else if (_selectedTargets == 'URL') {
+          if (urlController.text.trim() == '' ||
+              urlController.text.trim().isEmpty) {
+            showSnackbar(
+              context,
+              'When opting for URL target, please select the url too',
+            );
+          }
+        } else if (_selectedTargets == 'User') {
+          if (usersProvider.selectedUserForPushNotification == null) {
+            showSnackbar(
+              context,
+              'When optino for User target, please select the user too',
+            );
+          }
+        }
+        // final validation for recipients, once target is set
+        if (!_allUsers && !_selectedUsers && !_selectedChannels) {
+          showSnackbar(context, 'Please select at-least one recipient');
+        } else {
+          sendNotification(false);
+        }
+      }
+    }
+  }
+
+  Future<void> sendNotification(bool isTest) async {
     if (isTest) {
       await pushNotificationMainProvider
           .sendPushNotificationToTestUser(
-        user: usersProvider.selectedTestNotificationUser!,
+        userModel: usersProvider.selectedTestNotificationUser!,
         title: titleController.text.trim(),
         message: messageController.text.trim(),
-        badgeCount: _badgeCount,
+        target: _selectedTargets,
+        badgeCount: true,
+        href: generateHref(),
+        name: buildName(),
       )
-          .whenComplete(() {
+          .then((value) {
         setState(() {
-          _isSent = true;
+          _isSent = value;
         });
       });
     } else {
       pushNotificationMainProvider.setNotificationSending(true);
       try {
-        for (var a in _selectedTargets) {
-          if (a == 'Article') {
-            await pushNotificationMainProvider.sendNotificationToArticle(
-              title: titleController.text.trim(),
-              message: messageController.text.trim(),
-              articleUrl: articleController.text.trim(),
-              selectedTime: _selectedDateTime,
-              badgeCount: _badgeCount,
-            );
-          } else if (a == 'URL') {
-            await pushNotificationMainProvider.sendNotificationToUrl(
-              title: titleController.text.trim(),
-              message: messageController.text.trim(),
-              url: urlController.text.trim(),
-              badgeCount: _badgeCount,
-              selectedTime: _selectedDateTime,
-            );
-          } else if (a == 'Channels') {
-            if (_allChannels == true) {
-              await pushNotificationMainProvider
-                  .sendPushNotificationToAllChannels(
-                title: titleController.text.trim(),
-                target: 'channel',
-                message: messageController.text.trim(),
-                badgeCount: _badgeCount,
-                selectedDateTime: _selectedDateTime,
-              );
-            } else if (_singleChannel == true) {
-              await pushNotificationMainProvider
-                  .sendPushNotificationToSelectedChannels(
-                title: titleController.text.trim(),
-                message: messageController.text.trim(),
-                badgeCount: _badgeCount,
-                selectedChannels: channelProvider.selectedNotificationChannels,
-                selectedDateTime: _selectedDateTime,
-              );
-            }
-          } else if (a == 'Users') {
-            if (_allUsers == true) {
-              await pushNotificationMainProvider.sendPushNotificationToAllUsers(
-                title: titleController.text.trim(),
-                target: 'user',
-                message: messageController.text.trim(),
-                badgeCount: _badgeCount,
-                selectedDateTime: _selectedDateTime,
-              );
-            } else if (_singleUser == true) {
-              await pushNotificationMainProvider
-                  .sendPushNotificationToSelectedUsers(
-                title: titleController.text.trim(),
-                message: messageController.text.trim(),
-                badgeCount: _badgeCount,
-                selectedDateTime: _selectedDateTime,
-                selectedUsers: usersProvider.selectedNotificationUser,
-              );
-            }
-          }
-        }
+        await pushNotificationMainProvider.sendPushNotification(
+          allUsers: _allUsers,
+          selectedUsers: _selectedUsers,
+          title: titleController.text.trim(),
+          message: messageController.text.trim(),
+          badge: _badgeCount,
+          selectedDateTime: _selectedDateTime,
+          name: buildName(),
+          selectedChannels: _selectedChannels,
+          selectedChannelID: channelProvider.selectedNotificationChannels,
+          selectedUserID: usersProvider.selectedNotificationUser,
+          target: _selectedTargets,
+          href: generateHref(),
+        );
       } catch (e) {
         if (kDebugMode) {
           print(e);
@@ -707,161 +1020,18 @@ class _PushNotificationMainState extends State<PushNotificationMain> {
     }
   }
 
-  void checkValidation({required bool isTest}) {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedTargets.isEmpty) {
-        showSnackbar(context, 'Please select at least one target');
-      } else if (_selectedTargets.length == 4) {
-        // all four items are selected
-        bool allFieldsFilled = true;
-        if (articleController.text.isEmpty) {
-          allFieldsFilled = false;
-          showSnackbar(context, 'Please enter article details');
-        }
-        if (urlController.text.isEmpty) {
-          allFieldsFilled = false;
-          showSnackbar(context, 'Please enter URL details');
-        }
-
-        if (_selectedTargets.contains('Channels')) {
-          if (_allChannels == false && _singleChannel == true) {
-            if (channelProvider.selectedNotificationChannels.isEmpty) {
-              allFieldsFilled = false;
-              showSnackbar(context, 'Please select atleast one single channel');
-            }
-          } else if (_allChannels == null && _singleChannel == null) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select channel type');
-          } else if (_allChannels == false && _singleChannel == false) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select channel type');
-          }
-        }
-        if (_selectedTargets.contains('Users')) {
-          if (_allUsers == false && _singleUser == true) {
-            if (usersProvider.selectedNotificationUser.isEmpty) {
-              allFieldsFilled = false;
-              showSnackbar(context, 'Please select atleast one single user');
-            }
-          } else if (_allUsers == null && _singleUser == null) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select user type');
-          } else if (_allUsers == false && _singleUser == false) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select user type');
-          }
-        }
-        if (allFieldsFilled) {
-          sendNotification(isTest: isTest);
-        }
-      } else if (_selectedTargets.length == 1) {
-        // only one target is selected
-        String target = _selectedTargets.first;
-        switch (target) {
-          case 'Article':
-            if (articleController.text.isNotEmpty) {
-              // required fields are filled
-              sendNotification(isTest: isTest);
-            } else {
-              showSnackbar(context, 'Please enter article details');
-            }
-            break;
-          case 'URL':
-            if (urlController.text.isNotEmpty) {
-              // required fields are filled
-              sendNotification(isTest: isTest);
-            } else {
-              showSnackbar(context, 'Please enter URL details');
-            }
-            break;
-          case 'Channels':
-            if (_allChannels! ||
-                channelProvider.selectedNotificationChannels.isNotEmpty) {
-              // required fields are filled
-              sendNotification(isTest: isTest);
-            } else {
-              showSnackbar(
-                context,
-                'Please select at least one channel by clicking on plus icon on right side',
-              );
-            }
-            break;
-          case 'Users':
-            if (_allUsers! ||
-                usersProvider.selectedNotificationUser.isNotEmpty) {
-              // required fields are filled
-              sendNotification(isTest: isTest);
-            } else {
-              showSnackbar(
-                context,
-                'Please select at least one user by clicking on plus icon on right side',
-              );
-            }
-            break;
-        }
-      } else {
-        // multiple targets are selected
-        bool allFieldsFilled = true;
-        if (_selectedTargets.contains('Article') &&
-            articleController.text.isEmpty) {
-          allFieldsFilled = false;
-          showSnackbar(context, 'Please enter article details');
-        }
-        if (_selectedTargets.contains('URL') && urlController.text.isEmpty) {
-          allFieldsFilled = false;
-          showSnackbar(context, 'Please enter URL details');
-        }
-        if (_selectedTargets.contains('Channels')) {
-          if (_allChannels == false && _singleChannel == true) {
-            if (channelProvider.selectedNotificationChannels.isEmpty) {
-              allFieldsFilled = false;
-              showSnackbar(context, 'Please select atleast one single channel');
-            }
-          } else if (_allChannels == null && _singleChannel == null) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select channel type');
-          } else if (_allChannels == false && _singleChannel == false) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select channel type');
-          }
-        }
-        if (_selectedTargets.contains('Users')) {
-          if (_allUsers == false && _singleUser == true) {
-            if (usersProvider.selectedNotificationUser.isEmpty) {
-              allFieldsFilled = false;
-              showSnackbar(context, 'Please select atleast one single user');
-            }
-          } else if (_allUsers == null && _singleUser == null) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select user type');
-          } else if (_allUsers == false && _singleUser == false) {
-            allFieldsFilled = false;
-            showSnackbar(context, 'Please select user type');
-          }
-        }
-        if (allFieldsFilled) {
-          sendNotification(isTest: isTest);
-        }
-      }
-    }
-  }
-
-  void sendPublishClicked({required bool isTest}) {
-    if (isTest) {
-      sendNotification(isTest: isTest);
-    } else {
-      if (_sendNow) {
-        checkValidation(isTest: isTest);
-      } else if (_sendLater) {
-        if (_selectedDateTime != null) {
-          checkValidation(isTest: isTest);
-        } else {
-          showSnackbar(
-            context,
-            'Please select date and time when opting for send-later notifications',
-          );
-        }
-      }
+  String buildName() {
+    switch (_selectedTargets.trim()) {
+      case 'Article':
+        return pushNotificationMainProvider.selectedArticle!.headline!;
+      case 'Channel':
+        return channelProvider.selectedChannelPushNotification!.channelName!;
+      case 'User':
+        return '${usersProvider.selectedUserForPushNotification!.firstName!} ${usersProvider.selectedUserForPushNotification!.lastName!}';
+      case 'URL':
+        return 'url';
+      default:
+        return '';
     }
   }
 }
