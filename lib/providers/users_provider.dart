@@ -150,6 +150,34 @@ class UsersProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> checkUniqueUsername({required String username}) async {
+    try {
+      QuerySnapshot querySnapshot;
+      querySnapshot = await firebaseFirestore
+          .collection("users")
+          .where("nickname", isEqualTo: username)
+          .get();
+
+      return querySnapshot.docs.isEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> checkEmailAddress({required String email}) async {
+    try {
+      QuerySnapshot querySnapshot;
+      querySnapshot = await firebaseFirestore
+          .collection("users")
+          .where("email", isEqualTo: email)
+          .get();
+
+      return querySnapshot.docs.isEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // getting userdata form userId
   Future<UserModel?> getUserDataFromId(String userId) async {
     DocumentSnapshot documentSnapshot =
@@ -196,6 +224,7 @@ class UsersProvider extends ChangeNotifier {
         'invited_by': userModel.invitedBy,
         'phoneNumber': userModel.phoneNumber,
         'websiteUrl': userModel.websiteUrl,
+        'isOnline': userModel.isOnline,
       });
 
       DocumentSnapshot documentSnapshot =
