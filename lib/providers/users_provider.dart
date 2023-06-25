@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
+import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -282,5 +283,56 @@ class UsersProvider extends ChangeNotifier {
       }
       return false;
     }
+  }
+
+  Future<Map<String, dynamic>> getInvitedUsers(String userId) async {
+    Map<String, dynamic> finalData = {};
+
+    QuerySnapshot<Map<String, dynamic>> snapshot = await firebaseFirestore
+        .collection('invitations')
+        .doc(userId)
+        .collection('user_invitations')
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      List<Future> futures = [];
+
+      // We now store both the Future and the associated InvitationModel in a tuple
+      for (var data in snapshot.docs) {
+        InvitationModel inviteduserData = InvitationModel.fromJson(data.data());
+        futures.add(
+          Future.value({
+            'future': firebaseFirestore
+                .collection('users')
+                .doc(inviteduserData.acceptedUserId)
+                .get(),
+            'invitation': inviteduserData,
+          }),
+        );
+      }
+
+      // Wait for all the Futures to complete
+      var results = await Future.wait(futures);
+      int index = 1;
+
+      for (var result in results) {
+        DocumentSnapshot doc = await result['future'];
+        InvitationModel invitation = result['invitation'];
+
+        if (doc.exists) {
+          UserModel userData = UserModel.fromJson(doc.data() as dynamic);
+          finalData[index.toString()] = {
+            'firstName': userData.firstName,
+            'lastName': userData.lastName,
+            'profilePic': userData.profilePic,
+            'nickname': userData.nickname,
+            'acceptedAt': invitation.acceptedTimestamp,
+          };
+          index += 1;
+        }
+      }
+    }
+
+    return finalData;
   }
 }

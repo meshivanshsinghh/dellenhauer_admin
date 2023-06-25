@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
+import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
@@ -483,6 +484,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                         awardsShowcaseWidget(currentUser!.awardsModel!),
                         coursesShowWidget(currentUser!.coursesModel!),
                         loadInvitedUserWidget(),
+                        loadTotalInvitedUser(),
                         userCreated(currentUser!.createdAt!),
                         Container(
                           width: double.infinity,
@@ -729,14 +731,22 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     );
   }
 
-  String getUserCreatedDate(int timestamp) {
+  String getUserCreatedDate({
+    required int timestamp,
+    bool isInvitedSection = false,
+  }) {
     tz.initializeTimeZones();
     final berlin = tz.getLocation('Europe/Berlin');
+
     final berlinTime =
         tz.TZDateTime.fromMillisecondsSinceEpoch(berlin, timestamp);
     final formatter = DateFormat('d.M.y H:m:s');
     final berlinFormatted = formatter.format(berlinTime);
-    return 'User created at: $berlinFormatted (Berlin)';
+    if (isInvitedSection) {
+      return berlinFormatted;
+    } else {
+      return 'User created at: $berlinFormatted (Berlin)';
+    }
   }
 
   Widget userCreated(String createdAt) {
@@ -745,7 +755,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       padding: const EdgeInsets.all(10.0),
       width: MediaQuery.of(context).size.width,
       child: Text(
-        getUserCreatedDate(int.parse(createdAt)),
+        getUserCreatedDate(timestamp: int.parse(createdAt)),
         style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
       ),
     );
@@ -869,6 +879,123 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                             ),
                           ),
                   )
+          ],
+        ));
+  }
+
+  Widget loadTotalInvitedUser() {
+    return Container(
+        width: MediaQuery.of(context).size.width,
+        margin: const EdgeInsets.only(top: 20, bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'User\'s Invitation',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+            FutureBuilder<Map<String, dynamic>>(
+              future: userProvider.getInvitedUsers(currentUser!.userId!),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey, width: 1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        margin: const EdgeInsets.symmetric(vertical: 10),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: 10, left: 10),
+                          scrollDirection: Axis.vertical,
+                          child: Wrap(
+                              direction: Axis.horizontal,
+                              children: snapshot.data!.entries.map((e) {
+                                final value = e.value;
+                                return ListTile(
+                                  leading: CachedNetworkImage(
+                                    imageUrl: value['profilePic'],
+                                    placeholder: (context, url) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: const DecorationImage(
+                                            image: AssetImage(
+                                                'assets/images/placeholder.jpeg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: const DecorationImage(
+                                            image: AssetImage(
+                                                'assets/images/placeholder.jpeg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    imageBuilder: (context, imageProvider) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: DecorationImage(
+                                            image: imageProvider,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  subtitle: SelectableText(
+                                    '@${value['nickname']}\nAccepted at: ${getUserCreatedDate(
+                                      timestamp: int.parse(value['acceptedAt']),
+                                      isInvitedSection: true,
+                                    )}',
+                                  ),
+                                  title: SelectableText(
+                                    '${value['firstName']} ${value['lastName']}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                );
+                              }).toList()),
+                        ),
+                      )
+                    ],
+                  );
+                } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                  return const Text(
+                    'No user used your ref-code for registration',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey,
+                    ),
+                  );
+                }
+                return const Center(
+                  child: CircularProgressIndicator(color: kPrimaryColor),
+                );
+              },
+            ),
           ],
         ));
   }
