@@ -270,8 +270,7 @@ class _UserScreenState extends State<UserScreen> {
           );
         },
       ),
-      subtitle:
-          SelectableText('${userData.email} \nUID: ${userData.phoneNumber}'),
+      subtitle: SelectableText('${userData.email} \n@${userData.nickname}'),
       title: SelectableText(
         '${userData.firstName} ${userData.lastName}',
         style: const TextStyle(fontWeight: FontWeight.w600),

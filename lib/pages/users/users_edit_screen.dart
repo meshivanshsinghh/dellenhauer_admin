@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
+import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
@@ -26,22 +27,28 @@ class UsersEditScreen extends StatefulWidget {
 
 class _UsersEditScreenState extends State<UsersEditScreen> {
   late UsersProvider userProvider;
-  bool isLoading = false;
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _nickNameController = TextEditingController();
-  late CountryModel countryModel;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _phoneNumber = TextEditingController();
+  final TextEditingController _websiteUrl = TextEditingController();
   late bool _isPremiumUser;
   late bool _isVerified;
-  UserModel? userModelLatest;
-  final TextEditingController _phoneNumber = TextEditingController();
+  late bool _isOnlineUser;
   List<AwardsModel> awardsModel = [];
   List<CoursesModel> coursesModel = [];
   bool _activatePush = false;
-  late UserModel currentUser;
-  final TextEditingController _websiteUrl = TextEditingController();
+  UserModel? currentUser;
+  // username
+  bool? isUsernameAvailable;
+  String? initialUsername;
+  bool userEnteredNewUserName = false;
+  // email
+  bool? isEmailAddressAvailable;
+  String? initialEmailAddress;
+  bool userEnteredNewEmail = false;
 
   @override
   void initState() {
@@ -49,6 +56,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     Future.delayed(Duration.zero, () async {
       userProvider = Provider.of<UsersProvider>(context, listen: false);
       userProvider.attachContext(context);
+      userProvider.setLoading(isLoading: true);
       userProvider.removeInvitedByUser();
       userProvider.selectedCourses.clear();
       userProvider.selectedUserAwards.clear();
@@ -56,34 +64,42 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
         setState(() {
           currentUser = value!;
         });
-      }).whenComplete(() => setData());
-      await fetchPushPermission(currentUser.userId!);
+        setData();
+      }).whenComplete(() {
+        userProvider.setLoading(isLoading: false);
+      });
     });
   }
 
   setData() async {
-    if (mounted) {
-      setState(() {
-        _isPremiumUser = currentUser.isPremiumUser!;
-        _isVerified = currentUser.isVerified!;
-        _isVerified = currentUser.isVerified!;
-      });
-      userProvider.selectedCourses.addAll(currentUser.coursesModel!);
-      userProvider.selectedUserAwards.addAll(currentUser.awardsModel!);
-    }
-    if (currentUser.invitedBy!.trim().isNotEmpty) {
-      setState(() {
-        isLoading = true;
-      });
-      await userProvider
-          .getUserDataFromId(currentUser.invitedBy!)
-          .then((value) {
-        userProvider.setInvitedByUser(value!);
-      }).whenComplete(() {
+    if (currentUser != null) {
+      if (mounted) {
         setState(() {
-          isLoading = false;
+          _isPremiumUser = currentUser!.isPremiumUser!;
+          _isVerified = currentUser!.isVerified!;
+          _firstNameController.text = currentUser!.firstName!;
+          _lastNameController.text = currentUser!.lastName!;
+          _nickNameController.text = currentUser!.nickname!;
+          initialUsername = currentUser!.nickname!;
+          initialEmailAddress = currentUser!.email;
+          _emailController.text = currentUser!.email!;
+          _bioController.text = currentUser!.bio!;
+          _phoneNumber.text = currentUser!.phoneNumber!;
+          _websiteUrl.text = currentUser!.websiteUrl!;
+          _isOnlineUser = currentUser!.isOnline!;
         });
-      });
+        userProvider.selectedCourses.addAll(currentUser!.coursesModel!);
+        userProvider.selectedUserAwards.addAll(currentUser!.awardsModel!);
+      }
+      if (currentUser!.invitedBy != null &&
+          currentUser!.invitedBy!.trim().isNotEmpty) {
+        await userProvider
+            .getUserDataFromId(currentUser!.invitedBy!)
+            .then((value) {
+          userProvider.setInvitedByUser(value!);
+        });
+      }
+      await fetchPushPermission(currentUser!.userId!);
     }
   }
 
@@ -99,6 +115,10 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     } else if (type == 'activatePush') {
       setState(() {
         _activatePush = value;
+      });
+    } else if (type == 'isOnline') {
+      setState(() {
+        _isOnlineUser = value;
       });
     }
   }
@@ -125,6 +145,68 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     _phoneNumber.dispose();
   }
 
+  void checkUsername(String userName) {
+    if (userName.length < 6) {
+      return;
+    }
+    if (userName == initialUsername) {
+      setState(() {
+        isUsernameAvailable = true;
+      });
+      return;
+    }
+    setState(() {
+      isUsernameAvailable = null;
+    });
+    userProvider = Provider.of<UsersProvider>(context, listen: false);
+    userProvider.checkUniqueUsername(username: userName).then((value) {
+      if (userName == _nickNameController.text) {
+        setState(() {
+          isUsernameAvailable = value;
+        });
+      }
+    });
+  }
+
+  void checkEmail(String emailAddress) {
+    if (emailAddress.length < 6) {
+      return;
+    }
+    if (emailAddress == initialEmailAddress) {
+      setState(() {
+        isEmailAddressAvailable = true;
+      });
+      return;
+    }
+    setState(() {
+      isEmailAddressAvailable = null;
+    });
+    userProvider = Provider.of<UsersProvider>(context, listen: false);
+    userProvider.checkEmailAddress(email: emailAddress).then((value) {
+      if (emailAddress == _emailController.text) {
+        setState(() {
+          isEmailAddressAvailable = value;
+        });
+      }
+    });
+  }
+
+  setNickNameNull() {
+    if (mounted) {
+      setState(() {
+        isUsernameAvailable = null;
+      });
+    }
+  }
+
+  setEmailAddressNull() {
+    if (mounted) {
+      setState(() {
+        isEmailAddressAvailable = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -141,169 +223,288 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
         ),
       ),
       body: Container(
-          height: double.infinity,
-          width: double.infinity,
-          margin: const EdgeInsets.all(20),
-          padding: EdgeInsets.only(
-            left: w * 0.05,
-            right: w * 0.20,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey[300]!,
-                blurRadius: 10,
-                offset: const Offset(3, 3),
+        height: double.infinity,
+        width: double.infinity,
+        margin: const EdgeInsets.all(20),
+        padding: EdgeInsets.only(
+          left: w * 0.05,
+          right: w * 0.20,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey[300]!,
+              blurRadius: 10,
+              offset: const Offset(3, 3),
+            )
+          ],
+        ),
+        child: userProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: kPrimaryColor),
               )
-            ],
-          ),
-          child:
-              // getting the userdata in futurebuilder
-              FutureBuilder<UserModel?>(
-            future: userProvider.getUserDataFromId(widget.userId),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                // setting up dataa
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // profile pic of user
-                      CachedNetworkImage(
-                        imageUrl: snapshot.data!.profilePic!,
-                        placeholder: (context, url) {
-                          return Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                    'assets/images/placeholder.jpeg'),
-                                fit: BoxFit.cover,
+            : currentUser == null
+                ? emptyPage(FontAwesomeIcons.solidUser, 'No user data')
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: currentUser!.profilePic!,
+                          placeholder: (context, url) {
+                            return Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                      'assets/images/placeholder.jpeg'),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        errorWidget: (context, url, error) {
-                          return Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                    'assets/images/placeholder.jpeg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          );
-                        },
-                        imageBuilder: (context, imageProvider) {
-                          return Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // text field
-                      textFieldEntry(
-                        title: 'First Name',
-                        controller: _firstNameController,
-                        value: snapshot.data!.firstName!,
-                      ),
-                      textFieldEntry(
-                        title: 'Last Name',
-                        controller: _lastNameController,
-                        value: snapshot.data!.lastName!,
-                      ),
-                      textFieldEntry(
-                        title: 'Nick Name',
-                        controller: _nickNameController,
-                        value: snapshot.data!.nickname!,
-                      ),
-                      textFieldEntry(
-                        title: 'Email',
-                        controller: _emailController,
-                        value: snapshot.data!.email!,
-                      ),
-                      textFieldEntry(
-                        title: 'Website Url',
-                        controller: _websiteUrl,
-                        value: snapshot.data!.websiteUrl!,
-                      ),
-                      textFieldEntry(
-                        title: 'Phone Number',
-                        isFieldActive: false,
-                        controller: _phoneNumber,
-                        value: snapshot.data!.phoneNumber!,
-                      ),
-                      textFieldEntry(
-                        title: 'Bio',
-                        controller: _bioController,
-                        value: snapshot.data!.bio!,
-                      ),
-                      // toggle buttons
-                      switchWidget('Premium User', _isPremiumUser, (value) {
-                        toggleSwitch(value, 'premium');
-                      }),
-                      switchWidget('Activate Push', _activatePush, (value) {
-                        toggleSwitch(value, 'activatePush');
-                      }),
-                      switchWidget('Verified User', _isVerified, (value) {
-                        toggleSwitch(value, 'verified');
-                      }),
-                      const SizedBox(height: 10),
-                      // awards list
-                      awardsShowcaseWidget(snapshot.data!.awardsModel!),
-                      // courses list
-                      coursesShowWidget(snapshot.data!.coursesModel!),
-                      loadInvitedUserWidget(),
-                      // showcasing when user was created
-                      userCreated(snapshot.data!.createdAt!),
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(top: 5),
-                        height: 40,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            submitData();
+                            );
                           },
-                          style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)),
-                              backgroundColor: kPrimaryColor),
-                          child: const Text('Save'),
+                          errorWidget: (context, url, error) {
+                            return Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                      'assets/images/placeholder.jpeg'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                          imageBuilder: (context, imageProvider) {
+                            return Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      )
-                    ],
+                        textFieldEntry(
+                          title: 'First Name',
+                          controller: _firstNameController,
+                          validator: (value) {
+                            if (value!.trim().isEmpty) {
+                              return 'First name cannot be empty';
+                            }
+                            return null;
+                          },
+                        ),
+                        textFieldEntry(
+                            title: 'Last Name',
+                            controller: _lastNameController,
+                            validator: (value) {
+                              if (value!.trim().isEmpty) {
+                                return 'Last name cannot be empty';
+                              }
+                              return null;
+                            }),
+                        textFieldEntry(
+                          title: 'Nick Name',
+                          controller: _nickNameController,
+                          validator: (value) {
+                            const pattern = r'^[a-zA-Z0-9]+$';
+                            final regExp = RegExp(pattern);
+                            if (!regExp.hasMatch(value!)) {
+                              return 'Nick Name must be alphanumeric without whitespace';
+                            } else if (value.trim().isEmpty) {
+                              return 'Nick Name cannot be empty';
+                            } else if (value.length < 6) {
+                              return 'Nick Name cannot be less than 6 character';
+                            }
+                            return null;
+                          },
+                          onChanged: (value) {
+                            if (value.length < 6 ||
+                                !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)) {
+                              setNickNameNull();
+                            } else if (value.trim().isEmpty) {
+                              setNickNameNull();
+                            } else if (value.length < 6) {
+                              setNickNameNull();
+                            } else if (value.length >= 6) {
+                              checkUsername(value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          alignment: Alignment.centerLeft,
+                          child: _nickNameController.text.isNotEmpty &&
+                                  userEnteredNewUserName
+                              ? isUsernameAvailable == null
+                                  ? const SizedBox.shrink()
+                                  : isUsernameAvailable!
+                                      ? Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 10.0, left: 10.0),
+                                          child: const Text(
+                                            "Nick Name available.",
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 10.0, left: 10.0),
+                                          child: const Text(
+                                            "Nick Name not available.",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                              : const SizedBox.shrink(),
+                        ),
+                        const SizedBox(height: 10),
+                        textFieldEntry(
+                          title: 'Email',
+                          controller: _emailController,
+                          validator: (value) {
+                            const pattern =
+                                r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+';
+                            final regExp = RegExp(pattern);
+                            if (!regExp.hasMatch(value!)) {
+                              isEmailAddressAvailable = null;
+                              return 'Enter a valid email';
+                            } else if (value.trim().isEmpty) {
+                              isEmailAddressAvailable = null;
+                              return 'The email cannot be empty';
+                            }
+                            return null;
+                          },
+                          onChanged: (value) {
+                            if (!RegExp(r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+$')
+                                    .hasMatch(value) ||
+                                value.trim().isEmpty) {
+                              setEmailAddressNull();
+                            } else if (value.trim().isEmpty) {
+                              setEmailAddressNull();
+                            } else if (value.trim().isNotEmpty) {
+                              checkEmail(value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          alignment: Alignment.centerLeft,
+                          child: _emailController.text.isNotEmpty &&
+                                  userEnteredNewEmail
+                              ? isEmailAddressAvailable == null
+                                  ? const SizedBox.shrink()
+                                  : isEmailAddressAvailable!
+                                      ? Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 10.0, left: 10.0),
+                                          child: const Text(
+                                            "Email available.",
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 10.0, left: 10.0),
+                                          child: const Text(
+                                            "Email not available.",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                              : const SizedBox.shrink(),
+                        ),
+                        const SizedBox(height: 10),
+                        textFieldEntry(
+                          title: 'Website Url',
+                          controller: _websiteUrl,
+                          validator: (value) {
+                            const pattern =
+                                r'^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})+(\.[a-zA-Z]{2,})?$';
+                            final regExp = RegExp(pattern);
+                            if (!regExp.hasMatch(value!)) {
+                              return 'Enter a valid website';
+                            } else if (value.trim().isEmpty) {
+                              return 'Website cannot be empty';
+                            }
+                            return null;
+                          },
+                        ),
+                        textFieldEntry(
+                          title: 'Phone Number',
+                          isFieldActive: false,
+                          controller: _phoneNumber,
+                          validator: (p0) {},
+                        ),
+                        textFieldEntry(
+                          title: 'Bio',
+                          controller: _bioController,
+                          validator: (p0) {},
+                        ),
+                        switchWidget('Premium User', _isPremiumUser, (value) {
+                          toggleSwitch(value, 'premium');
+                        }),
+                        switchWidget('Verified User', _isVerified, (value) {
+                          toggleSwitch(value, 'verified');
+                        }),
+                        switchWidget('User Online', _isOnlineUser, (value) {
+                          toggleSwitch(value, 'isOnline');
+                        }),
+                        switchWidget('Activate Push', _activatePush, (value) {
+                          toggleSwitch(value, 'activatePush');
+                        }),
+                        const SizedBox(height: 10),
+                        awardsShowcaseWidget(currentUser!.awardsModel!),
+                        coursesShowWidget(currentUser!.coursesModel!),
+                        loadInvitedUserWidget(),
+                        loadTotalInvitedUser(),
+                        userCreated(currentUser!.createdAt!),
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(top: 5),
+                          height: 40,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              submitData();
+                            },
+                            style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30)),
+                                backgroundColor: kPrimaryColor),
+                            child: const Text('Save'),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                );
-              } else if (snapshot.hasError) {
-                return emptyPage(FontAwesomeIcons.circleXmark, 'Error!');
-              } else if (snapshot.hasData) {
-                return emptyPage(FontAwesomeIcons.solidUser, 'No user data');
-              }
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: kPrimaryColor,
-                ),
-              );
-            },
-          )),
+      ),
     );
   }
 
@@ -311,9 +512,9 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     required String title,
     bool isFieldActive = true,
     required TextEditingController controller,
-    required String value,
+    required String? Function(String?)? validator,
+    Function(String)? onChanged,
   }) {
-    controller.text = value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -325,7 +526,40 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           ),
         ),
         TextFormField(
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: validator,
           enabled: isFieldActive,
+          onChanged: (value) {
+            if (controller == _nickNameController) {
+              if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value) ||
+                  value.trim().isEmpty) {
+                setNickNameNull();
+              } else if (value != initialUsername) {
+                userEnteredNewUserName = true;
+                checkUsername(value);
+              } else {
+                userEnteredNewUserName = false;
+                setState(() {
+                  isUsernameAvailable = true;
+                });
+              }
+            } else if (controller == _emailController) {
+              if (!RegExp(r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+$')
+                      .hasMatch(value) ||
+                  value.trim().isEmpty) {
+                setEmailAddressNull();
+              } else if (value != initialEmailAddress) {
+                userEnteredNewEmail = true;
+                checkEmail(value);
+              } else {
+                userEnteredNewEmail = false;
+                setState(() {
+                  isEmailAddressAvailable = true;
+                });
+              }
+            }
+            onChanged?.call(value);
+          },
           maxLines: controller == _bioController ? 4 : 1,
           controller: controller,
           cursorColor: kPrimaryColor,
@@ -497,14 +731,22 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     );
   }
 
-  String getUserCreatedDate(int timestamp) {
+  String getUserCreatedDate({
+    required int timestamp,
+    bool isInvitedSection = false,
+  }) {
     tz.initializeTimeZones();
     final berlin = tz.getLocation('Europe/Berlin');
+
     final berlinTime =
         tz.TZDateTime.fromMillisecondsSinceEpoch(berlin, timestamp);
     final formatter = DateFormat('d.M.y H:m:s');
     final berlinFormatted = formatter.format(berlinTime);
-    return 'User created at: $berlinFormatted (Berlin)';
+    if (isInvitedSection) {
+      return berlinFormatted;
+    } else {
+      return 'User created at: $berlinFormatted (Berlin)';
+    }
   }
 
   Widget userCreated(String createdAt) {
@@ -513,7 +755,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       padding: const EdgeInsets.all(10.0),
       width: MediaQuery.of(context).size.width,
       child: Text(
-        getUserCreatedDate(int.parse(createdAt)),
+        getUserCreatedDate(timestamp: int.parse(createdAt)),
         style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
       ),
     );
@@ -531,122 +773,229 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
-            isLoading
-                ? const Center(
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                  )
-                : userProvider.invitedByUser == null
-                    ? ElevatedButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return const UserListNotificationSelection(
-                                isUser: true,
-                                isEditUser: true,
-                              );
-                            },
+            userProvider.invitedByUser == null
+                ? ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return const UserListNotificationSelection(
+                            isUser: true,
+                            isEditUser: true,
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(0),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(0),
+                      ),
+                    ),
+                    child: const Text('Add User'),
+                  )
+                : ListTile(
+                    leading: CachedNetworkImage(
+                      imageUrl: userProvider.invitedByUser!.profilePic!,
+                      placeholder: (context, url) {
+                        return Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            shape: BoxShape.circle,
+                            image: const DecorationImage(
+                              image:
+                                  AssetImage('assets/images/placeholder.jpeg'),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                        child: const Text('Add User'),
-                      )
-                    : ListTile(
-                        leading: CachedNetworkImage(
-                          imageUrl: userProvider.invitedByUser!.profilePic!,
-                          placeholder: (context, url) {
-                            return Container(
-                              height: 50,
-                              width: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/placeholder.jpeg'),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                          errorWidget: (context, url, errr) {
-                            return Container(
-                              height: 50,
-                              width: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/placeholder.jpeg'),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                          imageBuilder: (context, imageProvider) {
-                            return Container(
-                              height: 50,
-                              width: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        title: Text(
-                          '${userProvider.invitedByUser!.firstName} ${userProvider.invitedByUser!.lastName}',
-                        ),
-                        subtitle: Text(
-                          '${userProvider.invitedByUser!.userId}',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                        trailing: userProvider.invitedByUser != null
-                            ? IconButton(
-                                onPressed: () {
-                                  userProvider.removeInvitedByUser();
-                                },
-                                icon: const Icon(
-                                  FontAwesomeIcons.circleXmark,
-                                  size: 20,
-                                  color: kPrimaryColor,
-                                ),
-                              )
-                            : IconButton(
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return const UserListNotificationSelection(
-                                        isUser: true,
-                                        isEditUser: true,
-                                      );
-                                    },
+                        );
+                      },
+                      errorWidget: (context, url, errr) {
+                        return Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            shape: BoxShape.circle,
+                            image: const DecorationImage(
+                              image:
+                                  AssetImage('assets/images/placeholder.jpeg'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                      imageBuilder: (context, imageProvider) {
+                        return Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              image: imageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    title: Text(
+                      '${userProvider.invitedByUser!.firstName} ${userProvider.invitedByUser!.lastName}',
+                    ),
+                    subtitle: Text(
+                      '${userProvider.invitedByUser!.userId}',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    trailing: userProvider.invitedByUser != null
+                        ? IconButton(
+                            onPressed: () {
+                              userProvider.removeInvitedByUser();
+                            },
+                            icon: const Icon(
+                              FontAwesomeIcons.circleXmark,
+                              size: 20,
+                              color: kPrimaryColor,
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return const UserListNotificationSelection(
+                                    isUser: true,
+                                    isEditUser: true,
                                   );
                                 },
-                                icon: const Icon(
-                                  FontAwesomeIcons.pencil,
-                                  size: 20,
-                                  color: kPrimaryColor,
-                                ),
-                              ),
+                              );
+                            },
+                            icon: const Icon(
+                              FontAwesomeIcons.pencil,
+                              size: 20,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                  )
+          ],
+        ));
+  }
+
+  Widget loadTotalInvitedUser() {
+    return Container(
+        width: MediaQuery.of(context).size.width,
+        margin: const EdgeInsets.only(top: 20, bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'User\'s Invitation',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+            FutureBuilder<Map<String, dynamic>>(
+              future: userProvider.getInvitedUsers(currentUser!.userId!),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey, width: 1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        margin: const EdgeInsets.symmetric(vertical: 10),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: 10, left: 10),
+                          scrollDirection: Axis.vertical,
+                          child: Wrap(
+                              direction: Axis.horizontal,
+                              children: snapshot.data!.entries.map((e) {
+                                final value = e.value;
+                                return ListTile(
+                                  leading: CachedNetworkImage(
+                                    imageUrl: value['profilePic'],
+                                    placeholder: (context, url) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: const DecorationImage(
+                                            image: AssetImage(
+                                                'assets/images/placeholder.jpeg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: const DecorationImage(
+                                            image: AssetImage(
+                                                'assets/images/placeholder.jpeg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    imageBuilder: (context, imageProvider) {
+                                      return Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.grey[300],
+                                          image: DecorationImage(
+                                            image: imageProvider,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  subtitle: SelectableText(
+                                    '@${value['nickname']}\nAccepted at: ${getUserCreatedDate(
+                                      timestamp: int.parse(value['acceptedAt']),
+                                      isInvitedSection: true,
+                                    )}',
+                                  ),
+                                  title: SelectableText(
+                                    '${value['firstName']} ${value['lastName']}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                );
+                              }).toList()),
+                        ),
                       )
+                    ],
+                  );
+                } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                  return const Text(
+                    'No user used your ref-code for registration',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey,
+                    ),
+                  );
+                }
+                return const Center(
+                  child: CircularProgressIndicator(color: kPrimaryColor),
+                );
+              },
+            ),
           ],
         ));
   }
@@ -669,6 +1018,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
         invitedBy: userProvider.invitedByUser!.userId!,
         phoneNumber: _phoneNumber.text.trim(),
         websiteUrl: _websiteUrl.text.trim(),
+        isOnline: _isOnlineUser,
       );
       await userProvider
           .updateUserData(

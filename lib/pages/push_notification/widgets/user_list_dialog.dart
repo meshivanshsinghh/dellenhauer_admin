@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
@@ -222,7 +224,7 @@ class _UserListDialogState extends State<UserListDialog> {
                                         },
                                       ),
                                       subtitle: SelectableText(
-                                          '${currentUser.email} \nUID: ${currentUser.phoneNumber}'),
+                                          '${currentUser.email} \n@${currentUser.nickname}'),
                                       title: SelectableText(
                                         '${currentUser.firstName} ${currentUser.lastName}',
                                         style: const TextStyle(
@@ -248,11 +250,17 @@ class _UserListDialogState extends State<UserListDialog> {
                                                     value == true) {
                                                   userProvider
                                                       .setSelectedTestUser(
-                                                          currentUser);
+                                                    currentUser,
+                                                  );
                                                 } else {
                                                   userProvider
                                                       .removeSelectedTestUser();
                                                 }
+                                                Timer(
+                                                    const Duration(seconds: 1),
+                                                    () {
+                                                  Navigator.of(context).pop();
+                                                });
                                               })
                                           : widget.selectMultipleUsers
                                               ? Checkbox(
