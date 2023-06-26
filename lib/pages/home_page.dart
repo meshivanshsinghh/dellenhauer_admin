@@ -1,6 +1,7 @@
 import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
+import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_requests_screen.dart';
 import 'package:dellenhauer_admin/pages/overview/overview_screen.dart';
 import 'package:dellenhauer_admin/pages/pending_users/pending_users.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_logs.dart';
@@ -38,6 +39,7 @@ class _HomePageState extends State<HomePage> {
     FontAwesomeIcons.briefcase,
     FontAwesomeIcons.book,
     FontAwesomeIcons.trophy,
+    FontAwesomeIcons.bookMedical,
     FontAwesomeIcons.gear,
   ];
   final titles = [
@@ -51,6 +53,7 @@ class _HomePageState extends State<HomePage> {
     'Services',
     'Courses',
     'Awards',
+    'Channel Requests',
     'Settings',
   ];
 
@@ -88,6 +91,7 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[8], icons[8]) as Tab,
                       tab(titles[9], icons[9]) as Tab,
                       tab(titles[10], icons[10]) as Tab,
+                      tab(titles[11], icons[11]) as Tab,
                     ],
                     contents: const [
                       OverviewScreen(),
@@ -100,6 +104,7 @@ class _HomePageState extends State<HomePage> {
                       ServicesScreen(),
                       CoursesScreen(),
                       AwardsScreen(),
+                      NewChannelRequestsScreen(),
                       SettingsScreen(),
                     ],
                   ),

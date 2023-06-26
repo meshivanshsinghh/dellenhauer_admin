@@ -93,6 +93,13 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
               sortingPopup(),
             ],
           ),
+          Container(
+            margin: const EdgeInsets.only(top: 5, bottom: 10),
+            height: 3,
+            width: 50,
+            decoration: BoxDecoration(
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
+          ),
           // displaying content here
           Expanded(
               child: requestsProvider.isLoadingChannelList == true

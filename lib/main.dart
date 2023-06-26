@@ -1,6 +1,8 @@
+import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_requests_provider.dart';
 import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_main_provider.dart';
+import 'package:dellenhauer_admin/pages/settings/settings_provider.dart';
 import 'package:dellenhauer_admin/providers/awards_provider.dart';
 import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/providers/courses_provider.dart';
@@ -72,6 +74,10 @@ class MyApp extends StatelessWidget {
             create: (_) => PushNotificationMainProvider()),
         ChangeNotifierProvider<PendingUsersProvider>(
             create: (_) => PendingUsersProvider()),
+        ChangeNotifierProvider<NewChannelRequestsProvider>(
+            create: (_) => NewChannelRequestsProvider()),
+        ChangeNotifierProvider<SettingsProvider>(
+            create: (_) => SettingsProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

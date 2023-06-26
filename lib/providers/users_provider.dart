@@ -29,6 +29,8 @@ class UsersProvider extends ChangeNotifier {
   UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
   UserModel? _invitedByUser;
   UserModel? get invitedByUser => _invitedByUser;
+  String? _currentUserUniqueCode;
+  String? get currentUserUniqueCode => _currentUserUniqueCode;
 
   // targets
   UserModel? _selectedUserForPushNotification;
@@ -283,6 +285,17 @@ class UsersProvider extends ChangeNotifier {
       }
       return false;
     }
+  }
+
+  Future<void> getCurrentUserInviteCode(String userId) async {
+    DocumentSnapshot doc =
+        await firebaseFirestore.collection('invitations').doc(userId).get();
+    setCurrentUserUniqueCode(doc['unique_code']);
+  }
+
+  void setCurrentUserUniqueCode(String? string) {
+    _currentUserUniqueCode = string;
+    notifyListeners();
   }
 
   Future<Map<String, dynamic>> getInvitedUsers(String userId) async {

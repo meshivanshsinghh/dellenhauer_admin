@@ -282,8 +282,8 @@ class _UserListNotificationSelectionState
           );
         },
       ),
-      subtitle:
-          SelectableText('${userData.email} \nUID: ${userData.phoneNumber}'),
+      subtitle: SelectableText(
+          '${userData.email}\n@${userData.nickname} • ${userData.phoneNumber}'),
       title: SelectableText(
         '${userData.firstName} ${userData.lastName}',
         style: const TextStyle(fontWeight: FontWeight.w600),

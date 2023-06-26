@@ -229,7 +229,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       padding: const EdgeInsets.all(15),
-      height: 150,
+      height: 160,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(10),
@@ -301,7 +301,21 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
+                  Expanded(
+                    child: Text(
+                      channelModel.channelDescription!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontFamily: 'Poppins',
+                        overflow: TextOverflow.ellipsis,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       // members
