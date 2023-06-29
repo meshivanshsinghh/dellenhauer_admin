@@ -13,11 +13,13 @@ class UserListScreen extends StatefulWidget {
   final bool isModerator;
   final String channelId;
   final String channelName;
+  final bool isNewChannel;
   const UserListScreen({
     super.key,
     required this.isModerator,
     required this.channelId,
     required this.channelName,
+    this.isNewChannel = false,
   });
 
   @override

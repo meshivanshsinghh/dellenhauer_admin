@@ -15,7 +15,8 @@ class AdminDataProvider extends ChangeNotifier {
   }
 
   // getting password
-  void getAdminPassword() async {
+  Future<void> getAdminPassword() async {
+    // Add this check
     await firebaseFirestore
         .collection('admin')
         .doc('settings')
@@ -23,8 +24,8 @@ class AdminDataProvider extends ChangeNotifier {
         .then((DocumentSnapshot snap) {
       String? aPassword = snap['admin_password'];
       _adminPassword = aPassword;
-      notifyListeners();
     });
+    notifyListeners();
   }
 
   // check sign in

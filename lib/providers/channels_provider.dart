@@ -358,11 +358,42 @@ class ChannelProvider extends ChangeNotifier {
     }
   }
 
-  // deleting a channel from databse
   Future<void> deleteChannelFromDatabase({
     required String channelId,
   }) async {
-    await firebaseFirestore.collection('channels').doc(channelId).delete();
+    DocumentSnapshot doc =
+        await firebaseFirestore.collection('channels').doc(channelId).get();
+    if (doc.exists) {
+      ChannelModel channelData = ChannelModel.fromMap(doc.data() as dynamic);
+      // removing members
+      QuerySnapshot queryMember = await firebaseFirestore
+          .collection('channels')
+          .doc(channelData.groupId)
+          .collection('members')
+          .get();
+      for (var doc in queryMember.docs) {
+        await doc.reference.delete();
+      }
+      // removing moderators
+      QuerySnapshot queryModerator = await firebaseFirestore
+          .collection('channels')
+          .doc(channelData.groupId)
+          .collection('moderators')
+          .get();
+      for (var doc in queryModerator.docs) {
+        await doc.reference.delete();
+      }
+      List<String> finalUserId = [
+        ...queryMember.docs.map((e) => e.id),
+        ...queryModerator.docs.map((e) => e.id)
+      ];
+      for (var id in finalUserId) {
+        await firebaseFirestore.collection('users').doc(id).update({
+          'joinedChannels': FieldValue.arrayRemove([id])
+        });
+      }
+      await doc.reference.delete();
+    }
   }
 
   Future<String> storeFileToFirebase(String ref, Uint8List data) async {
@@ -441,6 +472,129 @@ class ChannelProvider extends ChangeNotifier {
       }
     } catch (e) {
       print(e);
+    }
+  }
+
+  // create new channel
+  Future<bool> createChannelData({
+    required String channelName,
+    required String channelDescription,
+    required bool autoJoinWithRefCode,
+    required bool autoJoinWithoutRefCode,
+    required bool readOnly,
+    required bool joinAccessRequired,
+    Uint8List? imageFile,
+    required String visibility,
+    required List<String> relatedChannels,
+    required List<UserModel> newUsers,
+    required List<UserModel> newModerators,
+  }) async {
+    try {
+      DocumentReference doc = firebaseFirestore.collection('channels').doc();
+      String downloadUrl;
+      if (imageFile != null) {
+        downloadUrl = await storeFileToFirebase(
+          'channels/profilePic/${doc.id}',
+          imageFile,
+        );
+      } else {
+        downloadUrl =
+            'https://theperfectroundgolf.com/wp-content/uploads/2022/04/placeholder.png';
+      }
+      ChannelModel channelModel = ChannelModel(
+        channelName: channelName,
+        channelDescription: channelDescription,
+        channelAutoJoinWithRefCode: autoJoinWithRefCode,
+        channelAutoJoinWithoutRefCode: autoJoinWithoutRefCode,
+        channelNotification: false,
+        channelPhoto: downloadUrl,
+        relatedChannel: relatedChannels,
+        timeSent: DateTime.now(),
+        onlineUsers: 0,
+        totalMembers: 0,
+        totalModerators: 0,
+        visibility: visibility.toEnum(),
+        lastMessage: '',
+        groupId: doc.id,
+        joinAccessRequired: joinAccessRequired,
+        createdAt: DateTime.now().millisecondsSinceEpoch.toString(),
+        channelReadOnly: readOnly,
+      );
+      // creating new entry is done
+      await firebaseFirestore.collection('channels').doc(doc.id).set(
+            channelModel.toMap(),
+            SetOptions(merge: true),
+          );
+
+      for (UserModel user in newModerators) {
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .collection('moderators')
+            .doc(user.userId)
+            .set(
+                ParticipantModel(
+                        isNotificationEnabled: true,
+                        uid: user.userId!,
+                        joinedAt: DateTime.now().millisecondsSinceEpoch)
+                    .toMap(),
+                SetOptions(merge: true));
+        await firebaseFirestore.collection('users').doc(user.userId).update({
+          'joinedChannels': FieldValue.arrayUnion([channelModel.groupId])
+        });
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .update({
+          'totalModerators': FieldValue.increment(1),
+        });
+      }
+      // adding users
+      for (UserModel user in newUsers) {
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .collection('members')
+            .doc(user.userId)
+            .set(
+                ParticipantModel(
+                        isNotificationEnabled: true,
+                        uid: user.userId!,
+                        joinedAt: DateTime.now().millisecondsSinceEpoch)
+                    .toMap(),
+                SetOptions(merge: true));
+        await firebaseFirestore.collection('users').doc(user.userId).update({
+          'joinedChannels': FieldValue.arrayUnion([channelModel.groupId])
+        });
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelModel.groupId)
+            .update({
+          'totalMembers': FieldValue.increment(1),
+        });
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return false;
+    }
+  }
+
+  // check channel name
+  Future<bool> checkUniqueChannelName({required String channelName}) async {
+    try {
+      QuerySnapshot querySnapshot;
+      querySnapshot = await firebaseFirestore
+          .collection("channels")
+          .where("channel_name", isEqualTo: channelName)
+          .get();
+
+      return querySnapshot.docs.isEmpty;
+    } catch (e) {
+      return false;
     }
   }
 }

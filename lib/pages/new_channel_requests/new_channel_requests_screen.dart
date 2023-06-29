@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_request_model.dart';
 import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_requests_provider.dart';
+import 'package:dellenhauer_admin/pages/push_notification/widgets/shimmer_image.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -287,7 +289,9 @@ class _NewChannelRequestsScreenState extends State<NewChannelRequestsScreen> {
             ),
             const SizedBox(width: 10),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                showViewDetailsModel(request);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
                 shape: RoundedRectangleBorder(
@@ -357,5 +361,138 @@ class _NewChannelRequestsScreenState extends State<NewChannelRequestsScreen> {
         refreshData();
       },
     );
+  }
+
+  // show dialog for view details
+  void showViewDetailsModel(ChannelRequest channelRequest) {
+    showDialog(
+        builder: (context) {
+          return FractionallySizedBox(
+            heightFactor: 0.5,
+            widthFactor: 0.5,
+            child: Scaffold(
+              body: Container(
+                color: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // create by
+                    const Text(
+                      'Created By',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    FutureBuilder(
+                      future: requestProvider
+                          .getUserDataFromID(channelRequest.createdBy!),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          return ListTile(
+                            leading: CachedNetworkImage(
+                              imageUrl: snapshot.data!.profilePic!,
+                              placeholder: (context, url) {
+                                return Container(
+                                  height: 60,
+                                  width: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[300],
+                                    image: const DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/placeholder.jpeg'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorWidget: (context, url, error) {
+                                return Container(
+                                  height: 60,
+                                  width: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[300],
+                                    image: const DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/placeholder.jpeg'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              },
+                              imageBuilder: (context, imageProvider) {
+                                return Container(
+                                  height: 60,
+                                  width: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[300],
+                                    image: DecorationImage(
+                                      image: imageProvider,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            subtitle: SelectableText(
+                                '${snapshot.data!.email}\n@${snapshot.data!.nickname} • ${snapshot.data!.phoneNumber}'),
+                            title: SelectableText(
+                              '${snapshot.data!.firstName} ${snapshot.data!.lastName}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            isThreeLine: true,
+                          );
+                        } else if (snapshot.hasData && snapshot.data == null) {
+                          return Text(channelRequest.createdBy!);
+                        }
+                        return const SizedBox(
+                          height: 50,
+                          width: double.infinity,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    RichText(
+                      maxLines: 5,
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Request: ',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '${channelRequest.text}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+        context: context);
   }
 }

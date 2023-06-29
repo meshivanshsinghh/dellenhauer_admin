@@ -121,8 +121,10 @@ class _AdminPasswordChangeState extends State<AdminPasswordChange> {
                           settingsProvider.setLoading(true);
                           settingsProvider
                               .updateAdminPassword(
-                            _newPasswordController.text.trim(),
-                          )
+                                _newPasswordController.text.trim(),
+                              )
+                              .then((value) =>
+                                  adminDataProvider.getAdminPassword())
                               .whenComplete(() {
                             showSnackbar(
                               context,

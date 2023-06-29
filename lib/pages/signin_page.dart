@@ -26,9 +26,7 @@ class _SignInPageState extends State<SignInPage> {
 
   @override
   Widget build(BuildContext context) {
-    final adminProvider =
-        Provider.of<AdminDataProvider>(context, listen: false);
-
+    final adminProvider = Provider.of<AdminDataProvider>(context, listen: true);
     return Scaffold(
       backgroundColor: Colors.grey[200],
       body: Center(
@@ -135,7 +133,11 @@ class _SignInPageState extends State<SignInPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       await adminprovider.setSignIN().then((value) => Navigator.pushReplacement(
-          context, CupertinoPageRoute(builder: (context) => const HomePage())));
+            context,
+            CupertinoPageRoute(
+              builder: (context) => const HomePage(),
+            ),
+          ));
     }
   }
 }

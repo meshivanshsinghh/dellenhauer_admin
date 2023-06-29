@@ -404,6 +404,7 @@ class _BlockedNumbersState extends State<BlockedNumbers> {
       '+${selectedCountry.phoneCode}${phoneController.text.trim()}',
     )
         .then((value) {
+      phoneController.clear();
       if (value) {
         showSnackbar(
           context,

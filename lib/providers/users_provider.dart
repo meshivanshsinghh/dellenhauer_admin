@@ -32,6 +32,36 @@ class UsersProvider extends ChangeNotifier {
   String? _currentUserUniqueCode;
   String? get currentUserUniqueCode => _currentUserUniqueCode;
 
+  // create new channel's section
+  final List<UserModel> _createNewChannelUsers = [];
+  List<UserModel> get createNewChannelUsers => _createNewChannelUsers;
+  final List<UserModel> _createNewModerators = [];
+  List<UserModel> get createNewModerators => _createNewModerators;
+
+  void addNewUser({
+    required UserModel userModel,
+    required bool isModerator,
+  }) {
+    if (isModerator) {
+      _createNewModerators.add(userModel);
+    } else {
+      _createNewChannelUsers.add(userModel);
+    }
+    notifyListeners();
+  }
+
+  void removeNewUser({
+    required String userId,
+    required bool isModerator,
+  }) {
+    if (isModerator) {
+      _createNewModerators.removeWhere((element) => element.userId == userId);
+    } else {
+      _createNewChannelUsers.removeWhere((element) => element.userId == userId);
+    }
+    notifyListeners();
+  }
+
   // targets
   UserModel? _selectedUserForPushNotification;
   UserModel? get selectedUserForPushNotification =>
