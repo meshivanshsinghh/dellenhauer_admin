@@ -10,7 +10,12 @@ import '../../utils/widgets/empty.dart';
 
 class ChannelListSelectionScreen extends StatefulWidget {
   final String currentChannelId;
-  const ChannelListSelectionScreen({super.key, required this.currentChannelId});
+  final bool isCreateNewChannel;
+  const ChannelListSelectionScreen({
+    super.key,
+    required this.currentChannelId,
+    this.isCreateNewChannel = false,
+  });
 
   @override
   State<ChannelListSelectionScreen> createState() =>
@@ -34,9 +39,12 @@ class _ChannelListSelectionScreenState
                 future: channelProvider.getChannelList(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    snapshot.data!.removeWhere(
-                      (element) => element.groupId == widget.currentChannelId,
-                    );
+                    if (!widget.isCreateNewChannel) {
+                      snapshot.data!.removeWhere(
+                        (element) => element.groupId == widget.currentChannelId,
+                      );
+                    }
+
                     return Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,

@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
-import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
@@ -19,7 +18,13 @@ import 'package:timezone/standalone.dart' as tz;
 
 class UsersEditScreen extends StatefulWidget {
   final String userId;
-  const UsersEditScreen({super.key, required this.userId});
+  final VoidCallback onSaved;
+
+  const UsersEditScreen({
+    super.key,
+    required this.userId,
+    required this.onSaved,
+  });
 
   @override
   State<UsersEditScreen> createState() => _UsersEditScreenState();
@@ -49,6 +54,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   bool? isEmailAddressAvailable;
   String? initialEmailAddress;
   bool userEnteredNewEmail = false;
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -60,6 +66,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       userProvider.removeInvitedByUser();
       userProvider.selectedCourses.clear();
       userProvider.selectedUserAwards.clear();
+      userProvider.setCurrentUserUniqueCode(null);
       await userProvider.getUserDataFromId(widget.userId).then((value) {
         setState(() {
           currentUser = value!;
@@ -99,6 +106,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           userProvider.setInvitedByUser(value!);
         });
       }
+      userProvider.getCurrentUserInviteCode(currentUser!.userId!);
       await fetchPushPermission(currentUser!.userId!);
     }
   }
@@ -249,259 +257,268 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                 ? emptyPage(FontAwesomeIcons.solidUser, 'No user data')
                 : SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: currentUser!.profilePic!,
-                          placeholder: (context, url) {
-                            return Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/placeholder.jpeg'),
-                                  fit: BoxFit.cover,
+                    child: Form(
+                      key: _formkey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: currentUser!.profilePic!,
+                            placeholder: (context, url) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          errorWidget: (context, url, error) {
-                            return Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/placeholder.jpeg'),
-                                  fit: BoxFit.cover,
+                              );
+                            },
+                            errorWidget: (context, url, error) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          imageBuilder: (context, imageProvider) {
-                            return Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
+                              );
+                            },
+                            imageBuilder: (context, imageProvider) {
+                              return Container(
+                                height: 150,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        textFieldEntry(
-                          title: 'First Name',
-                          controller: _firstNameController,
-                          validator: (value) {
-                            if (value!.trim().isEmpty) {
-                              return 'First name cannot be empty';
-                            }
-                            return null;
-                          },
-                        ),
-                        textFieldEntry(
-                            title: 'Last Name',
-                            controller: _lastNameController,
+                              );
+                            },
+                          ),
+                          textFieldEntry(
+                            title: 'First Name',
+                            controller: _firstNameController,
                             validator: (value) {
                               if (value!.trim().isEmpty) {
-                                return 'Last name cannot be empty';
+                                return 'First name cannot be empty';
                               }
                               return null;
-                            }),
-                        textFieldEntry(
-                          title: 'Nick Name',
-                          controller: _nickNameController,
-                          validator: (value) {
-                            const pattern = r'^[a-zA-Z0-9]+$';
-                            final regExp = RegExp(pattern);
-                            if (!regExp.hasMatch(value!)) {
-                              return 'Nick Name must be alphanumeric without whitespace';
-                            } else if (value.trim().isEmpty) {
-                              return 'Nick Name cannot be empty';
-                            } else if (value.length < 6) {
-                              return 'Nick Name cannot be less than 6 character';
-                            }
-                            return null;
-                          },
-                          onChanged: (value) {
-                            if (value.length < 6 ||
-                                !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)) {
-                              setNickNameNull();
-                            } else if (value.trim().isEmpty) {
-                              setNickNameNull();
-                            } else if (value.length < 6) {
-                              setNickNameNull();
-                            } else if (value.length >= 6) {
-                              checkUsername(value);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          alignment: Alignment.centerLeft,
-                          child: _nickNameController.text.isNotEmpty &&
-                                  userEnteredNewUserName
-                              ? isUsernameAvailable == null
-                                  ? const SizedBox.shrink()
-                                  : isUsernameAvailable!
-                                      ? Container(
-                                          margin: const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          child: const Text(
-                                            "Nick Name available.",
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
-                                          margin: const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          child: const Text(
-                                            "Nick Name not available.",
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        )
-                              : const SizedBox.shrink(),
-                        ),
-                        const SizedBox(height: 10),
-                        textFieldEntry(
-                          title: 'Email',
-                          controller: _emailController,
-                          validator: (value) {
-                            const pattern =
-                                r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+';
-                            final regExp = RegExp(pattern);
-                            if (!regExp.hasMatch(value!)) {
-                              isEmailAddressAvailable = null;
-                              return 'Enter a valid email';
-                            } else if (value.trim().isEmpty) {
-                              isEmailAddressAvailable = null;
-                              return 'The email cannot be empty';
-                            }
-                            return null;
-                          },
-                          onChanged: (value) {
-                            if (!RegExp(r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+$')
-                                    .hasMatch(value) ||
-                                value.trim().isEmpty) {
-                              setEmailAddressNull();
-                            } else if (value.trim().isEmpty) {
-                              setEmailAddressNull();
-                            } else if (value.trim().isNotEmpty) {
-                              checkEmail(value);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          alignment: Alignment.centerLeft,
-                          child: _emailController.text.isNotEmpty &&
-                                  userEnteredNewEmail
-                              ? isEmailAddressAvailable == null
-                                  ? const SizedBox.shrink()
-                                  : isEmailAddressAvailable!
-                                      ? Container(
-                                          margin: const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          child: const Text(
-                                            "Email available.",
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
-                                          margin: const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          child: const Text(
-                                            "Email not available.",
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        )
-                              : const SizedBox.shrink(),
-                        ),
-                        const SizedBox(height: 10),
-                        textFieldEntry(
-                          title: 'Website Url',
-                          controller: _websiteUrl,
-                          validator: (value) {
-                            const pattern =
-                                r'^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})+(\.[a-zA-Z]{2,})?$';
-                            final regExp = RegExp(pattern);
-                            if (!regExp.hasMatch(value!)) {
-                              return 'Enter a valid website';
-                            } else if (value.trim().isEmpty) {
-                              return 'Website cannot be empty';
-                            }
-                            return null;
-                          },
-                        ),
-                        textFieldEntry(
-                          title: 'Phone Number',
-                          isFieldActive: false,
-                          controller: _phoneNumber,
-                          validator: (p0) {},
-                        ),
-                        textFieldEntry(
-                          title: 'Bio',
-                          controller: _bioController,
-                          validator: (p0) {},
-                        ),
-                        switchWidget('Premium User', _isPremiumUser, (value) {
-                          toggleSwitch(value, 'premium');
-                        }),
-                        switchWidget('Verified User', _isVerified, (value) {
-                          toggleSwitch(value, 'verified');
-                        }),
-                        switchWidget('User Online', _isOnlineUser, (value) {
-                          toggleSwitch(value, 'isOnline');
-                        }),
-                        switchWidget('Activate Push', _activatePush, (value) {
-                          toggleSwitch(value, 'activatePush');
-                        }),
-                        const SizedBox(height: 10),
-                        awardsShowcaseWidget(currentUser!.awardsModel!),
-                        coursesShowWidget(currentUser!.coursesModel!),
-                        loadInvitedUserWidget(),
-                        loadTotalInvitedUser(),
-                        userCreated(currentUser!.createdAt!),
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(top: 5),
-                          height: 40,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              submitData();
                             },
-                            style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30)),
-                                backgroundColor: kPrimaryColor),
-                            child: const Text('Save'),
                           ),
-                        )
-                      ],
+                          textFieldEntry(
+                              title: 'Last Name',
+                              controller: _lastNameController,
+                              validator: (value) {
+                                if (value!.trim().isEmpty) {
+                                  return 'Last name cannot be empty';
+                                }
+                                return null;
+                              }),
+                          textFieldEntry(
+                            title: 'Nickname',
+                            controller: _nickNameController,
+                            validator: (value) {
+                              const pattern = r'^[a-zA-Z0-9_]+$';
+                              final regExp = RegExp(pattern);
+                              if (!regExp.hasMatch(value!)) {
+                                return 'The nickname may only contain the following characters: letters (a-z), digits (0-9) and underscore (_).';
+                              } else if (value.trim().isEmpty) {
+                                return 'Nickname cannot be empty';
+                              } else if (value.length < 6) {
+                                return 'Nickname must contain at least 6 characters';
+                              }
+                              return null;
+                            },
+                            onChanged: (value) {
+                              if (value.length < 6 ||
+                                  !RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+                                setNickNameNull();
+                              } else if (value.trim().isEmpty) {
+                                setNickNameNull();
+                              } else if (value.length < 6) {
+                                setNickNameNull();
+                              } else if (value.length >= 6) {
+                                checkUsername(value);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            alignment: Alignment.centerLeft,
+                            child: _nickNameController.text.isNotEmpty &&
+                                    userEnteredNewUserName
+                                ? isUsernameAvailable == null
+                                    ? const SizedBox.shrink()
+                                    : isUsernameAvailable!
+                                        ? Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10.0, left: 10.0),
+                                            child: const Text(
+                                              "Nickname is available",
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          )
+                                        : Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10.0, left: 10.0),
+                                            child: const Text(
+                                              "Nickname is not available",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          )
+                                : const SizedBox.shrink(),
+                          ),
+                          const SizedBox(height: 10),
+                          textFieldEntry(
+                            title: 'E-Mail Address',
+                            controller: _emailController,
+                            validator: (value) {
+                              const pattern =
+                                  r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+';
+                              final regExp = RegExp(pattern);
+                              if (!regExp.hasMatch(value!)) {
+                                isEmailAddressAvailable = null;
+                                return 'Enter a valid email';
+                              } else if (value.trim().isEmpty) {
+                                isEmailAddressAvailable = null;
+                                return 'The email cannot be empty';
+                              }
+                              return null;
+                            },
+                            onChanged: (value) {
+                              if (!RegExp(r'^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+$')
+                                      .hasMatch(value) ||
+                                  value.trim().isEmpty) {
+                                setEmailAddressNull();
+                              } else if (value.trim().isEmpty) {
+                                setEmailAddressNull();
+                              } else if (value.trim().isNotEmpty) {
+                                checkEmail(value);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            alignment: Alignment.centerLeft,
+                            child: _emailController.text.isNotEmpty &&
+                                    userEnteredNewEmail
+                                ? isEmailAddressAvailable == null
+                                    ? const SizedBox.shrink()
+                                    : isEmailAddressAvailable!
+                                        ? Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10.0, left: 10.0),
+                                            child: const Text(
+                                              "Email available.",
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          )
+                                        : Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10.0, left: 10.0),
+                                            child: const Text(
+                                              "E-mail address has already been used in the system.",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          )
+                                : const SizedBox.shrink(),
+                          ),
+                          const SizedBox(height: 10),
+                          textFieldEntry(
+                            title: 'Website-URL',
+                            controller: _websiteUrl,
+                            validator: (value) {
+                              const pattern =
+                                  r'^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})+(\.[a-zA-Z]{2,})?$';
+                              final regExp = RegExp(pattern);
+                              if (!regExp.hasMatch(value!)) {
+                                return 'Enter a valid website';
+                              } else if (value.trim().isEmpty) {
+                                return 'Website cannot be empty';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          textFieldEntry(
+                            title: 'Phone Number',
+                            isFieldActive: false,
+                            controller: _phoneNumber,
+                            validator: (p0) {},
+                          ),
+                          const SizedBox(height: 10),
+                          textFieldEntry(
+                            title: 'Biography / More about',
+                            controller: _bioController,
+                            validator: (p0) {},
+                          ),
+                          switchWidget('Is Premium User?', _isPremiumUser,
+                              (value) {
+                            toggleSwitch(value, 'premium');
+                          }),
+                          switchWidget('Is User Verified?', _isVerified,
+                              (value) {
+                            toggleSwitch(value, 'verified');
+                          }),
+                          switchWidget('Is User Online?', _isOnlineUser,
+                              (value) {
+                            toggleSwitch(value, 'isOnline');
+                          }),
+                          switchWidget('Activate Push for User?', _activatePush,
+                              (value) {
+                            toggleSwitch(value, 'activatePush');
+                          }),
+                          const SizedBox(height: 10),
+                          awardsShowcaseWidget(currentUser!.awardsModel!),
+                          coursesShowWidget(currentUser!.coursesModel!),
+                          loadInvitedUserWidget(),
+                          loadTotalInvitedUser(),
+                          userCreated(currentUser!.createdAt!),
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 5),
+                            height: 40,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                submitData();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30)),
+                                  backgroundColor: kPrimaryColor),
+                              child: const Text('Save'),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
       ),
@@ -531,7 +548,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           enabled: isFieldActive,
           onChanged: (value) {
             if (controller == _nickNameController) {
-              if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value) ||
+              if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value) ||
                   value.trim().isEmpty) {
                 setNickNameNull();
               } else if (value != initialUsername) {
@@ -752,7 +769,6 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   Widget userCreated(String createdAt) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 30),
-      padding: const EdgeInsets.all(10.0),
       width: MediaQuery.of(context).size.width,
       child: Text(
         getUserCreatedDate(timestamp: int.parse(createdAt)),
@@ -769,7 +785,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Invited By User',
+              'User was invited to the app by',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
@@ -846,7 +862,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                       '${userProvider.invitedByUser!.firstName} ${userProvider.invitedByUser!.lastName}',
                     ),
                     subtitle: Text(
-                      '${userProvider.invitedByUser!.userId}',
+                      '${userProvider.invitedByUser!.nickname} • ${userProvider.invitedByUser!.phoneNumber}',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: userProvider.invitedByUser != null
@@ -893,6 +909,29 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
             const Text(
               'User\'s Invitation',
               style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+            RichText(
+              text: TextSpan(
+                children: [
+                  const TextSpan(
+                    text:
+                        'The user can invite new members to the app with their individual invitation code: ',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  TextSpan(
+                    text: userProvider.currentUserUniqueCode,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             FutureBuilder<Map<String, dynamic>>(
@@ -1005,30 +1044,41 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     if (userProvider.invitedByUser == null) {
       showSnackbar(context, 'Please select a invited by user first');
     } else {
-      UserModel userModelLatest = UserModel(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        nickname: _nickNameController.text.trim(),
-        awardsModel: userProvider.selectedUserAwards,
-        coursesModel: userProvider.selectedCourses,
-        email: _emailController.text.trim(),
-        bio: _bioController.text.trim(),
-        isPremiumUser: _isPremiumUser,
-        isVerified: _isVerified,
-        invitedBy: userProvider.invitedByUser!.userId!,
-        phoneNumber: _phoneNumber.text.trim(),
-        websiteUrl: _websiteUrl.text.trim(),
-        isOnline: _isOnlineUser,
-      );
-      await userProvider
-          .updateUserData(
-        userModel: userModelLatest,
-        userId: widget.userId,
-        activatePush: _activatePush,
-      )
-          .whenComplete(() {
-        showSnackbar(context, 'User data updated successfully');
-      });
+      if (isUsernameAvailable != null && isUsernameAvailable == false) {
+        showSnackbar(context, 'Please select a valid username');
+      } else if (isEmailAddressAvailable != null &&
+          isEmailAddressAvailable == false) {
+        showSnackbar(context, 'Please select a valid email');
+      } else if (_formkey.currentState!.validate()) {
+        UserModel userModelLatest = UserModel(
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          nickname: _nickNameController.text.trim(),
+          awardsModel: userProvider.selectedUserAwards,
+          coursesModel: userProvider.selectedCourses,
+          email: _emailController.text.trim(),
+          bio: _bioController.text.trim(),
+          isPremiumUser: _isPremiumUser,
+          isVerified: _isVerified,
+          invitedBy: userProvider.invitedByUser!.userId!,
+          phoneNumber: _phoneNumber.text.trim(),
+          websiteUrl: _websiteUrl.text.trim(),
+          isOnline: _isOnlineUser,
+        );
+        await userProvider
+            .updateUserData(
+          userModel: userModelLatest,
+          userId: widget.userId,
+          activatePush: _activatePush,
+        )
+            .whenComplete(() {
+          showSnackbar(context, 'User data updated successfully');
+          widget.onSaved();
+          Navigator.of(context).pop();
+        });
+      } else {
+        showSnackbar(context, 'Please check all fields');
+      }
     }
   }
 }

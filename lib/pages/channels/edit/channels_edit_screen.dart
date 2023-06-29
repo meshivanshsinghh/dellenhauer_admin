@@ -215,12 +215,10 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
 
                     const SizedBox(height: 20),
                     textFieldEntry(
-                      'Real Estate',
                       'Channel Name',
                       _channelNameController,
                     ),
                     textFieldEntry(
-                      'Hello this is channelDescription Text',
                       'Channel Description',
                       _channelDescriptionController,
                     ),
@@ -415,7 +413,6 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
   }
 
   Widget textFieldEntry(
-    String placeHolder,
     String title,
     TextEditingController controller,
   ) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dellenhauer_admin/pages/channels/edit/channels_edit_screen.dart';
+import 'package:dellenhauer_admin/pages/channels/new_channel/create_new_channel.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
@@ -98,7 +99,24 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     color: kPrimaryColor,
                   ),
                 ),
-              )
+              ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => CreateNewChannel(
+                      onSaved: refreshData,
+                    ),
+                  ));
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  child: const Icon(
+                    FontAwesomeIcons.circlePlus,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              ),
             ],
           ),
           Container(
@@ -229,7 +247,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       padding: const EdgeInsets.all(15),
-      height: 150,
+      height: 160,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(10),
@@ -301,7 +319,21 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
+                  Expanded(
+                    child: Text(
+                      channelModel.channelDescription!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontFamily: 'Poppins',
+                        overflow: TextOverflow.ellipsis,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       // members

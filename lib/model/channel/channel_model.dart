@@ -17,6 +17,12 @@ extension ConvertMessage on String {
   }
 }
 
+extension ChannelEnumX on ChannelEnum {
+  String toShortString() {
+    return toString().split('.').last;
+  }
+}
+
 class ChannelModel {
   String? channelName;
   String? channelDescription;
@@ -80,7 +86,7 @@ class ChannelModel {
       // 'members_id': membersId,
       // 'moderators_id': moderatorsId,
       'groupId': groupId,
-      'visibility': visibility,
+      'visibility': visibility?.toShortString(),
       'onlineUsers': onlineUsers,
       'totalMembers': totalMembers,
       'totalModerators': totalModerators,

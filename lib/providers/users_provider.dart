@@ -29,6 +29,38 @@ class UsersProvider extends ChangeNotifier {
   UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
   UserModel? _invitedByUser;
   UserModel? get invitedByUser => _invitedByUser;
+  String? _currentUserUniqueCode;
+  String? get currentUserUniqueCode => _currentUserUniqueCode;
+
+  // create new channel's section
+  final List<UserModel> _createNewChannelUsers = [];
+  List<UserModel> get createNewChannelUsers => _createNewChannelUsers;
+  final List<UserModel> _createNewModerators = [];
+  List<UserModel> get createNewModerators => _createNewModerators;
+
+  void addNewUser({
+    required UserModel userModel,
+    required bool isModerator,
+  }) {
+    if (isModerator) {
+      _createNewModerators.add(userModel);
+    } else {
+      _createNewChannelUsers.add(userModel);
+    }
+    notifyListeners();
+  }
+
+  void removeNewUser({
+    required String userId,
+    required bool isModerator,
+  }) {
+    if (isModerator) {
+      _createNewModerators.removeWhere((element) => element.userId == userId);
+    } else {
+      _createNewChannelUsers.removeWhere((element) => element.userId == userId);
+    }
+    notifyListeners();
+  }
 
   // targets
   UserModel? _selectedUserForPushNotification;
@@ -283,6 +315,17 @@ class UsersProvider extends ChangeNotifier {
       }
       return false;
     }
+  }
+
+  Future<void> getCurrentUserInviteCode(String userId) async {
+    DocumentSnapshot doc =
+        await firebaseFirestore.collection('invitations').doc(userId).get();
+    setCurrentUserUniqueCode(doc['unique_code']);
+  }
+
+  void setCurrentUserUniqueCode(String? string) {
+    _currentUserUniqueCode = string;
+    notifyListeners();
   }
 
   Future<Map<String, dynamic>> getInvitedUsers(String userId) async {

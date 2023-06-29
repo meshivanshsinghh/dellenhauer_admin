@@ -105,6 +105,13 @@ class _UserScreenState extends State<UserScreen> {
               )
             ],
           ),
+          Container(
+            margin: const EdgeInsets.only(top: 5, bottom: 10),
+            height: 3,
+            width: 50,
+            decoration: BoxDecoration(
+                color: kPrimaryColor, borderRadius: BorderRadius.circular(15)),
+          ),
           Expanded(
               child: usersProvider.isLoading == true
                   ? const Center(
@@ -270,18 +277,42 @@ class _UserScreenState extends State<UserScreen> {
           );
         },
       ),
-      subtitle: SelectableText('${userData.email} \n@${userData.nickname}'),
-      title: SelectableText(
-        '${userData.firstName} ${userData.lastName}',
-        style: const TextStyle(fontWeight: FontWeight.w600),
+      subtitle: SelectableText(
+          '${userData.email}\n@${userData.nickname} • ${userData.phoneNumber}'),
+      title: Row(
+        children: [
+          SelectableText(
+            '${userData.firstName} ${userData.lastName}',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          if (!userData.isVerified!)
+            Container(
+              alignment: Alignment.center,
+              margin: const EdgeInsets.only(left: 5),
+              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xffE91616),
+                borderRadius: BorderRadius.circular(0),
+              ),
+              child: const Text(
+                'INACTIVE',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                ),
+              ),
+            )
+        ],
       ),
       isThreeLine: true,
       trailing: Wrap(
         children: [
           IconButton(
-              icon: const Icon(
+              icon: Icon(
                 FontAwesomeIcons.trash,
-                color: kPrimaryColor,
+                color: Colors.red.shade400,
                 size: 18,
               ),
               onPressed: () {
@@ -316,7 +347,7 @@ class _UserScreenState extends State<UserScreen> {
           IconButton(
               icon: const Icon(
                 FontAwesomeIcons.solidBell,
-                color: Colors.black87,
+                color: kPrimaryColor,
                 size: 18,
               ),
               onPressed: () {
@@ -327,11 +358,16 @@ class _UserScreenState extends State<UserScreen> {
           IconButton(
               icon: const Icon(
                 FontAwesomeIcons.pencil,
-                color: Colors.grey,
+                color: Colors.black87,
                 size: 18,
               ),
               onPressed: () {
-                nextScreen(context, UsersEditScreen(userId: userData.userId!));
+                nextScreen(
+                    context,
+                    UsersEditScreen(
+                      userId: userData.userId!,
+                      onSaved: refreshData,
+                    ));
               }),
         ],
       ),

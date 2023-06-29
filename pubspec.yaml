@@ -55,6 +55,8 @@ dependencies:
   rxdart: ^0.27.7
   shimmer: ^3.0.0
   extended_image: ^7.0.2
+  country_picker: ^2.0.20
+  phone_numbers_parser: ^7.0.2
  
 dev_dependencies:
   flutter_test:
