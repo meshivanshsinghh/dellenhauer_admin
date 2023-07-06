@@ -153,40 +153,40 @@ class _RequestListScreenState extends State<RequestListScreen> {
             ),
             // displaying list of items
             Expanded(
-              child: requestsProvider.isLoadingRequestList == true
+              child: requestsProvider.isLoadingRequestList
                   ? const Center(
                       child: CircularProgressIndicator(color: kPrimaryColor),
                     )
                   : requestsProvider.requestData.isEmpty
-                      ? emptyPage(FontAwesomeIcons.userPlus,
-                          'No channel join request found!')
+                      ? emptyPage(
+                          FontAwesomeIcons.userPlus,
+                          'No channel join request found!',
+                        )
                       : RefreshIndicator(
                           child: ListView.builder(
-                              itemCount:
-                                  requestsProvider.requestData.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index <
-                                    requestsProvider.requestData.length) {
-                                  final ChannelRequestModel
-                                      channelRequestModel =
-                                      ChannelRequestModel.fromMap(
-                                          requestsProvider.requestData[index]
-                                              .data() as dynamic);
-                                  return buildRequestList(channelRequestModel);
-                                }
-                                return Center(
-                                    child: Opacity(
-                                  opacity: requestsProvider.isLoadingRequestList
-                                      ? 1.0
-                                      : 0.0,
-                                  child: const SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(
-                                        color: kPrimaryColor),
-                                  ),
-                                ));
-                              }),
+                            itemCount: requestsProvider.requestData.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index < requestsProvider.requestData.length) {
+                                final ChannelRequestModel channelRequestModel =
+                                    ChannelRequestModel.fromMap(requestsProvider
+                                        .requestData[index]
+                                        .data() as dynamic);
+                                return buildRequestList(channelRequestModel);
+                              }
+                              return Center(
+                                  child: Opacity(
+                                opacity: requestsProvider.isLoadingRequestList
+                                    ? 1.0
+                                    : 0.0,
+                                child: const SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: CircularProgressIndicator(
+                                      color: kPrimaryColor),
+                                ),
+                              ));
+                            },
+                          ),
                           onRefresh: () async {
                             refreshData();
                           }),
@@ -324,7 +324,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: SelectableText(
-                    'Request Id: ${requestData.requestId} \nQuery: ${requestData.requestText}',
+                    'Query: ${requestData.requestText}',
                     maxLines: 3,
                   ),
                   isThreeLine: true,

@@ -6,7 +6,10 @@ import 'package:dellenhauer_admin/constants.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
+import 'package:dellenhauer_admin/model/requests/requests_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_request_model.dart';
+import 'package:extended_image/extended_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -199,103 +202,199 @@ class ChannelProvider extends ChangeNotifier {
     required String channelId,
     required String channelName,
   }) async {
-    DocumentSnapshot dSnapshot =
-        await firebaseFirestore.collection('channels').doc(channelId).get();
+    CollectionReference channelCollection =
+        firebaseFirestore.collection('channels');
+    DocumentSnapshot channelSnapshot =
+        await channelCollection.doc(channelId).get();
+    Map<String, dynamic> channelData = channelSnapshot.data() as dynamic;
 
-    if (dSnapshot.exists) {
-      Map<String, dynamic> data = dSnapshot.data() as dynamic;
-      DocumentSnapshot documentSnapshot = await firebaseFirestore
-          .collection('channels')
+    String roleToAdd = isModerator ? 'moderators' : 'members';
+    String totalRoleToAdd = isModerator ? 'totalModerators' : 'totalMembers';
+
+    DocumentSnapshot userRoleSnapshot = await channelCollection
+        .doc(channelId)
+        .collection(roleToAdd)
+        .doc(userId)
+        .get();
+
+    if (!userRoleSnapshot.exists) {
+      await channelCollection
           .doc(channelId)
-          .collection(isModerator ? 'moderators' : 'members')
+          .collection(roleToAdd)
           .doc(userId)
-          .get();
-      if (!documentSnapshot.exists) {
-        await firebaseFirestore
-            .collection('channels')
-            .doc(channelId)
-            .collection(isModerator ? 'moderators' : 'members')
-            .doc(userId)
-            .set(
-              ParticipantModel(
-                      isNotificationEnabled: true,
-                      uid: userId,
-                      joinedAt: DateTime.now().millisecondsSinceEpoch)
-                  .toMap(),
-              SetOptions(merge: true),
-            );
-        if (data.containsKey(
-                isModerator ? 'totalModerators' : 'totalMembers') &&
-            data[isModerator ? 'totalModerators' : 'totalMembers'] >= 0) {
-          await firebaseFirestore.collection('channels').doc(channelId).update({
-            isModerator ? 'totalModerators' : 'totalMembers':
-                FieldValue.increment(1),
-          });
-        }
-        await firebaseFirestore.collection('users').doc(userId).update({
-          'joinedChannels': FieldValue.arrayUnion([channelId])
-        });
-        if (isModerator) {
-          sendModeratorPushNotification(
-            userId: userId,
-            message:
-                'Du bist nun Moderator von $channelName und kannst den Channel verwalten',
-            title: 'Als Moderator hinzugefügt',
-            channelId: channelId,
-            channelName: channelName,
+          .set(
+            ParticipantModel(
+                    isNotificationEnabled: true,
+                    uid: userId,
+                    joinedAt: DateTime.now().millisecondsSinceEpoch)
+                .toMap(),
+            SetOptions(merge: true),
           );
-        }
+
+      if (channelData.containsKey(totalRoleToAdd) &&
+          channelData[totalRoleToAdd] >= 0) {
+        await channelCollection.doc(channelId).update({
+          totalRoleToAdd: FieldValue.increment(1),
+        });
+      }
+
+      await firebaseFirestore.collection('users').doc(userId).update({
+        'joinedChannels': FieldValue.arrayUnion([channelId])
+      });
+
+      await handleUserChannelRequests(channelId, userId, isApproved: true);
+
+      if (isModerator) {
+        sendModeratorPushNotification(
+          userId: userId,
+          message:
+              'Du bist nun Moderator von $channelName und kannst den Channel verwalten',
+          title: 'Als Moderator hinzugefügt',
+          channelId: channelId,
+          channelName: channelName,
+        );
       }
     }
   }
 
-  // removing id from collection
   Future<void> removeUserFromChannel({
     required String userId,
     required bool isModerator,
     required String channelId,
     required String channelName,
   }) async {
-    DocumentSnapshot dSnapshot =
-        await firebaseFirestore.collection('channels').doc(channelId).get();
+    CollectionReference channelCollection =
+        firebaseFirestore.collection('channels');
+    DocumentSnapshot channelSnapshot =
+        await channelCollection.doc(channelId).get();
+    if (!channelSnapshot.exists) {
+      return;
+    }
+    String roleToRemove = isModerator ? 'moderators' : 'members';
+    String totalRoleToRemove = isModerator ? 'totalModerators' : 'totalMembers';
 
-    if (dSnapshot.exists) {
-      Map<String, dynamic> data = dSnapshot.data() as dynamic;
-      DocumentSnapshot dReference = await firebaseFirestore
-          .collection('channels')
+    DocumentSnapshot userRoleSnapshot = await channelCollection
+        .doc(channelId)
+        .collection(roleToRemove)
+        .doc(userId)
+        .get();
+
+    if (userRoleSnapshot.exists) {
+      await channelCollection
           .doc(channelId)
-          .collection(isModerator ? 'moderators' : 'members')
+          .collection(roleToRemove)
           .doc(userId)
-          .get();
-      if (dReference.exists) {
+          .delete();
+
+      Map<String, dynamic> channelData = channelSnapshot.data() as dynamic;
+
+      if (channelData.containsKey(totalRoleToRemove) &&
+          channelData[totalRoleToRemove] > 0) {
+        await channelCollection.doc(channelId).update({
+          totalRoleToRemove: FieldValue.increment(-1),
+        });
+      }
+
+      if (isModerator) {
+        DocumentSnapshot memberRoleSnapshot = await channelCollection
+            .doc(channelId)
+            .collection('members')
+            .doc(userId)
+            .get();
+        if (memberRoleSnapshot.exists) {
+          await channelCollection
+              .doc(channelId)
+              .collection('members')
+              .doc(userId)
+              .delete();
+          if (channelData.containsKey('totalMembers') &&
+              channelData['totalMembers'] > 0) {
+            await channelCollection.doc(channelId).update({
+              'totalMembers': FieldValue.increment(-1),
+            });
+          }
+        }
+      }
+
+      await firebaseFirestore.collection('users').doc(userId).update({
+        'joinedChannels': FieldValue.arrayRemove([channelId])
+      });
+
+      await handleUserChannelRequests(channelId, userId, isApproved: false);
+
+      if (isModerator) {
+        sendModeratorPushNotification(
+          userId: userId,
+          message: 'Sie wurden als Moderator von $channelName entfernt',
+          title: 'Als Moderator entfernt',
+          channelId: channelId,
+          channelName: channelName,
+        );
+      }
+    }
+  }
+
+  Future<void> handleUserChannelRequests(
+    String channelId,
+    String userId, {
+    required bool isApproved,
+  }) async {
+    DocumentSnapshot channelRequestUserSnapshot = await firebaseFirestore
+        .collection('users')
+        .doc(userId)
+        .collection('channelRequests')
+        .doc(channelId)
+        .get();
+    DocumentSnapshot channelRequestChannelSnapshot = await firebaseFirestore
+        .collection('channels')
+        .doc(channelId)
+        .collection('requests')
+        .doc(userId)
+        .get();
+
+    if (isApproved) {
+      if (!channelRequestUserSnapshot.exists) {
+        await firebaseFirestore
+            .collection('users')
+            .doc(userId)
+            .collection('channelRequests')
+            .doc(channelId)
+            .set(
+              UserRequetsCollection(channelId: channelId, accepted: true)
+                  .toMap(),
+              SetOptions(merge: true),
+            );
+      } else if (!channelRequestChannelSnapshot.exists) {
         await firebaseFirestore
             .collection('channels')
             .doc(channelId)
-            .collection(isModerator ? 'moderators' : 'members')
+            .collection('requests')
             .doc(userId)
-            .delete();
-
-        if (data.containsKey(
-                isModerator ? 'totalModerators' : 'totalMembers') &&
-            data[isModerator ? 'totalModerators' : 'totalMembers'] > 0) {
-          await firebaseFirestore.collection('channels').doc(channelId).update({
-            isModerator ? 'totalModerators' : 'totalMembers':
-                FieldValue.increment(-1),
-          });
-        }
-        await firebaseFirestore.collection('users').doc(userId).update({
-          'joinedChannels': FieldValue.arrayRemove([channelId])
-        });
-        if (isModerator) {
-          sendModeratorPushNotification(
-            userId: userId,
-            message: 'Sie wurden als Moderator von $channelName entfernt',
-            title: 'Als Moderator entfernt',
-            channelId: channelId,
-            channelName: channelName,
-          );
-        }
+            .set(
+              ChannelRequestModel(
+                      userId: userId,
+                      approvedBy: 'admin',
+                      requestText: '',
+                      createdAt:
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      isApproved: true)
+                  .toMap(),
+              SetOptions(merge: true),
+            );
       }
+    } else {
+      await firebaseFirestore
+          .collection('users')
+          .doc(userId)
+          .collection('channelRequests')
+          .doc(channelId)
+          .delete();
+      await firebaseFirestore
+          .collection('channels')
+          .doc(channelId)
+          .collection('requests')
+          .doc(userId)
+          .delete();
     }
   }
 

@@ -1045,7 +1045,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       showSnackbar(context, 'Please select a invited by user first');
     } else {
       if (isUsernameAvailable != null && isUsernameAvailable == false) {
-        showSnackbar(context, 'Please select a valid username');
+        showSnackbar(context, 'Please select a valid nickname');
       } else if (isEmailAddressAvailable != null &&
           isEmailAddressAvailable == false) {
         showSnackbar(context, 'Please select a valid email');

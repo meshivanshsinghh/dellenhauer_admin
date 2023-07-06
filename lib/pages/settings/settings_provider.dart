@@ -95,6 +95,18 @@ class SettingsProvider extends ChangeNotifier {
         'createdAt': DateTime.now().millisecondsSinceEpoch,
         'phoneNumber': phoneNumber,
       });
+      QuerySnapshot userQuery = await firebaseFirestore
+          .collection('users')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .get();
+      if (userQuery.docs.isNotEmpty) {
+        await firebaseFirestore
+            .collection('users')
+            .doc(userQuery.docs[0].id)
+            .update({
+          'isVerified': false,
+        });
+      }
       return true;
     } else {
       return false;
@@ -115,6 +127,18 @@ class SettingsProvider extends ChangeNotifier {
           .collection('blocked_numbers')
           .doc(query.docs[0].id)
           .delete();
+      QuerySnapshot userQuery = await firebaseFirestore
+          .collection('users')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .get();
+      if (userQuery.docs.isNotEmpty) {
+        await firebaseFirestore
+            .collection('users')
+            .doc(userQuery.docs[0].id)
+            .update(
+          {'isVerified': true},
+        );
+      }
     }
   }
 }
