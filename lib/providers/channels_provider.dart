@@ -251,6 +251,14 @@ class ChannelProvider extends ChangeNotifier {
           channelId: channelId,
           channelName: channelName,
         );
+      } else {
+        sendSingleUserPushNotification(
+          userId: userId,
+          title: 'Einladung hinzugefügt',
+          message: 'Du wurdest zum Channel $channelName eingeladen',
+          channelId: channelId,
+          channelName: channelName,
+        );
       }
     }
   }
