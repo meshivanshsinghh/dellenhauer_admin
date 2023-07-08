@@ -206,10 +206,8 @@ class _PendingUsersState extends State<PendingUsers> {
               pendingUsersProvider
                   .acceptPendingUser(userId: data.userId!)
                   .then((v) {
-                Future.delayed(const Duration(seconds: 1), () {
-                  showSnackbar(context, 'User verified successfully');
-                  refreshData();
-                });
+                showSnackbar(context, 'User verified successfully');
+                refreshData();
               });
             },
             icon: Icon(

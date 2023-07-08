@@ -8,8 +8,6 @@ import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_request_model.dart';
-import 'package:extended_image/extended_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -245,7 +243,7 @@ class ChannelProvider extends ChangeNotifier {
       await handleUserChannelRequests(channelId, userId, isApproved: true);
 
       if (isModerator) {
-        sendModeratorPushNotification(
+        sendSingleUserPushNotification(
           userId: userId,
           message:
               'Du bist nun Moderator von $channelName und kannst den Channel verwalten',
@@ -270,9 +268,9 @@ class ChannelProvider extends ChangeNotifier {
     if (!channelSnapshot.exists) {
       return;
     }
+
     String roleToRemove = isModerator ? 'moderators' : 'members';
     String totalRoleToRemove = isModerator ? 'totalModerators' : 'totalMembers';
-
     DocumentSnapshot userRoleSnapshot = await channelCollection
         .doc(channelId)
         .collection(roleToRemove)
@@ -316,14 +314,30 @@ class ChannelProvider extends ChangeNotifier {
         }
       }
 
-      await firebaseFirestore.collection('users').doc(userId).update({
-        'joinedChannels': FieldValue.arrayRemove([channelId])
-      });
+      DocumentSnapshot remainingUserRoleSnapshot;
+      if (isModerator) {
+        remainingUserRoleSnapshot = await channelCollection
+            .doc(channelId)
+            .collection('members')
+            .doc(userId)
+            .get();
+      } else {
+        remainingUserRoleSnapshot = await channelCollection
+            .doc(channelId)
+            .collection('moderators')
+            .doc(userId)
+            .get();
+      }
 
-      await handleUserChannelRequests(channelId, userId, isApproved: false);
+      if (!remainingUserRoleSnapshot.exists) {
+        await firebaseFirestore.collection('users').doc(userId).update({
+          'joinedChannels': FieldValue.arrayRemove([channelId])
+        });
+        await handleUserChannelRequests(channelId, userId, isApproved: false);
+      }
 
       if (isModerator) {
-        sendModeratorPushNotification(
+        sendSingleUserPushNotification(
           userId: userId,
           message: 'Sie wurden als Moderator von $channelName entfernt',
           title: 'Als Moderator entfernt',
@@ -364,7 +378,8 @@ class ChannelProvider extends ChangeNotifier {
                   .toMap(),
               SetOptions(merge: true),
             );
-      } else if (!channelRequestChannelSnapshot.exists) {
+      }
+      if (!channelRequestChannelSnapshot.exists) {
         await firebaseFirestore
             .collection('channels')
             .doc(channelId)
@@ -457,41 +472,15 @@ class ChannelProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteChannelFromDatabase({
-    required String channelId,
-  }) async {
-    DocumentSnapshot doc =
-        await firebaseFirestore.collection('channels').doc(channelId).get();
-    if (doc.exists) {
-      ChannelModel channelData = ChannelModel.fromMap(doc.data() as dynamic);
-      // removing members
-      QuerySnapshot queryMember = await firebaseFirestore
-          .collection('channels')
-          .doc(channelData.groupId)
-          .collection('members')
-          .get();
-      for (var doc in queryMember.docs) {
-        await doc.reference.delete();
-      }
-      // removing moderators
-      QuerySnapshot queryModerator = await firebaseFirestore
-          .collection('channels')
-          .doc(channelData.groupId)
-          .collection('moderators')
-          .get();
-      for (var doc in queryModerator.docs) {
-        await doc.reference.delete();
-      }
-      List<String> finalUserId = [
-        ...queryMember.docs.map((e) => e.id),
-        ...queryModerator.docs.map((e) => e.id)
-      ];
-      for (var id in finalUserId) {
-        await firebaseFirestore.collection('users').doc(id).update({
-          'joinedChannels': FieldValue.arrayRemove([id])
-        });
-      }
-      await doc.reference.delete();
+  Future<void> deleteChannelFromDatabase(String channelId) async {
+    final String url =
+        '${AppConstants.cloudFunctionDevDeleteChannelFromDatabase}?channelId=$channelId';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      debugPrint('Successfully deleted channel and all references.');
+    } else {
+      debugPrint('Failed to delete channel: ${response.body}');
     }
   }
 
@@ -502,7 +491,7 @@ class ChannelProvider extends ChangeNotifier {
     return downloadUrl;
   }
 
-  Future<void> sendModeratorPushNotification({
+  Future<void> sendSingleUserPushNotification({
     required String userId,
     required String title,
     required String message,
@@ -546,11 +535,11 @@ class ChannelProvider extends ChangeNotifier {
             'registration_ids': [userData.fcmToken]
           };
           var res = await http.post(
-            Uri.parse(Contants.firebaseUrl),
+            Uri.parse(AppConstants.firebaseUrl),
             headers: {
               HttpHeaders.contentTypeHeader: 'application/json',
               HttpHeaders.authorizationHeader:
-                  Contants.authorizationHeaderFCMDev,
+                  AppConstants.authorizationHeaderFCMDev,
             },
             body: jsonEncode(notificationPayload),
           );
@@ -570,7 +559,9 @@ class ChannelProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     }
   }
 

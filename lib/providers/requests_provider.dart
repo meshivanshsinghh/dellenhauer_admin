@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -168,6 +169,7 @@ class RequestsProvider extends ChangeNotifier {
   Future<void> acceptChannelRequest({
     required ChannelRequestModel channelRequestData,
     required String channelId,
+    required ChannelProvider channelprovider,
   }) async {
     CollectionReference channelsCollection =
         firebaseFirestoree.collection('channels');
@@ -210,14 +212,21 @@ class RequestsProvider extends ChangeNotifier {
       await firebaseFirestoree.collection('users').doc(userId).update({
         'joinedChannels': FieldValue.arrayUnion([channelId])
       });
+      await firebaseFirestoree
+          .collection('users')
+          .doc(userId)
+          .collection('channelRequests')
+          .doc(channelId)
+          .update({'accepted': true});
+      channelprovider.sendSingleUserPushNotification(
+        userId: userId,
+        message:
+            'Channel-Anfrage für ${channelDocSnapshot['channel_name']} akzeptiert!',
+        title: 'Anfrage akzeptiert',
+        channelId: channelId,
+        channelName: channelDocSnapshot['channel_name'],
+      );
     }
-
-    await firebaseFirestoree
-        .collection('users')
-        .doc(userId)
-        .collection('channelRequests')
-        .doc(channelId)
-        .update({'accepted': true});
   }
 
   Future<void> declineChannelRequest({

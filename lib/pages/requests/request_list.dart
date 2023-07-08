@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -23,6 +24,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
   ScrollController? scrollController;
   late String orderBy;
   late bool descending;
+  late ChannelProvider channelProvider;
   String? sortByText;
 
   @override
@@ -84,6 +86,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     requestsProvider = Provider.of<RequestsProvider>(context, listen: true);
+    channelProvider = Provider.of<ChannelProvider>(context, listen: false);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -361,8 +364,10 @@ class _RequestListScreenState extends State<RequestListScreen> {
               onPressed: () {
                 requestsProvider
                     .acceptChannelRequest(
-                        channelRequestData: requestData,
-                        channelId: widget.channelModel.groupId!)
+                  channelRequestData: requestData,
+                  channelId: widget.channelModel.groupId!,
+                  channelprovider: channelProvider,
+                )
                     .whenComplete(() {
                   showSnackbar(context, 'User successfully added to channel');
                   refreshData();

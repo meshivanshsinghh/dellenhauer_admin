@@ -206,9 +206,8 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
                                         channelId: widget.channelId,
                                         channelName: widget.channelName,
                                       )
-                                          .then((v) {
+                                          .whenComplete(() {
                                         Navigator.of(context).pop();
-                                      }).whenComplete(() {
                                         showSnackbar(
                                           context,
                                           '${widget.isModerator ? 'Moderator' : 'User'} added to channel',
