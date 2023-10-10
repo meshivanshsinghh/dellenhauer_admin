@@ -57,6 +57,7 @@ dependencies:
   extended_image: ^7.0.2
   country_picker: ^2.0.20
   phone_numbers_parser: ^7.0.2
+  dio: ^5.3.0
  
 dev_dependencies:
   flutter_test:

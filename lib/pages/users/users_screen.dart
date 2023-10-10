@@ -52,7 +52,6 @@ class _UserScreenState extends State<UserScreen> {
     usersProvider.setLoading(isLoading: true);
     usersProvider.data.clear();
     usersProvider.getUsersData(orderBy: orderBy, descending: descending);
-    usersProvider.notifyListeners();
   }
 
   @override
@@ -232,58 +231,75 @@ class _UserScreenState extends State<UserScreen> {
   Widget buildUserData(UserModel userData) {
     return ListTile(
       contentPadding: const EdgeInsets.only(top: 10, bottom: 10),
-      leading: CachedNetworkImage(
-        imageUrl: userData.profilePic!,
-        placeholder: (context, url) {
-          return Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[300],
-              image: const DecorationImage(
-                image: AssetImage('assets/images/placeholder.jpeg'),
-                fit: BoxFit.cover,
+      leading: Stack(
+        children: [
+          CachedNetworkImage(
+            imageUrl: userData.profilePic!,
+            placeholder: (context, url) {
+              return Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/placeholder.jpeg'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
+            errorWidget: (context, url, error) {
+              return Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/placeholder.jpeg'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
+            imageBuilder: (context, imageProvider) {
+              return Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
+          ),
+          if (userData.isOnline!)
+            Positioned(
+              bottom: 0,
+              right: 5,
+              child: Container(
+                height: 15,
+                width: 15,
+                decoration: const BoxDecoration(
+                    color: Colors.green, shape: BoxShape.circle),
               ),
-            ),
-          );
-        },
-        errorWidget: (context, url, error) {
-          return Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[300],
-              image: const DecorationImage(
-                image: AssetImage('assets/images/placeholder.jpeg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          );
-        },
-        imageBuilder: (context, imageProvider) {
-          return Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[300],
-              image: DecorationImage(
-                image: imageProvider,
-                fit: BoxFit.cover,
-              ),
-            ),
-          );
-        },
+            )
+        ],
       ),
       subtitle: SelectableText(
           '${userData.email}\n@${userData.nickname} • ${userData.phoneNumber}'),
       title: Row(
         children: [
-          SelectableText(
-            '${userData.firstName} ${userData.lastName}',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Flexible(
+            child: SelectableText(
+              '${userData.firstName} ${userData.lastName}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           if (!userData.isVerified!)
             Container(

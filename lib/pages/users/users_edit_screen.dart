@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
@@ -11,6 +13,7 @@ import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -39,6 +42,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _phoneNumber = TextEditingController();
   final TextEditingController _websiteUrl = TextEditingController();
+  final TextEditingController _wordpressCMSId = TextEditingController();
   late bool _isPremiumUser;
   late bool _isVerified;
   late bool _isOnlineUser;
@@ -55,6 +59,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   String? initialEmailAddress;
   bool userEnteredNewEmail = false;
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+  Uint8List? _imageFile;
 
   @override
   void initState() {
@@ -94,6 +99,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           _phoneNumber.text = currentUser!.phoneNumber!;
           _websiteUrl.text = currentUser!.websiteUrl!;
           _isOnlineUser = currentUser!.isOnline!;
+          _wordpressCMSId.text = currentUser!.wordpressCMSuserId!.toString();
         });
         userProvider.selectedCourses.addAll(currentUser!.coursesModel!);
         userProvider.selectedUserAwards.addAll(currentUser!.awardsModel!);
@@ -131,6 +137,15 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final pickedImage = await ImagePickerWeb.getImageAsBytes();
+    if (pickedImage != null) {
+      setState(() {
+        _imageFile = pickedImage;
+      });
+    }
+  }
+
   Future<void> fetchPushPermission(String userId) async {
     await userProvider.determineActivatePushForUser(userId).then((value) {
       if (mounted) {
@@ -151,6 +166,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     _bioController.dispose();
     _websiteUrl.dispose();
     _phoneNumber.dispose();
+    _wordpressCMSId.dispose();
   }
 
   void checkUsername(String userName) {
@@ -262,52 +278,77 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          CachedNetworkImage(
-                            imageUrl: currentUser!.profilePic!,
-                            placeholder: (context, url) {
-                              return Container(
-                                height: 150,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle,
-                                  image: const DecorationImage(
-                                    image: AssetImage(
-                                        'assets/images/placeholder.jpeg'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
+                          InkWell(
+                            onTap: () {
+                              _pickImage();
                             },
-                            errorWidget: (context, url, error) {
-                              return Container(
-                                height: 150,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle,
-                                  image: const DecorationImage(
-                                    image: AssetImage(
-                                        'assets/images/placeholder.jpeg'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-                            imageBuilder: (context, imageProvider) {
-                              return Container(
-                                height: 150,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    image: imageProvider,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
+                            child: Stack(
+                              children: [
+                                _imageFile == null
+                                    ? CachedNetworkImage(
+                                        imageUrl: currentUser!.profilePic!,
+                                        placeholder: (context, url) {
+                                          return Container(
+                                            height: 150,
+                                            width: 150,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              shape: BoxShape.circle,
+                                              image: const DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/placeholder.jpeg'),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorWidget: (context, url, error) {
+                                          return Container(
+                                            height: 150,
+                                            width: 150,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              shape: BoxShape.circle,
+                                              image: const DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/placeholder.jpeg'),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        imageBuilder: (context, imageProvider) {
+                                          return Container(
+                                            height: 150,
+                                            width: 150,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              shape: BoxShape.circle,
+                                              image: DecorationImage(
+                                                image: imageProvider,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(100),
+                                        child: SizedBox(
+                                          height: 150,
+                                          width: 150,
+                                          child: _imageFile != null
+                                              ? FittedBox(
+                                                  fit: BoxFit.cover,
+                                                  child:
+                                                      Image.memory(_imageFile!),
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
+                                      ),
+                              ],
+                            ),
                           ),
                           textFieldEntry(
                             title: 'First Name',
@@ -469,16 +510,23 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                           ),
                           const SizedBox(height: 10),
                           textFieldEntry(
+                            title: 'Wordpress User-ID (CMS)',
+                            controller: _wordpressCMSId,
+                            isFieldActive: false,
+                            validator: null,
+                          ),
+                          const SizedBox(height: 10),
+                          textFieldEntry(
                             title: 'Phone Number',
                             isFieldActive: false,
                             controller: _phoneNumber,
-                            validator: (p0) {},
+                            validator: null,
                           ),
                           const SizedBox(height: 10),
                           textFieldEntry(
                             title: 'Biography / More about',
                             controller: _bioController,
-                            validator: (p0) {},
+                            validator: null,
                           ),
                           switchWidget('Is Premium User?', _isPremiumUser,
                               (value) {
@@ -811,53 +859,67 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                     child: const Text('Add User'),
                   )
                 : ListTile(
-                    leading: CachedNetworkImage(
-                      imageUrl: userProvider.invitedByUser!.profilePic!,
-                      placeholder: (context, url) {
-                        return Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            shape: BoxShape.circle,
-                            image: const DecorationImage(
-                              image:
-                                  AssetImage('assets/images/placeholder.jpeg'),
-                              fit: BoxFit.cover,
+                    leading: userProvider.invitedByUser!.profilePic == null
+                        ? Container(
+                            height: 50,
+                            width: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              shape: BoxShape.circle,
+                              image: const DecorationImage(
+                                image: AssetImage(
+                                    'assets/images/placeholder.jpeg'),
+                                fit: BoxFit.cover,
+                              ),
                             ),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: userProvider.invitedByUser!.profilePic!,
+                            placeholder: (context, url) {
+                              return Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorWidget: (context, url, errr) {
+                              return Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: const DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/placeholder.jpeg'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                            imageBuilder: (context, imageProvider) {
+                              return Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      errorWidget: (context, url, errr) {
-                        return Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            shape: BoxShape.circle,
-                            image: const DecorationImage(
-                              image:
-                                  AssetImage('assets/images/placeholder.jpeg'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      },
-                      imageBuilder: (context, imageProvider) {
-                        return Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: imageProvider,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                     title: Text(
                       '${userProvider.invitedByUser!.firstName} ${userProvider.invitedByUser!.lastName}',
                     ),
@@ -1041,44 +1103,44 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
 
   // submitting data
   void submitData() async {
-    if (userProvider.invitedByUser == null) {
-      showSnackbar(context, 'Please select a invited by user first');
+    if (isUsernameAvailable != null && isUsernameAvailable == false) {
+      showSnackbar(context, 'Please select a valid nickname');
+    } else if (isEmailAddressAvailable != null &&
+        isEmailAddressAvailable == false) {
+      showSnackbar(context, 'Please select a valid email');
+    } else if (_formkey.currentState!.validate()) {
+      UserModel userModelLatest = UserModel(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        nickname: _nickNameController.text.trim(),
+        awardsModel: userProvider.selectedUserAwards,
+        coursesModel: userProvider.selectedCourses,
+        email: _emailController.text.trim(),
+        bio: _bioController.text.trim(),
+        isPremiumUser: _isPremiumUser,
+        isVerified: _isVerified,
+        invitedBy: userProvider.invitedByUser != null
+            ? userProvider.invitedByUser!.userId
+            : '',
+        phoneNumber: _phoneNumber.text.trim(),
+        websiteUrl: _websiteUrl.text.trim(),
+        isOnline: _isOnlineUser,
+        wordpressCMSuserId: int.parse(_wordpressCMSId.text.trim()),
+      );
+      await userProvider
+          .updateUserData(
+        userModel: userModelLatest,
+        userId: widget.userId,
+        activatePush: _activatePush,
+        imageFile: _imageFile,
+      )
+          .whenComplete(() {
+        showSnackbar(context, 'User data updated successfully');
+        widget.onSaved();
+        Navigator.of(context).pop();
+      });
     } else {
-      if (isUsernameAvailable != null && isUsernameAvailable == false) {
-        showSnackbar(context, 'Please select a valid nickname');
-      } else if (isEmailAddressAvailable != null &&
-          isEmailAddressAvailable == false) {
-        showSnackbar(context, 'Please select a valid email');
-      } else if (_formkey.currentState!.validate()) {
-        UserModel userModelLatest = UserModel(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          nickname: _nickNameController.text.trim(),
-          awardsModel: userProvider.selectedUserAwards,
-          coursesModel: userProvider.selectedCourses,
-          email: _emailController.text.trim(),
-          bio: _bioController.text.trim(),
-          isPremiumUser: _isPremiumUser,
-          isVerified: _isVerified,
-          invitedBy: userProvider.invitedByUser!.userId!,
-          phoneNumber: _phoneNumber.text.trim(),
-          websiteUrl: _websiteUrl.text.trim(),
-          isOnline: _isOnlineUser,
-        );
-        await userProvider
-            .updateUserData(
-          userModel: userModelLatest,
-          userId: widget.userId,
-          activatePush: _activatePush,
-        )
-            .whenComplete(() {
-          showSnackbar(context, 'User data updated successfully');
-          widget.onSaved();
-          Navigator.of(context).pop();
-        });
-      } else {
-        showSnackbar(context, 'Please check all fields');
-      }
+      showSnackbar(context, 'Please check all fields');
     }
   }
 }

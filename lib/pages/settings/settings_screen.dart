@@ -1,7 +1,6 @@
 import 'package:dellenhauer_admin/pages/settings/admin_password_change.dart';
 import 'package:dellenhauer_admin/pages/settings/blocked_numbers.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
-import 'package:dellenhauer_admin/utils/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,7 +12,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController oldPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
 

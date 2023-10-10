@@ -60,7 +60,6 @@ class _BlockedNumbersState extends State<BlockedNumbers> {
     settingsProvider.setLoading(true);
     settingsProvider.data.clear();
     settingsProvider.getUsersData(orderBy: orderBy, descending: descending);
-    settingsProvider.notifyListeners();
   }
 
   @override

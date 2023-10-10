@@ -47,7 +47,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     channelProvider.setLoading(isLoading: true);
     channelProvider.channelData.clear();
     channelProvider.getChannelData(descending: descending, orderBy: orderBy);
-    channelProvider.notifyListeners();
   }
 
   @override

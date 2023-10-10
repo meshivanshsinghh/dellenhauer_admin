@@ -35,6 +35,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
   late bool _channelAutoJoinWithoutRefCode;
   late bool _isReadOnly;
   late bool _joinAccessRequired;
+  late bool _allowUserConversation;
   String? _visibility;
   Uint8List? _image;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -68,6 +69,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
             widget.channelModel.channelAutoJoinWithoutRefCode!;
         _isReadOnly = widget.channelModel.channelReadOnly!;
         _joinAccessRequired = widget.channelModel.joinAccessRequired!;
+        _allowUserConversation = widget.channelModel.allowUserConversation!;
         _visibility = widget.channelModel.visibility!.name;
         if (widget.channelModel.relatedChannel != null &&
             widget.channelModel.relatedChannel!.isNotEmpty) {
@@ -81,9 +83,11 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
 
   Future<void> _pickImage() async {
     final pickedImage = await ImagePickerWeb.getImageAsBytes();
-    setState(() {
-      _image = pickedImage;
-    });
+    if (pickedImage != null) {
+      setState(() {
+        _image = pickedImage;
+      });
+    }
   }
 
   @override
@@ -242,6 +246,14 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                       },
                     ),
 
+                    switchWidget(
+                      'Users can write to users directly via individual chats?',
+                      _allowUserConversation,
+                      (value) {
+                        toggleSwitch(value, 'allowUserConversation');
+                      },
+                    ),
+
                     // displaying moderator list
                     listWidget(
                       'Moderators',
@@ -299,6 +311,7 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
                             autoJoinWithoutRefCode:
                                 _channelAutoJoinWithoutRefCode,
                             imageFile: _image,
+                            allowUserConversation: _allowUserConversation,
                             readOnly: _isReadOnly,
                             joinAccessRequired: _joinAccessRequired,
                             visibility: _visibility!,
@@ -382,6 +395,10 @@ class _ChannelEditScreenState extends State<ChannelEditScreen> {
     } else if (type == 'autoJoinWithoutRefCode') {
       setState(() {
         _channelAutoJoinWithoutRefCode = value;
+      });
+    } else if (type == 'allowUserConversation') {
+      setState(() {
+        _allowUserConversation = value;
       });
     } else {
       setState(() {

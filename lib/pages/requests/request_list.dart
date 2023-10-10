@@ -73,7 +73,6 @@ class _RequestListScreenState extends State<RequestListScreen> {
       descending: descending,
       channelId: widget.channelModel.groupId!,
     );
-    requestsProvider.notifyListeners();
   }
 
   @override

@@ -8,7 +8,7 @@ import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/notification/push_notification_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +24,6 @@ class ChannelProvider extends ChangeNotifier {
   List<DocumentSnapshot> _channelData = [];
   List<DocumentSnapshot> get channelData => _channelData;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  final FirebaseStorage storage = FirebaseStorage.instance;
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
   final List<String> _relatedChannels = [];
@@ -386,6 +385,15 @@ class ChannelProvider extends ChangeNotifier {
                   .toMap(),
               SetOptions(merge: true),
             );
+      } else {
+        await firebaseFirestore
+            .collection('users')
+            .doc(userId)
+            .collection('channelRequests')
+            .doc(channelId)
+            .update(
+          {'accepted': true},
+        );
       }
       if (!channelRequestChannelSnapshot.exists) {
         await firebaseFirestore
@@ -404,6 +412,16 @@ class ChannelProvider extends ChangeNotifier {
                   .toMap(),
               SetOptions(merge: true),
             );
+      } else {
+        await firebaseFirestore
+            .collection('channels')
+            .doc(channelId)
+            .collection('requests')
+            .doc(userId)
+            .update({
+          'approved_by': 'admin',
+          'isApproved': true,
+        });
       }
     } else {
       await firebaseFirestore
@@ -432,6 +450,7 @@ class ChannelProvider extends ChangeNotifier {
     required String visibility,
     required String channelId,
     required List<String> relatedChannels,
+    required bool allowUserConversation,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -445,6 +464,7 @@ class ChannelProvider extends ChangeNotifier {
             'channel_name': channelName,
             'channel_description': channelDescription,
             'channel_autojoin_with_refcode': autoJoinWithRefCode,
+            'allow_user_conversation': allowUserConversation,
             'channel_autojoin_without_refcode': autoJoinWithoutRefCode,
             'related_channels': FieldValue.arrayUnion(relatedChannels),
             'channel_readonly': readOnly,
@@ -464,6 +484,7 @@ class ChannelProvider extends ChangeNotifier {
           'channel_autojoin_without_refcode': autoJoinWithoutRefCode,
           'related_channels': FieldValue.arrayUnion(relatedChannels),
           'channel_readonly': readOnly,
+          'allow_user_conversation': allowUserConversation,
           'join_access_required': joinAccessRequired,
           'visibility': visibility,
         }).whenComplete(() {
@@ -490,13 +511,6 @@ class ChannelProvider extends ChangeNotifier {
     } else {
       debugPrint('Failed to delete channel: ${response.body}');
     }
-  }
-
-  Future<String> storeFileToFirebase(String ref, Uint8List data) async {
-    UploadTask uploadTask = storage.ref().child(ref).putData(data);
-    await uploadTask;
-    String downloadUrl = await storage.ref(ref).getDownloadURL();
-    return downloadUrl;
   }
 
   Future<void> sendSingleUserPushNotification({

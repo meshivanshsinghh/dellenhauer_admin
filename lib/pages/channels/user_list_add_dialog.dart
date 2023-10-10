@@ -187,9 +187,9 @@ class _UserListAddDialogState extends State<UserListAddDialog> {
                                   '${userList[index].firstName}${userList[index].lastName}',
                                   maxLines: 1,
                                 ),
+
                                 subtitle: SelectableText(
-                                  userList[index].userId!,
-                                  maxLines: 1,
+                                  '${userList[index].email}\n@${userList[index].nickname} • ${userList[index].phoneNumber}',
                                 ),
                                 // building the trailing widget
                                 trailing: IconButton(

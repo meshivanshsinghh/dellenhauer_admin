@@ -43,7 +43,7 @@ class ChannelModel {
   // for last messages
   DateTime? timeSent;
   String? lastMessage;
-
+  bool? allowUserConversation;
   int? totalMembers;
   int? totalModerators;
   int? onlineUsers;
@@ -68,6 +68,7 @@ class ChannelModel {
     this.onlineUsers,
     this.totalMembers,
     this.totalModerators,
+    this.allowUserConversation,
   });
 
   // to map
@@ -78,6 +79,7 @@ class ChannelModel {
       'channel_notification': channelNotification,
       'channel_photo': channelPhoto,
       'channel_autojoin_with_refcode': channelAutoJoinWithRefCode,
+      'allow_user_conversation': allowUserConversation,
       'channel_autojoin_without_refcode': channelAutoJoinWithoutRefCode,
       'channel_readonly': channelReadOnly,
       'created_timestamp': createdAt,
@@ -109,7 +111,11 @@ class ChannelModel {
       channelNotification = false;
     }
     channelPhoto = map['channel_photo'];
-
+    if (map['allow_user_conversation'] != null) {
+      allowUserConversation = map['allow_user_conversation'];
+    } else {
+      allowUserConversation = false;
+    }
     if (map['channel_autojoin_with_refcode'] != null) {
       channelAutoJoinWithRefCode = map['channel_autojoin_with_refcode'];
     } else {

@@ -52,6 +52,7 @@ class UserModel {
   List<AwardsModel>? awardsModel;
   int? lastSeen;
   int? firstLoginTimeStamp;
+  int? wordpressCMSuserId;
   List<String>? joinedChannels;
 
   UserModel({
@@ -83,6 +84,7 @@ class UserModel {
     this.lastSeen,
     this.nickname,
     this.firstLoginTimeStamp,
+    this.wordpressCMSuserId,
   });
 
   // from json
@@ -91,6 +93,7 @@ class UserModel {
       return;
     }
     lastSeen = map['lastSeen'];
+    wordpressCMSuserId = map['wordpress_cms_userid'];
     firstLoginTimeStamp = map['firstLoginTimestamp'];
     email = map['email'];
     userId = map['userId'];
@@ -160,6 +163,7 @@ class UserModel {
       'websiteUrl': websiteUrl,
       'email': email,
       'lastSeen': lastSeen,
+      'wordpress_cms_userid': wordpressCMSuserId,
       'firstLoginTimestamp': firstLoginTimeStamp,
       'userId': userId,
       'firstName': firstName,

@@ -18,4 +18,6 @@ class AppConstants {
       'https://us-central1-dellenhauerdev.cloudfunctions.net/deleteChannelAndReferences';
   static const String cloudFunctionProDeleteChannelFromDatabase =
       'https://us-central1-dellenhauer-ease5f.cloudfunctions.net/deleteChannelAndReferences';
+
+  static const String X_API_KEY = "WPAObiq6mx57kW9kpZFhOERymRu3SHin";
 }
