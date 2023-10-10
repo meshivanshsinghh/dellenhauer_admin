@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dellenhauer_admin/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -88,15 +89,15 @@ class PendingUsersProvider extends ChangeNotifier {
     await _firebaseFirestore.collection('users').doc(userId).update({
       'isVerified': true,
     }).whenComplete(() async {
-      const String url =
-          'https://us-central1-dellenhauer-eae5f.cloudfunctions.net/sendActivationPushNotification';
       final Map<String, String> body = {
         'userId': userId,
       };
-      final response =
-          await http.post(Uri.parse(url), body: jsonEncode(body), headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+          Uri.parse(AppConstants.cloudFunctionDevAcceptPendingUser),
+          body: jsonEncode(body),
+          headers: {
+            'Content-Type': 'application/json',
+          });
       if (response.statusCode == 200) {
         debugPrint('Cloud function executed successfully');
       } else {

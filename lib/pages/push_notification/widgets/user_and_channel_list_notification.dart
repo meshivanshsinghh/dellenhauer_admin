@@ -57,7 +57,6 @@ class _UserListNotificationSelectionState
       usersProvider.setLoading(isLoading: true);
       usersProvider.data.clear();
       usersProvider.getUsersData(orderBy: 'createdAt', descending: true);
-      usersProvider.notifyListeners();
     } else {
       channelProvider = Provider.of<ChannelProvider>(context, listen: false);
       channelProvider.setLastVisible(documentSnapshot: null);
@@ -65,7 +64,6 @@ class _UserListNotificationSelectionState
       channelProvider.channelData.clear();
       channelProvider.getChannelData(
           orderBy: 'created_timestamp', descending: true);
-      channelProvider.notifyListeners();
     }
   }
 

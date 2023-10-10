@@ -47,7 +47,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     channelProvider.setLoading(isLoading: true);
     channelProvider.channelData.clear();
     channelProvider.getChannelData(descending: descending, orderBy: orderBy);
-    channelProvider.notifyListeners();
   }
 
   @override
@@ -454,17 +453,17 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                    title: const Text('Delete?'),
+                                    title: const Text('Delete Channel?'),
                                     content: const Text(
-                                      'Are you sure you want to delete this channel from database?',
+                                      'This action is irreverisible, all users and moderators would be removed',
                                     ),
                                     actions: [
                                       ElevatedButton(
                                           onPressed: () {
                                             channelProvider
                                                 .deleteChannelFromDatabase(
-                                                    channelId:
-                                                        channelModel.groupId!)
+                                              channelModel.groupId!,
+                                            )
                                                 .whenComplete(() {
                                               Navigator.of(context).pop();
                                               showSnackbar(context,

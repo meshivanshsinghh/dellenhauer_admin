@@ -1,9 +1,14 @@
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/standalone.dart' as tz;
+
+final FirebaseStorage storage = FirebaseStorage.instance;
 
 void showSnackbar(BuildContext context, String content) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -121,4 +126,22 @@ String getDate(int date) {
   var berlinDateTime = tz.TZDateTime.from(dateTime, berlin);
   var formatter = DateFormat('dd.MM.yyyy-HH:mm:ss');
   return formatter.format(berlinDateTime);
+}
+
+Future<String> storeFileToFirebase(String ref, Uint8List data) async {
+  final Reference firebaseStorageRef = storage.ref().child(ref);
+  try {
+    await firebaseStorageRef.getDownloadURL();
+    await firebaseStorageRef.delete();
+  } catch (e) {
+    if (kDebugMode) {
+      print(e);
+    }
+  }
+  UploadTask uploadTask = firebaseStorageRef.putData(data);
+  await uploadTask;
+
+  // Get and return the download URL
+  String downloadUrl = await firebaseStorageRef.getDownloadURL();
+  return downloadUrl;
 }

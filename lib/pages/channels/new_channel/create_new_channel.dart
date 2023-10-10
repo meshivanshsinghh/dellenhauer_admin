@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_list_selection_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/new_channel/create_new_channel_user_dialog.dart';
@@ -38,9 +37,11 @@ class _CreateNewChannelState extends State<CreateNewChannel> {
 
   Future<void> _pickImage() async {
     final pickedImage = await ImagePickerWeb.getImageAsBytes();
-    setState(() {
-      _image = pickedImage;
-    });
+    if (pickedImage != null) {
+      setState(() {
+        _image = pickedImage;
+      });
+    }
   }
 
   @override

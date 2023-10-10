@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_request_model.dart';
 import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_requests_provider.dart';
-import 'package:dellenhauer_admin/pages/push_notification/widgets/shimmer_image.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:dellenhauer_admin/utils/widgets/empty.dart';
@@ -63,7 +62,6 @@ class _NewChannelRequestsScreenState extends State<NewChannelRequestsScreen> {
       orderBy: orderBy,
       descending: descending,
     );
-    requestProvider.notifyListeners();
   }
 
   @override

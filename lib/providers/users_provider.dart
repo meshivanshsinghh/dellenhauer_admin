@@ -3,6 +3,8 @@ import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/providers/post_helper_provider.dart';
+import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -16,14 +18,14 @@ class UsersProvider extends ChangeNotifier {
   bool get hasData => _hasData;
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
-  List<DocumentSnapshot> _data = [];
+  final List<DocumentSnapshot> _data = [];
   List<DocumentSnapshot> get data => _data;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  List<AwardsModel> _selectedUserAwards = [];
+  final List<AwardsModel> _selectedUserAwards = [];
   List<AwardsModel> get selectedUserAwards => _selectedUserAwards;
-  List<CoursesModel> _selectedCourses = [];
+  final List<CoursesModel> _selectedCourses = [];
   List<CoursesModel> get selectedCourses => _selectedCourses;
-  List<String> _selectedNotificationUser = [];
+  final List<String> _selectedNotificationUser = [];
   List<String> get selectedNotificationUser => _selectedNotificationUser;
   UserModel? _selectedTestNotificationUser;
   UserModel? get selectedTestNotificationUser => _selectedTestNotificationUser;
@@ -38,6 +40,7 @@ class UsersProvider extends ChangeNotifier {
   final List<UserModel> _createNewModerators = [];
   List<UserModel> get createNewModerators => _createNewModerators;
 
+  final PostDataHelper _postDataHelper = PostDataHelper();
   void addNewUser({
     required UserModel userModel,
     required bool isModerator,
@@ -239,27 +242,57 @@ class UsersProvider extends ChangeNotifier {
   }
 
   // updating existing data
-  Future<void> updateUserData(
-      {required UserModel userModel,
-      required String userId,
-      required bool activatePush}) async {
+  Future<void> updateUserData({
+    required UserModel userModel,
+    required String userId,
+    required bool activatePush,
+    Uint8List? imageFile,
+  }) async {
     try {
-      await firebaseFirestore.collection('users').doc(userId).update({
+      if (imageFile != null) {
+        await storeFileToFirebase('profilePic/$userId', imageFile)
+            .then((value) async {
+          await firebaseFirestore.collection('users').doc(userId).update({
+            'firstName': userModel.firstName,
+            'lastName': userModel.lastName,
+            'nickname': userModel.nickname,
+            'awards': userModel.awardsModel!.map((e) => e.toMap()).toList(),
+            'courses': userModel.coursesModel!.map((e) => e.toMap()).toList(),
+            'email': userModel.email,
+            'bio': userModel.bio,
+            'is_premium_user': userModel.isPremiumUser,
+            'isVerified': userModel.isVerified,
+            'invited_by': userModel.invitedBy,
+            'phoneNumber': userModel.phoneNumber,
+            'websiteUrl': userModel.websiteUrl,
+            'isOnline': userModel.isOnline,
+            'profilePic': value,
+          });
+        });
+      } else {
+        await firebaseFirestore.collection('users').doc(userId).update({
+          'firstName': userModel.firstName,
+          'lastName': userModel.lastName,
+          'nickname': userModel.nickname,
+          'awards': userModel.awardsModel!.map((e) => e.toMap()).toList(),
+          'courses': userModel.coursesModel!.map((e) => e.toMap()).toList(),
+          'email': userModel.email,
+          'bio': userModel.bio,
+          'is_premium_user': userModel.isPremiumUser,
+          'isVerified': userModel.isVerified,
+          'invited_by': userModel.invitedBy,
+          'phoneNumber': userModel.phoneNumber,
+          'websiteUrl': userModel.websiteUrl,
+          'isOnline': userModel.isOnline,
+        });
+      }
+
+      await _postDataHelper.updateUserData({
+        'wordpress_cms_userid': userModel.wordpressCMSuserId,
         'firstName': userModel.firstName,
         'lastName': userModel.lastName,
-        'nickname': userModel.nickname,
-        'awards': userModel.awardsModel!.map((e) => e.toMap()).toList(),
-        'courses': userModel.coursesModel!.map((e) => e.toMap()).toList(),
-        'email': userModel.email,
-        'bio': userModel.bio,
-        'is_premium_user': userModel.isPremiumUser,
-        'isVerified': userModel.isVerified,
-        'invited_by': userModel.invitedBy,
-        'phoneNumber': userModel.phoneNumber,
         'websiteUrl': userModel.websiteUrl,
-        'isOnline': userModel.isOnline,
       });
-
       DocumentSnapshot documentSnapshot =
           await firebaseFirestore.collection('users').doc(userId).get();
       if (documentSnapshot.exists) {

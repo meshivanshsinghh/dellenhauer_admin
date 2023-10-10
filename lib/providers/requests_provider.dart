@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/channel/participant_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/model/requests/requests_model.dart';
+import 'package:dellenhauer_admin/providers/channels_provider.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -133,8 +134,9 @@ class RequestsProvider extends ChangeNotifier {
       _isLoadingRequestList = false;
       _hasRequestData = true;
       for (var data in data.docs) {
-        ChannelRequestModel model =
-            ChannelRequestModel.fromMap(data.data() as dynamic);
+        ChannelRequestModel model = ChannelRequestModel.fromMap(
+          data.data() as dynamic,
+        );
         if (model.isApproved == false) {
           _requestData.add(data);
         }
@@ -164,78 +166,66 @@ class RequestsProvider extends ChangeNotifier {
     });
   }
 
-  // approve request
   Future<void> acceptChannelRequest({
     required ChannelRequestModel channelRequestData,
     required String channelId,
+    required ChannelProvider channelprovider,
   }) async {
+    CollectionReference channelsCollection =
+        firebaseFirestoree.collection('channels');
     DocumentSnapshot channelDocSnapshot =
-        await firebaseFirestoree.collection('channels').doc(channelId).get();
-    if (channelDocSnapshot.exists) {
-      Map<String, dynamic> data = channelDocSnapshot.data() as dynamic;
-      await firebaseFirestoree
-          .collection('channels')
-          .doc(channelId)
-          .collection('requests')
-          .doc(channelRequestData.requestId)
-          .update({
-        'approved_by': 'admin',
-        'isApproved': true,
+        await channelsCollection.doc(channelId).get();
+
+    if (!channelDocSnapshot.exists) {
+      return;
+    }
+    Map<String, dynamic> data = channelDocSnapshot.data() as dynamic;
+    String userId = channelRequestData.userId;
+    await channelsCollection
+        .doc(channelId)
+        .collection('requests')
+        .doc(userId)
+        .update({
+      'approved_by': 'admin',
+      'isApproved': true,
+    });
+
+    DocumentReference memberDocRef =
+        channelsCollection.doc(channelId).collection('members').doc(userId);
+
+    DocumentSnapshot memberDocSnapshot = await memberDocRef.get();
+    if (!memberDocSnapshot.exists) {
+      await memberDocRef.set(
+        ParticipantModel(
+          isNotificationEnabled: true,
+          uid: userId,
+          joinedAt: DateTime.now().millisecondsSinceEpoch,
+        ).toMap(),
+      );
+
+      if (data.containsKey('totalMembers') && data['totalMembers'] >= 0) {
+        await channelsCollection.doc(channelId).update({
+          'totalMembers': FieldValue.increment(1),
+        });
+      }
+
+      await firebaseFirestoree.collection('users').doc(userId).update({
+        'joinedChannels': FieldValue.arrayUnion([channelId])
       });
-      DocumentSnapshot dSnapshot = await firebaseFirestoree
-          .collection('channels')
-          .doc(channelId)
-          .collection('members')
-          .doc(channelRequestData.userId)
-          .get();
-      if (!dSnapshot.exists) {
-        // adding to members collection
-        await firebaseFirestoree
-            .collection('channels')
-            .doc(channelId)
-            .collection('members')
-            .doc(channelRequestData.userId)
-            .set(
-              ParticipantModel(
-                      isNotificationEnabled: true,
-                      uid: channelRequestData.userId,
-                      joinedAt: DateTime.now().millisecondsSinceEpoch)
-                  .toMap(),
-              SetOptions(merge: true),
-            );
-        if (data.containsKey('totalMembers') && data['totalMembers'] >= 0) {
-          await firebaseFirestoree
-              .collection('channels')
-              .doc(channelId)
-              .update({
-            'totalMembers': FieldValue.increment(1),
-          });
-        }
-        // adding to user's joined channel array
-        await firebaseFirestoree
-            .collection('users')
-            .doc(channelRequestData.userId)
-            .update({
-          'joinedChannels': FieldValue.arrayUnion([channelId])
-        });
-      }
-      // updating user personal request
-      QuerySnapshot snap = await firebaseFirestoree
+      await firebaseFirestoree
           .collection('users')
-          .doc(channelRequestData.userId)
+          .doc(userId)
           .collection('channelRequests')
-          .where('channelId', isEqualTo: channelId)
-          .get();
-      if (snap.docs.isNotEmpty) {
-        await firebaseFirestoree
-            .collection('users')
-            .doc(channelRequestData.userId)
-            .collection('channelRequests')
-            .doc(snap.docs[0].id)
-            .update({
-          'accepted': true,
-        });
-      }
+          .doc(channelId)
+          .update({'accepted': true});
+      channelprovider.sendSingleUserPushNotification(
+        userId: userId,
+        message:
+            'Channel-Anfrage für ${channelDocSnapshot['channel_name']} akzeptiert!',
+        title: 'Anfrage akzeptiert',
+        channelId: channelId,
+        channelName: channelDocSnapshot['channel_name'],
+      );
     }
   }
 
@@ -247,7 +237,7 @@ class RequestsProvider extends ChangeNotifier {
         .collection('channels')
         .doc(channelId)
         .collection('requests')
-        .doc(channelRequestdata.requestId)
+        .doc(channelRequestdata.userId)
         .delete();
     QuerySnapshot snap = await firebaseFirestoree
         .collection('users')

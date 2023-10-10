@@ -74,6 +74,19 @@ class _PendingUsersState extends State<PendingUsers> {
                 ),
               ),
               sortingPopup(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  refreshData();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  child: const Icon(
+                    FontAwesomeIcons.arrowsRotate,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              )
             ],
           ),
           Container(
@@ -192,7 +205,8 @@ class _PendingUsersState extends State<PendingUsers> {
           );
         },
       ),
-      subtitle: SelectableText('${data.email} \nUID: ${data.phoneNumber}'),
+      subtitle: SelectableText(
+          '${data.email}\n@${data.nickname} • ${data.phoneNumber}'),
       title: SelectableText(
         '${data.firstName} ${data.lastName}',
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -206,10 +220,8 @@ class _PendingUsersState extends State<PendingUsers> {
               pendingUsersProvider
                   .acceptPendingUser(userId: data.userId!)
                   .then((v) {
-                Future.delayed(const Duration(seconds: 1), () {
-                  showSnackbar(context, 'User verified successfully');
-                  refreshData();
-                });
+                showSnackbar(context, 'User verified successfully');
+                refreshData();
               });
             },
             icon: Icon(
@@ -285,6 +297,5 @@ class _PendingUsersState extends State<PendingUsers> {
     pendingUsersProvider.setLoading(true);
     pendingUsersProvider.data.clear();
     pendingUsersProvider.getUserData(orderBy: orderBy, descending: descending);
-    pendingUsersProvider.notifyListeners();
   }
 }

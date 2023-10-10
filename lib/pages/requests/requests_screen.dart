@@ -46,7 +46,6 @@ class _RequestsScreenListState extends State<RequestsScreenList> {
     requestsProvider.setChannelDataLoading(isLoading: true);
     requestsProvider.channelData.clear();
     requestsProvider.getChannelData(orderBy: orderBy, descending: descending);
-    requestsProvider.notifyListeners();
   }
 
   navigateToRequestsScreen(BuildContext context, ChannelModel channelData) {

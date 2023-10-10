@@ -50,7 +50,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
       _articleData.clear();
       const String url = 'https://dellenhauer.com/wp-json/bestcms/v1/article';
       final http.Response response = await http.get(Uri.parse(url), headers: {
-        'X-API-KEY': Contants.dellenhauereBestCMSKey,
+        'X-API-KEY': AppConstants.dellenhauereBestCMSKey,
         'Connection': 'keep-alive',
         'Accept': '*/*',
         'Accept-Encoding': 'gzip,defalte,br',
@@ -192,11 +192,11 @@ class PushNotificationMainProvider extends ChangeNotifier {
             'registration_ids': tokensChunk,
           };
           var res = await http.post(
-            Uri.parse(Contants.firebaseUrl),
+            Uri.parse(AppConstants.firebaseUrl),
             headers: {
               HttpHeaders.contentTypeHeader: 'application/json',
               HttpHeaders.authorizationHeader:
-                  Contants.authorizationHeaderFCMDev,
+                  AppConstants.authorizationHeaderFCMDev,
             },
             body: jsonEncode(notificationPayload),
           );
@@ -254,10 +254,11 @@ class PushNotificationMainProvider extends ChangeNotifier {
         'to': userModel.fcmToken,
       };
       var res = await http.post(
-        Uri.parse(Contants.firebaseUrl),
+        Uri.parse(AppConstants.firebaseUrl),
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',
-          HttpHeaders.authorizationHeader: Contants.authorizationHeaderFCMDev,
+          HttpHeaders.authorizationHeader:
+              AppConstants.authorizationHeaderFCMDev,
         },
         body: jsonEncode(notificationPayload),
       );
