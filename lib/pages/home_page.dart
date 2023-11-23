@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/pages/analytics/analytics_screen.dart';
 import 'package:dellenhauer_admin/pages/awards/awards_screen.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
 import 'package:dellenhauer_admin/pages/courses/courses_screen.dart';
@@ -30,6 +31,7 @@ class _HomePageState extends State<HomePage> {
 
   final icons = [
     FontAwesomeIcons.chartPie,
+    FontAwesomeIcons.chartSimple,
     FontAwesomeIcons.peopleGroup,
     FontAwesomeIcons.solidUser,
     FontAwesomeIcons.userPlus,
@@ -44,6 +46,7 @@ class _HomePageState extends State<HomePage> {
   ];
   final titles = [
     'Overview',
+    'Analytics',
     'Channels',
     'Users',
     'Pending Users',
@@ -92,9 +95,11 @@ class _HomePageState extends State<HomePage> {
                       tab(titles[9], icons[9]) as Tab,
                       tab(titles[10], icons[10]) as Tab,
                       tab(titles[11], icons[11]) as Tab,
+                      tab(titles[12], icons[12]) as Tab,
                     ],
                     contents: const [
                       OverviewScreen(),
+                      AnalyticsScreen(),
                       ChannelsScreen(),
                       UserScreen(),
                       PendingUsers(),

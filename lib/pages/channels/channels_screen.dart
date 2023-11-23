@@ -156,8 +156,9 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                             itemBuilder: (context, index) {
                               if (index < channelProvider.channelData.length) {
                                 final ChannelModel d = ChannelModel.fromMap(
-                                    channelProvider.channelData[index].data()
-                                        as dynamic);
+                                  channelProvider.channelData[index].data()
+                                      as dynamic,
+                                );
 
                                 return buildContentList(d);
                               }

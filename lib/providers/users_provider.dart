@@ -3,7 +3,7 @@ import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
-import 'package:dellenhauer_admin/providers/post_helper_provider.dart';
+import 'package:dellenhauer_admin/api_service.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,7 @@ class UsersProvider extends ChangeNotifier {
   final List<UserModel> _createNewModerators = [];
   List<UserModel> get createNewModerators => _createNewModerators;
 
-  final PostDataHelper _postDataHelper = PostDataHelper();
+  final ApiService _postDataHelper = ApiService();
   void addNewUser({
     required UserModel userModel,
     required bool isModerator,
