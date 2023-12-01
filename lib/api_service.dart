@@ -4,7 +4,6 @@ import 'package:dellenhauer_admin/model/article/article_model.dart';
 import 'package:dellenhauer_admin/model/requests/analytics_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(headers: {
@@ -48,6 +47,7 @@ class ApiService {
       Response response = await _dio.get(
         '$BASE_URL_ANALYTICS_API$eventName?start_date=$startDate&end_date=$endDate',
       );
+
       if (response.statusCode == 200) {
         for (var data in response.data) {
           articles.add(AnalyticsModel.fromJson(data));

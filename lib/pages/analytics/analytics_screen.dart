@@ -158,10 +158,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       future: mostOpenedArticles,
                       key: mostOpenedKey,
                       builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        if (snapshot.hasData) {
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
                             heading: 'Most opened Articles',
+                            selectedDateRange: selectedDateRange,
                             type: 'article_opened',
                           );
                         }
@@ -173,9 +174,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       future: mostLikedArticles,
                       key: mostLikedKey,
                       builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        if (snapshot.hasData) {
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
+                            selectedDateRange: selectedDateRange,
                             heading: 'Most liked Articles',
                             type: 'article_liked',
                           );
@@ -191,6 +193,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         if (snapshot.hasData) {
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
+                            selectedDateRange: selectedDateRange,
                             heading: 'Most viewed Articles',
                             type: 'article_view_duration',
                           );
@@ -207,6 +210,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
                             heading: 'Most shared Articles',
+                            selectedDateRange: selectedDateRange,
                             type: 'article_share',
                           );
                         }
@@ -221,6 +225,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         if (snapshot.hasData) {
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
+                            selectedDateRange: selectedDateRange,
                             heading: 'Most joined channels',
                             type: 'channel_join',
                           );
@@ -237,6 +242,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           return AnalyticsOverviewWidget(
                             articles: snapshot.data!,
                             heading: 'Most downloaded Articles',
+                            selectedDateRange: selectedDateRange,
                             type: 'article_downloaded',
                           );
                         }

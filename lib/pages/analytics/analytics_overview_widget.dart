@@ -3,9 +3,11 @@ import 'package:dellenhauer_admin/api_service.dart';
 import 'package:dellenhauer_admin/model/article/article_model.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/requests/analytics_model.dart';
+import 'package:dellenhauer_admin/pages/analytics/analytics_detail_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_date_range_picker/flutter_date_range_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -14,10 +16,14 @@ class AnalyticsOverviewWidget extends StatefulWidget {
   final List<AnalyticsModel> articles;
   final String heading;
   final String type;
+  final bool comingFromDetail;
+  final DateRange selectedDateRange;
 
   const AnalyticsOverviewWidget({
     super.key,
     required this.type,
+    required this.selectedDateRange,
+    this.comingFromDetail = false,
     required this.articles,
     required this.heading,
   });
@@ -68,27 +74,38 @@ class _AnalyticsOverviewWidgetState extends State<AnalyticsOverviewWidget> {
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {},
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'View More',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                    ),
-                    SizedBox(width: 5),
-                    Icon(
-                      FontAwesomeIcons.arrowRight,
-                      color: kPrimaryColor,
-                      size: 14,
-                    ),
-                  ],
-                ),
-              )
+              if (!widget.comingFromDetail)
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AnalayticsDetailScreen(
+                          title: widget.heading,
+                          eventName: widget.type,
+                          selectedDateRange: widget.selectedDateRange,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'View More',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, fontSize: 14),
+                      ),
+                      SizedBox(width: 5),
+                      Icon(
+                        FontAwesomeIcons.arrowRight,
+                        color: kPrimaryColor,
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                )
             ],
           ),
           Container(
@@ -102,9 +119,14 @@ class _AnalyticsOverviewWidgetState extends State<AnalyticsOverviewWidget> {
           ),
           widget.articles.isNotEmpty
               ? ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount:
-                      widget.articles.length > 5 ? 5 : widget.articles.length,
+                  physics: widget.comingFromDetail
+                      ? const BouncingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  itemCount: widget.comingFromDetail
+                      ? widget.articles.length
+                      : widget.articles.length > 5
+                          ? 5
+                          : widget.articles.length,
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
                   itemBuilder: (context, index) {
