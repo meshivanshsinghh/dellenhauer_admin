@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
+import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
@@ -410,5 +411,21 @@ class UsersProvider extends ChangeNotifier {
     }
 
     return finalData;
+  }
+
+  Future<ChannelModel?> getChannelData({required String channelId}) async {
+    ChannelModel? channelData;
+    try {
+      DocumentSnapshot snapshot =
+          await firebaseFirestore.collection('channels').doc(channelId).get();
+      if (snapshot.exists) {
+        channelData = ChannelModel.fromMap(snapshot.data() as dynamic);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
+    return channelData;
   }
 }

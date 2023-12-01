@@ -1,8 +1,10 @@
+import 'package:intl/intl.dart';
 import 'package:dellenhauer_admin/constants.dart';
 import 'package:dellenhauer_admin/model/article/article_model.dart';
 import 'package:dellenhauer_admin/model/requests/analytics_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(headers: {
@@ -28,13 +30,24 @@ class ApiService {
     }
   }
 
+  String formatDate(DateTime date) {
+    final DateFormat formatter = DateFormat('yyyy-MM-dd');
+    return formatter.format(date);
+  }
+
   // get analytics entries
   Future<List<AnalyticsModel>> getMostViewedArticles({
     required String eventName,
+    required DateTime start,
+    required DateTime end,
   }) async {
     List<AnalyticsModel> articles = [];
     try {
-      Response response = await _dio.get('$BASE_URL_ANALYTICS_API$eventName');
+      String startDate = formatDate(start);
+      String endDate = formatDate(end);
+      Response response = await _dio.get(
+        '$BASE_URL_ANALYTICS_API$eventName?start_date=$startDate&end_date=$endDate',
+      );
       if (response.statusCode == 200) {
         for (var data in response.data) {
           articles.add(AnalyticsModel.fromJson(data));
