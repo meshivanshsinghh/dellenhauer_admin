@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dellenhauer_admin/constants.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/channel/channel_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
@@ -7,6 +8,7 @@ import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/api_service.dart';
 import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -35,6 +37,9 @@ class UsersProvider extends ChangeNotifier {
   UserModel? get invitedByUser => _invitedByUser;
   String? _currentUserUniqueCode;
   String? get currentUserUniqueCode => _currentUserUniqueCode;
+  final Dio dio = Dio(BaseOptions(headers: {
+    'X-API-KEY': AppConstants.X_API_KEY,
+  }));
 
   // create new channel's section
   final List<UserModel> _createNewChannelUsers = [];
@@ -248,14 +253,14 @@ class UsersProvider extends ChangeNotifier {
     try {
       DocumentReference userRef =
           firebaseFirestore.collection('users').doc(userModel.userId);
-      DocumentSnapshot oldUserSnapshot = await userRef.get();
-      UserModel oldUserModel =
-          UserModel.fromJson(oldUserSnapshot.data() as dynamic);
+      DocumentSnapshot lastestSnapshot = await userRef.get();
+      UserModel latestUserModel =
+          UserModel.fromJson(lastestSnapshot.data() as dynamic);
 
       // Extracting old and new states for comparison
-      bool oldIsVerified = oldUserModel.isVerified ?? false;
+      bool oldIsVerified = latestUserModel.isVerified ?? false;
       bool newIsVerified = userModel.isVerified ?? false;
-      String? oldInvitedBy = oldUserModel.invitedBy;
+      String? oldInvitedBy = latestUserModel.invitedBy;
       String? newInvitedBy = userModel.invitedBy;
 
       // Prepare user data update map
@@ -302,6 +307,15 @@ class UsersProvider extends ChangeNotifier {
       if (oldIsVerified != newIsVerified) {
         userDataUpdate['isVerified'] = newIsVerified;
         if (newIsVerified) {
+          if (latestUserModel.wordpressCMSuserId == null ||
+              latestUserModel.wordpressCMSuserId.toString().isNotEmpty) {
+            int code = await addingUserToCMSWordpress(
+              userModel: userModel,
+            );
+            if (code != 0) {
+              userDataUpdate['wordpress_cms_userid'] = code;
+            }
+          }
           await pendingUsersProvider.acceptPendingUser(
             userId: userModel.userId!,
             comingFromUserUpdate: true,
@@ -371,6 +385,32 @@ class UsersProvider extends ChangeNotifier {
         debugPrint('Error removing invited by user current invitation: $e');
       }
     }
+  }
+
+  Future<int> addingUserToCMSWordpress({
+    required UserModel userModel,
+  }) async {
+    debugPrint('adding user to cms sytem');
+    int code = 0;
+    try {
+      final Response response =
+          await dio.post(AppConstants.cmsWordpressUserCreate, data: {
+        'firstName': userModel.firstName,
+        'lastName': userModel.lastName,
+        'email': userModel.email,
+        'nickname': userModel.nickname,
+        'websiteUrl': userModel.websiteUrl,
+        'phoneNumber': userModel.phoneNumber,
+        'invited_by': userModel.invitedBy,
+        'userId': userModel.userId,
+      });
+      if (response.statusCode == 200) {
+        code = response.data['user_id'];
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return code;
   }
 
   Future<void> addInvitedByUserCurrentInvitation({

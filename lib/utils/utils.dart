@@ -138,7 +138,10 @@ Future<String> storeFileToFirebase(String ref, Uint8List data) async {
       print(e);
     }
   }
-  UploadTask uploadTask = firebaseStorageRef.putData(data);
+  UploadTask uploadTask = firebaseStorageRef.putData(
+    data,
+    SettableMetadata(contentType: 'image/jpeg'),
+  );
   await uploadTask;
 
   // Get and return the download URL

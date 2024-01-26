@@ -22,5 +22,8 @@ class AppConstants {
   static const String deleteUserDev =
       'https://us-central1-dellenhauerdev.cloudfunctions.net/deleteUserFromDellenhauer';
 
+  static const String cmsWordpressUserCreate =
+      'https://dellenhauer.com/wp-json/bestcms/v1/user/create';
+
   static const String X_API_KEY = "WPAObiq6mx57kW9kpZFhOERymRu3SHin";
 }
