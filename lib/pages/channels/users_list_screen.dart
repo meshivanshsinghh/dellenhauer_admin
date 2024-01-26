@@ -285,7 +285,6 @@ class _UserListScreenState extends State<UserListScreen> {
                   channelProvider
                       .removeUserFromChannel(
                     userId: userData.userId!,
-                    isModerator: widget.isModerator,
                     channelName: widget.channelName,
                     channelId: widget.channelId,
                   )

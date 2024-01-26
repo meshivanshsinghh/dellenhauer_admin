@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/pages/channels/channels_screen.dart';
+import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/logs/push_notification_single_user_logs.dart';
 import 'package:dellenhauer_admin/pages/users/users_edit_screen.dart';
 import 'package:dellenhauer_admin/providers/users_provider.dart';
@@ -25,6 +26,7 @@ class _UserScreenState extends State<UserScreen> {
   late String orderBy;
   String? sortByText;
   late bool descending;
+  late PendingUsersProvider pendingUsersProvider;
 
   @override
   void initState() {
@@ -34,6 +36,8 @@ class _UserScreenState extends State<UserScreen> {
     descending = true;
     Future.delayed(Duration.zero, () {
       usersProvider = Provider.of<UsersProvider>(context, listen: false);
+      pendingUsersProvider =
+          Provider.of<PendingUsersProvider>(context, listen: false);
       usersProvider.attachContext(context);
       usersProvider.setLoading(isLoading: true);
       usersProvider.getUsersData(orderBy: orderBy, descending: descending);
@@ -338,12 +342,14 @@ class _UserScreenState extends State<UserScreen> {
                   'Are you sure you want to delete this user from databse?',
                   ElevatedButton(
                     onPressed: () {
-                      usersProvider
-                          .deletingUser(userId: userData.userId!)
+                      pendingUsersProvider
+                          .deleteUser(userId: userData.userId!)
                           .whenComplete(() {
                         Navigator.of(context).pop();
-                        showSnackbar(context,
-                            'User deleted successfully form #Dellenhauer');
+                        showSnackbar(
+                          context,
+                          'User deleted successfully form #Dellenhauer',
+                        );
                         setState(() {});
                       });
                     },
@@ -379,11 +385,12 @@ class _UserScreenState extends State<UserScreen> {
               ),
               onPressed: () {
                 nextScreen(
-                    context,
-                    UsersEditScreen(
-                      userId: userData.userId!,
-                      onSaved: refreshData,
-                    ));
+                  context,
+                  UsersEditScreen(
+                    userId: userData.userId!,
+                    onSaved: refreshData,
+                  ),
+                );
               }),
         ],
       ),

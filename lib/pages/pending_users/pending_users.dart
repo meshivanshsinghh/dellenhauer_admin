@@ -73,6 +73,7 @@ class _PendingUsersState extends State<PendingUsers> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              const Spacer(),
               sortingPopup(),
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
