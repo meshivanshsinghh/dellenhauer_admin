@@ -106,7 +106,6 @@ class _AnalyticsDatePickerWidgetState extends State<AnalyticsDatePickerWidget> {
       DateRangePickerWidget(
         height: 350,
         doubleMonth: doubleMonth,
-        maximumDateRangeLength: 10,
         quickDateRanges: [
           QuickDateRange(dateRange: null, label: "Remove date range"),
           QuickDateRange(
@@ -145,7 +144,7 @@ class _AnalyticsDatePickerWidgetState extends State<AnalyticsDatePickerWidget> {
             ),
           ),
         ],
-        minimumDateRangeLength: 3,
+        minimumDateRangeLength: 2,
         initialDateRange: _selectedDateRange,
         disabledDates: [DateTime(2023, 11, 20)],
         initialDisplayedDate: _selectedDateRange != null

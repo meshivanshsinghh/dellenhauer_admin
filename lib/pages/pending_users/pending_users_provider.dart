@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dellenhauer_admin/constants.dart';
 import 'package:flutter/material.dart';
@@ -85,24 +83,33 @@ class PendingUsersProvider extends ChangeNotifier {
   // approve pending user
   Future<void> acceptPendingUser({
     required String userId,
+    bool comingFromUserUpdate = false,
   }) async {
-    await _firebaseFirestore.collection('users').doc(userId).update({
-      'isVerified': true,
-    }).whenComplete(() async {
-      final Map<String, String> body = {
-        'userId': userId,
-      };
-      final response = await http.post(
-          Uri.parse(AppConstants.cloudFunctionDevAcceptPendingUser),
-          body: jsonEncode(body),
-          headers: {
-            'Content-Type': 'application/json',
-          });
-      if (response.statusCode == 200) {
-        debugPrint('Cloud function executed successfully');
-      } else {
-        debugPrint('Cloud function execution failed.');
-      }
-    });
+    if (!comingFromUserUpdate) {
+      await _firebaseFirestore.collection('users').doc(userId).update(
+        {'isVerified': true},
+      );
+    }
+    final response = await http.post(
+      Uri.parse(
+        '${AppConstants.cloudFunctionDevAcceptPendingUser}?userId=$userId',
+      ),
+    );
+    if (response.statusCode == 200) {
+      debugPrint('Cloud function executed successfully');
+    } else {
+      debugPrint('Cloud function execution failed., ${response.body}');
+    }
+  }
+
+  // deleting user
+  Future<void> deleteUser({required String userId}) async {
+    final String url = '${AppConstants.deleteUserDev}?userId=$userId';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      debugPrint('Successfully deleted user');
+    } else {
+      debugPrint(response.body);
+    }
   }
 }

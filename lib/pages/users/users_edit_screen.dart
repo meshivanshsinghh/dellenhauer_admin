@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dellenhauer_admin/model/awards/awards_model.dart';
 import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
+import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/widgets/user_and_channel_list_notification.dart';
 import 'package:dellenhauer_admin/pages/users/users_awards_list.dart';
 import 'package:dellenhauer_admin/pages/users/users_courses_list.dart';
@@ -60,34 +61,45 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   bool userEnteredNewEmail = false;
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   Uint8List? _imageFile;
+  late PendingUsersProvider pendingUserProvider;
 
   @override
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
       userProvider = Provider.of<UsersProvider>(context, listen: false);
+      pendingUserProvider =
+          Provider.of<PendingUsersProvider>(context, listen: false);
+      getData();
+    });
+  }
+
+  void getData() async {
+    userProvider.setLoading(isLoading: true);
+    try {
       userProvider.attachContext(context);
-      userProvider.setLoading(isLoading: true);
       userProvider.removeInvitedByUser();
       userProvider.selectedCourses.clear();
       userProvider.selectedUserAwards.clear();
       userProvider.setCurrentUserUniqueCode(null);
-      await userProvider.getUserDataFromId(widget.userId).then((value) {
-        setState(() {
-          currentUser = value!;
-        });
-        setData();
-      }).whenComplete(() {
-        userProvider.setLoading(isLoading: false);
-      });
-    });
+      UserModel? userData = await userProvider.getUserDataFromId(
+        userId: widget.userId,
+      );
+      if (userData != null && mounted) {
+        currentUser = userData;
+        await setData();
+      }
+    } catch (_) {
+    } finally {
+      userProvider.setLoading(isLoading: false);
+    }
   }
 
-  setData() async {
-    if (currentUser != null) {
-      if (mounted) {
+  Future<void> setData() async {
+    try {
+      if (currentUser != null && mounted) {
         setState(() {
-          _isPremiumUser = currentUser!.isPremiumUser!;
+          _isPremiumUser = currentUser!.isPremiumUser ?? false;
           _isVerified = currentUser!.isVerified!;
           _firstNameController.text = currentUser!.firstName!;
           _lastNameController.text = currentUser!.lastName!;
@@ -99,21 +111,30 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
           _phoneNumber.text = currentUser!.phoneNumber!;
           _websiteUrl.text = currentUser!.websiteUrl!;
           _isOnlineUser = currentUser!.isOnline!;
-          _wordpressCMSId.text = currentUser!.wordpressCMSuserId!.toString();
+          _wordpressCMSId.text =
+              (currentUser!.wordpressCMSuserId ?? '').toString();
         });
-        userProvider.selectedCourses.addAll(currentUser!.coursesModel!);
-        userProvider.selectedUserAwards.addAll(currentUser!.awardsModel!);
+        userProvider.selectedCourses.addAll(
+          currentUser!.coursesModel!,
+        );
+        userProvider.selectedUserAwards.addAll(
+          currentUser!.awardsModel!,
+        );
+
+        if (currentUser!.invitedBy != null &&
+            currentUser!.invitedBy!.trim().isNotEmpty) {
+          UserModel? invitedUserData = await userProvider.getUserDataFromId(
+            userId: currentUser!.invitedBy!,
+          );
+          if (invitedUserData != null) {
+            userProvider.setInvitedByUser(invitedUserData);
+          }
+        }
+        await userProvider.getCurrentUserInviteCode(widget.userId);
+        await fetchPushPermission(widget.userId);
       }
-      if (currentUser!.invitedBy != null &&
-          currentUser!.invitedBy!.trim().isNotEmpty) {
-        await userProvider
-            .getUserDataFromId(currentUser!.invitedBy!)
-            .then((value) {
-          userProvider.setInvitedByUser(value!);
-        });
-      }
-      userProvider.getCurrentUserInviteCode(currentUser!.userId!);
-      await fetchPushPermission(currentUser!.userId!);
+    } catch (e) {
+      debugPrint(e.toString());
     }
   }
 
@@ -235,6 +256,7 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     userProvider = Provider.of<UsersProvider>(context, listen: true);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -559,9 +581,10 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
                                 submitData();
                               },
                               style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30)),
-                                  backgroundColor: kPrimaryColor),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30)),
+                                backgroundColor: kPrimaryColor,
+                              ),
                               child: const Text('Save'),
                             ),
                           )
@@ -1108,8 +1131,14 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
     } else if (isEmailAddressAvailable != null &&
         isEmailAddressAvailable == false) {
       showSnackbar(context, 'Please select a valid email');
+    } else if (userProvider.invitedByUser != null && !_isVerified) {
+      showSnackbar(
+        context,
+        'Please check isVerified toggle to add/remove invited by user.',
+      );
     } else if (_formkey.currentState!.validate()) {
       UserModel userModelLatest = UserModel(
+        userId: widget.userId,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         nickname: _nickNameController.text.trim(),
@@ -1122,17 +1151,22 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
         invitedBy: userProvider.invitedByUser != null
             ? userProvider.invitedByUser!.userId
             : '',
+        invitedTimestamp: userProvider.invitedByUser != null
+            ? DateTime.now().millisecondsSinceEpoch.toString()
+            : '',
         phoneNumber: _phoneNumber.text.trim(),
         websiteUrl: _websiteUrl.text.trim(),
         isOnline: _isOnlineUser,
-        wordpressCMSuserId: int.parse(_wordpressCMSId.text.trim()),
+        wordpressCMSuserId: _wordpressCMSId.text.trim().isNotEmpty
+            ? int.parse(_wordpressCMSId.text.trim())
+            : null,
       );
       await userProvider
           .updateUserData(
         userModel: userModelLatest,
-        userId: widget.userId,
         activatePush: _activatePush,
         imageFile: _imageFile,
+        pendingUsersProvider: pendingUserProvider,
       )
           .whenComplete(() {
         showSnackbar(context, 'User data updated successfully');
