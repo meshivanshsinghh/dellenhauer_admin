@@ -5,6 +5,7 @@ import 'package:dellenhauer_admin/model/courses/courses_model.dart';
 import 'package:dellenhauer_admin/model/users/invitation_model.dart';
 import 'package:dellenhauer_admin/model/users/user_model.dart';
 import 'package:dellenhauer_admin/api_service.dart';
+import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -216,105 +217,176 @@ class UsersProvider extends ChangeNotifier {
   }
 
   // getting userdata form userId
-  Future<UserModel?> getUserDataFromId(String userId) async {
+  Future<UserModel?> getUserDataFromId({
+    required String userId,
+  }) async {
     DocumentSnapshot documentSnapshot =
         await firebaseFirestore.collection('users').doc(userId).get();
-    UserModel? userData =
-        UserModel.fromJson(documentSnapshot.data() as dynamic);
+    UserModel? userData = UserModel.fromJson(
+      documentSnapshot.data() as dynamic,
+    );
     return userData;
   }
 
   // adding awards data to usermodel
-  Future<void> addAwardsDataToUser(
-      {required AwardsModel awardsModel, required String userId}) async {
-    /*
-        going to user collection and then
-        adding a new array item under awards heading
-        then adding the awardsmodel data
-        */
+  Future<void> addAwardsDataToUser({
+    required AwardsModel awardsModel,
+    required String userId,
+  }) async {
     await firebaseFirestore.collection('users').doc(userId).update({
       'awards': FieldValue.arrayUnion([awardsModel.toMap()]),
     });
   }
 
-  // deleting a user
-  Future<void> deletingUser({required String userId}) async {
-    await firebaseFirestore.collection('users').doc(userId).delete();
-  }
-
   // updating existing data
   Future<void> updateUserData({
     required UserModel userModel,
-    required String userId,
-    required bool activatePush,
+    bool activatePush = false,
     Uint8List? imageFile,
+    required PendingUsersProvider pendingUsersProvider,
   }) async {
     try {
-      if (imageFile != null) {
-        await storeFileToFirebase('profilePic/$userId', imageFile)
-            .then((value) async {
-          await firebaseFirestore.collection('users').doc(userId).update({
-            'firstName': userModel.firstName,
-            'lastName': userModel.lastName,
-            'nickname': userModel.nickname,
-            'awards': userModel.awardsModel!.map((e) => e.toMap()).toList(),
-            'courses': userModel.coursesModel!.map((e) => e.toMap()).toList(),
-            'email': userModel.email,
-            'bio': userModel.bio,
-            'is_premium_user': userModel.isPremiumUser,
-            'isVerified': userModel.isVerified,
-            'invited_by': userModel.invitedBy,
-            'phoneNumber': userModel.phoneNumber,
-            'websiteUrl': userModel.websiteUrl,
-            'isOnline': userModel.isOnline,
-            'profilePic': value,
-          });
-        });
-      } else {
-        await firebaseFirestore.collection('users').doc(userId).update({
-          'firstName': userModel.firstName,
-          'lastName': userModel.lastName,
-          'nickname': userModel.nickname,
-          'awards': userModel.awardsModel!.map((e) => e.toMap()).toList(),
-          'courses': userModel.coursesModel!.map((e) => e.toMap()).toList(),
-          'email': userModel.email,
-          'bio': userModel.bio,
-          'is_premium_user': userModel.isPremiumUser,
-          'isVerified': userModel.isVerified,
-          'invited_by': userModel.invitedBy,
-          'phoneNumber': userModel.phoneNumber,
-          'websiteUrl': userModel.websiteUrl,
-          'isOnline': userModel.isOnline,
-        });
-      }
+      DocumentReference userRef =
+          firebaseFirestore.collection('users').doc(userModel.userId);
+      DocumentSnapshot oldUserSnapshot = await userRef.get();
+      UserModel oldUserModel =
+          UserModel.fromJson(oldUserSnapshot.data() as dynamic);
 
-      await _postDataHelper.updateUserData({
-        'wordpress_cms_userid': userModel.wordpressCMSuserId,
+      // Extracting old and new states for comparison
+      bool oldIsVerified = oldUserModel.isVerified ?? false;
+      bool newIsVerified = userModel.isVerified ?? false;
+      String? oldInvitedBy = oldUserModel.invitedBy;
+      String? newInvitedBy = userModel.invitedBy;
+
+      // Prepare user data update map
+      Map<String, dynamic> userDataUpdate = {
         'firstName': userModel.firstName,
         'lastName': userModel.lastName,
+        'nickname': userModel.nickname,
+        'email': userModel.email,
+        'bio': userModel.bio,
+        'is_premium_user': userModel.isPremiumUser,
+        'phoneNumber': userModel.phoneNumber,
         'websiteUrl': userModel.websiteUrl,
-      });
-      DocumentSnapshot documentSnapshot =
-          await firebaseFirestore.collection('users').doc(userId).get();
-      if (documentSnapshot.exists) {
-        String fcmToken = documentSnapshot['fcmToken'];
-        if (fcmToken.trim().isNotEmpty) {
-          QuerySnapshot query = await firebaseFirestore
-              .collection('devices')
-              .where('fcmToken', isEqualTo: userModel.fcmToken)
-              .get();
-          if (query.docs.isNotEmpty) {
-            await firebaseFirestore
-                .collection('devices')
-                .doc(query.docs[0].id)
-                .update({'activatePush': activatePush});
-          }
+        'isOnline': userModel.isOnline,
+      };
+
+      // Handle profile picture upload if present
+      if (imageFile != null) {
+        String profilePicUrl = await storeFileToFirebase(
+          'profilePic/${userModel.userId}',
+          imageFile,
+        );
+        userDataUpdate['profilePic'] = profilePicUrl;
+      }
+      bool invitedByCleared = oldInvitedBy != null &&
+          (newInvitedBy == null || newInvitedBy.trim().isEmpty);
+      bool invitedByChanged = oldInvitedBy != newInvitedBy &&
+          newInvitedBy != null &&
+          newInvitedBy.trim().isNotEmpty;
+
+      if (invitedByChanged || invitedByCleared) {
+        userDataUpdate['invited_by'] = newInvitedBy ?? '';
+        userDataUpdate['invited_timestamp'] = newInvitedBy != null
+            ? userModel.invitedTimestamp ??
+                DateTime.now().millisecondsSinceEpoch.toString()
+            : '';
+
+        if (invitedByChanged && newIsVerified) {
+          await addInvitedByUserCurrentInvitation(
+            currentUserId: userModel.userId!,
+            referedUserId: newInvitedBy,
+          );
         }
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
+      if (oldIsVerified != newIsVerified) {
+        userDataUpdate['isVerified'] = newIsVerified;
+        if (newIsVerified) {
+          await pendingUsersProvider.acceptPendingUser(
+            userId: userModel.userId!,
+            comingFromUserUpdate: true,
+          );
+        }
       }
+      if (invitedByCleared && oldInvitedBy.trim().isNotEmpty) {
+        await removeInvitedByUserCurrentInvitation(
+          currentUserId: userModel.userId!,
+          referedUserId: oldInvitedBy,
+        );
+      }
+
+      await userRef.update(userDataUpdate);
+      if (userModel.wordpressCMSuserId != null) {
+        await _postDataHelper.updateUserData({
+          'wordpress_cms_userid': userModel.wordpressCMSuserId,
+          'firstName': userModel.firstName,
+          'lastName': userModel.lastName,
+          'websiteUrl': userModel.websiteUrl,
+        });
+      }
+      await _updatePushActivation(userModel.userId!, activatePush);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> _updatePushActivation(String userId, bool activatePush) async {
+    DocumentSnapshot userDoc =
+        await firebaseFirestore.collection('users').doc(userId).get();
+    String fcmToken = userDoc['fcmToken'] ?? '';
+    if (fcmToken.isNotEmpty) {
+      QuerySnapshot deviceQuery = await firebaseFirestore
+          .collection('devices')
+          .where('fcmToken', isEqualTo: fcmToken)
+          .get();
+
+      if (deviceQuery.docs.isNotEmpty) {
+        await firebaseFirestore
+            .collection('devices')
+            .doc(deviceQuery.docs.first.id)
+            .update({'activatePush': activatePush});
+      }
+    }
+  }
+
+  Future<void> removeInvitedByUserCurrentInvitation({
+    required String currentUserId,
+    required String referedUserId,
+  }) async {
+    if (referedUserId.trim().isNotEmpty) {
+      try {
+        QuerySnapshot qSnapshot = await firebaseFirestore
+            .collection('invitations')
+            .doc(referedUserId)
+            .collection('user_invitations')
+            .where('accepted_user_id', isEqualTo: currentUserId)
+            .get();
+        if (qSnapshot.docs.isEmpty) return;
+        final batch = firebaseFirestore.batch();
+        for (DocumentSnapshot doc in qSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      } catch (e) {
+        debugPrint('Error removing invited by user current invitation: $e');
+      }
+    }
+  }
+
+  Future<void> addInvitedByUserCurrentInvitation({
+    required String currentUserId,
+    required String referedUserId,
+  }) async {
+    if (referedUserId.trim().isNotEmpty) {
+      await firebaseFirestore
+          .collection('invitations')
+          .doc(referedUserId)
+          .collection('user_invitations')
+          .add(InvitationModel(
+            acceptedTimestamp: DateTime.now().millisecondsSinceEpoch.toString(),
+            acceptedUserId: currentUserId,
+            createdUserId: referedUserId,
+          ).toJson());
     }
   }
 

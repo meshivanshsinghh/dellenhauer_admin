@@ -264,7 +264,6 @@ class ChannelProvider extends ChangeNotifier {
 
   Future<void> removeUserFromChannel({
     required String userId,
-    required bool isModerator,
     required String channelId,
     required String channelName,
   }) async {
@@ -276,82 +275,47 @@ class ChannelProvider extends ChangeNotifier {
       return;
     }
 
-    String roleToRemove = isModerator ? 'moderators' : 'members';
-    String totalRoleToRemove = isModerator ? 'totalModerators' : 'totalMembers';
-    DocumentSnapshot userRoleSnapshot = await channelCollection
-        .doc(channelId)
-        .collection(roleToRemove)
-        .doc(userId)
-        .get();
+    Map<String, dynamic> channelData =
+        channelSnapshot.data() as Map<String, dynamic>;
 
-    if (userRoleSnapshot.exists) {
-      await channelCollection
-          .doc(channelId)
-          .collection(roleToRemove)
-          .doc(userId)
-          .delete();
-
-      Map<String, dynamic> channelData = channelSnapshot.data() as dynamic;
-
-      if (channelData.containsKey(totalRoleToRemove) &&
-          channelData[totalRoleToRemove] > 0) {
-        await channelCollection.doc(channelId).update({
-          totalRoleToRemove: FieldValue.increment(-1),
+    // Check and remove from moderators collection
+    DocumentReference moderatorRef =
+        channelCollection.doc(channelId).collection('moderators').doc(userId);
+    if ((await moderatorRef.get()).exists) {
+      await moderatorRef.delete();
+      if (channelData['totalModerators'] > 0) {
+        channelCollection.doc(channelId).update({
+          'totalModerators': FieldValue.increment(-1),
         });
       }
+      // Send notification to the user if removed from moderators
+      sendSingleUserPushNotification(
+        userId: userId,
+        message: 'You have been removed as a moderator from $channelName',
+        title: 'Removed as Moderator',
+        channelId: channelId,
+        channelName: channelName,
+      );
+    }
 
-      if (isModerator) {
-        DocumentSnapshot memberRoleSnapshot = await channelCollection
-            .doc(channelId)
-            .collection('members')
-            .doc(userId)
-            .get();
-        if (memberRoleSnapshot.exists) {
-          await channelCollection
-              .doc(channelId)
-              .collection('members')
-              .doc(userId)
-              .delete();
-          if (channelData.containsKey('totalMembers') &&
-              channelData['totalMembers'] > 0) {
-            await channelCollection.doc(channelId).update({
-              'totalMembers': FieldValue.increment(-1),
-            });
-          }
-        }
-      }
-
-      DocumentSnapshot remainingUserRoleSnapshot;
-      if (isModerator) {
-        remainingUserRoleSnapshot = await channelCollection
-            .doc(channelId)
-            .collection('members')
-            .doc(userId)
-            .get();
-      } else {
-        remainingUserRoleSnapshot = await channelCollection
-            .doc(channelId)
-            .collection('moderators')
-            .doc(userId)
-            .get();
-      }
-
-      if (!remainingUserRoleSnapshot.exists) {
-        await firebaseFirestore.collection('users').doc(userId).update({
-          'joinedChannels': FieldValue.arrayRemove([channelId])
+    // Check and remove from members collection
+    DocumentReference memberRef =
+        channelCollection.doc(channelId).collection('members').doc(userId);
+    if ((await memberRef.get()).exists) {
+      await memberRef.delete();
+      if (channelData['totalMembers'] > 0) {
+        channelCollection.doc(channelId).update({
+          'totalMembers': FieldValue.increment(-1),
         });
-        await handleUserChannelRequests(channelId, userId, isApproved: false);
       }
+    }
 
-      if (isModerator) {
-        sendSingleUserPushNotification(
-          userId: userId,
-          message: 'Sie wurden als Moderator von $channelName entfernt',
-          title: 'Als Moderator entfernt',
-          channelId: channelId,
-          channelName: channelName,
-        );
-      }
+    // Update user's joinedChannels list if the user is no longer part of the channel
+    if (!(await moderatorRef.get()).exists && !(await memberRef.get()).exists) {
+      firebaseFirestore.collection('users').doc(userId).update({
+        'joinedChannels': FieldValue.arrayRemove([channelId])
+      });
+      handleUserChannelRequests(channelId, userId, isApproved: false);
     }
   }
 
