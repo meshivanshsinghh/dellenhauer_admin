@@ -4,7 +4,6 @@ import 'package:dellenhauer_admin/pages/settings/settings_provider.dart';
 import 'package:dellenhauer_admin/providers/admin_provider.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:dellenhauer_admin/utils/styles.dart';
-import 'package:dellenhauer_admin/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +26,7 @@ class _AdminPasswordChangeState extends State<AdminPasswordChange> {
     Future.delayed(Duration.zero, () {
       adminDataProvider =
           Provider.of<AdminDataProvider>(context, listen: false);
-      adminDataProvider.getAdminPassword();
+      // adminDataProvider.getAdminPassword();
     });
   }
 
@@ -108,40 +107,40 @@ class _AdminPasswordChangeState extends State<AdminPasswordChange> {
                                   fontWeight: FontWeight.w600),
                             ),
                       onPressed: () async {
-                        if (_oldPasswordController.text.trim() !=
-                            adminDataProvider.adminPassword!.trim()) {
-                          showSnackbar(
-                            context,
-                            'Wrong old-password entered. Please enter correct password to update',
-                          );
-                          settingsProvider.setLoading(false);
-                        } else if (_oldPasswordController.text.trim() ==
-                                adminDataProvider.adminPassword!.trim() &&
-                            _newPasswordController.text.trim().isNotEmpty) {
-                          settingsProvider.setLoading(true);
-                          settingsProvider
-                              .updateAdminPassword(
-                                _newPasswordController.text.trim(),
-                              )
-                              .then((value) =>
-                                  adminDataProvider.getAdminPassword())
-                              .whenComplete(() {
-                            showSnackbar(
-                              context,
-                              'Password changed successfully',
-                            );
-                            Timer(
-                              const Duration(milliseconds: 400),
-                              () => Navigator.of(context).pop(),
-                            );
-                          });
-                        } else if (_oldPasswordController.text.trim() ==
-                                adminDataProvider.adminPassword!.trim() &&
-                            _newPasswordController.text.trim().isEmpty) {
-                          showSnackbar(context, 'Please enter new password');
-                        } else {
-                          showSnackbar(context, 'Unexpected error!');
-                        }
+                        // if (_oldPasswordController.text.trim() !=
+                        //     adminDataProvider.adminPassword!.trim()) {
+                        //   showSnackbar(
+                        //     context,
+                        //     'Wrong old-password entered. Please enter correct password to update',
+                        //   );
+                        //   settingsProvider.setLoading(false);
+                        // } else if (_oldPasswordController.text.trim() ==
+                        //         adminDataProvider.adminPassword!.trim() &&
+                        //     _newPasswordController.text.trim().isNotEmpty) {
+                        //   settingsProvider.setLoading(true);
+                        //   settingsProvider
+                        //       .updateAdminPassword(
+                        //         _newPasswordController.text.trim(),
+                        //       )
+                        //       .then((value) =>
+                        //           adminDataProvider.getAdminPassword())
+                        //       .whenComplete(() {
+                        //     showSnackbar(
+                        //       context,
+                        //       'Password changed successfully',
+                        //     );
+                        //     Timer(
+                        //       const Duration(milliseconds: 400),
+                        //       () => Navigator.of(context).pop(),
+                        //     );
+                        //   });
+                        // } else if (_oldPasswordController.text.trim() ==
+                        //         adminDataProvider.adminPassword!.trim() &&
+                        //     _newPasswordController.text.trim().isEmpty) {
+                        //   showSnackbar(context, 'Please enter new password');
+                        // } else {
+                        //   showSnackbar(context, 'Unexpected error!');
+                        // }
                       },
                     ),
                   ),

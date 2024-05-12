@@ -7,10 +7,10 @@ import 'package:flutter/foundation.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(headers: {
-    'X-API-KEY': AppConstants.X_API_KEY,
+    'X-API-KEY': AppConstants.dellenhauereBestCMSKey,
   }));
 
-  final BASE_URL_ANALYTICS_API =
+  final baseUrlAnalyticsApi =
       'https://dellenhauerapi-e48eb97aae38.herokuapp.com/analytics/';
   // update user data
   Future<void> updateUserData(Map<String, dynamic> data) async {
@@ -45,7 +45,7 @@ class ApiService {
       String startDate = formatDate(start);
       String endDate = formatDate(end);
       Response response = await _dio.get(
-        '$BASE_URL_ANALYTICS_API$eventName?start_date=$startDate&end_date=$endDate',
+        '$baseUrlAnalyticsApi$eventName?start_date=$startDate&end_date=$endDate',
       );
 
       if (response.statusCode == 200) {

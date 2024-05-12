@@ -63,3 +63,12 @@ left:
 // 
 1. check google analytics integration completely. 
 2. adding new user don't create their wordpress cms id
+
+
+
+
+- change remote config logic for blocked numbers 
+- add more channels to admin panel 
+- deploy prod and dev environment
+- remove change password logic 
+- update dellenhauer dev rules in cloud firestore and also update 

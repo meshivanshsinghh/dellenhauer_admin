@@ -1,6 +1,6 @@
 # dellenhauer_admin
 
-A new Flutter project.
+Software for operating the #DELLENHAUER app.
 
 ## Getting Started
 

@@ -92,7 +92,7 @@ class PendingUsersProvider extends ChangeNotifier {
     }
     final response = await http.post(
       Uri.parse(
-        '${AppConstants.cloudFunctionDevAcceptPendingUser}?userId=$userId',
+        '${AppConstants.acceptPendingUser}?userId=$userId',
       ),
     );
     if (response.statusCode == 200) {
@@ -104,7 +104,7 @@ class PendingUsersProvider extends ChangeNotifier {
 
   // deleting user
   Future<void> deleteUser({required String userId}) async {
-    final String url = '${AppConstants.deleteUserDev}?userId=$userId';
+    final String url = '${AppConstants.deleteUser}?userId=$userId';
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       debugPrint('Successfully deleted user');

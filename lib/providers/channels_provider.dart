@@ -467,7 +467,7 @@ class ChannelProvider extends ChangeNotifier {
 
   Future<void> deleteChannelFromDatabase(String channelId) async {
     final String url =
-        '${AppConstants.cloudFunctionDevDeleteChannelFromDatabase}?channelId=$channelId';
+        '${AppConstants.deleteChannelFromDatabase}?channelId=$channelId';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -525,7 +525,7 @@ class ChannelProvider extends ChangeNotifier {
             headers: {
               HttpHeaders.contentTypeHeader: 'application/json',
               HttpHeaders.authorizationHeader:
-                  AppConstants.authorizationHeaderFCMDev,
+                  AppConstants.getAuthorizationHeader,
             },
             body: jsonEncode(notificationPayload),
           );
@@ -574,8 +574,7 @@ class ChannelProvider extends ChangeNotifier {
           imageFile,
         );
       } else {
-        downloadUrl =
-            'https://theperfectroundgolf.com/wp-content/uploads/2022/04/placeholder.png';
+        downloadUrl = AppConstants.placeholderImage;
       }
       ChannelModel channelModel = ChannelModel(
         channelName: channelName,

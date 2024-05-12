@@ -1,3 +1,4 @@
+import 'package:dellenhauer_admin/constants.dart';
 import 'package:dellenhauer_admin/pages/new_channel_requests/new_channel_requests_provider.dart';
 import 'package:dellenhauer_admin/pages/pending_users/pending_users_provider.dart';
 import 'package:dellenhauer_admin/pages/push_notification/push_notification_logs_provider.dart';
@@ -23,29 +24,13 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    // Production Options
-    // options: const FirebaseOptions(
-    //   apiKey: "AIzaSyBW5QMvs76hSmLz6XkhF87G_Badzom-67o",
-    //   appId: "1:337585374916:web:925d5442d2f8c7bfb5eb91",
-    //   messagingSenderId: "337585374916",
-    //   projectId: "dellenhauer-eae5f",
-    //   storageBucket: "dellenhauer-eae5f.appspot.com",
-    // ),
-
-    // Development Options
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyAaRUuuIIbpBmVLds4AljLPNg5Vw3Eo4-E",
-      authDomain: "dellenhauerdev.firebaseapp.com",
-      projectId: "dellenhauerdev",
-      storageBucket: "dellenhauerdev.appspot.com",
-      messagingSenderId: "728511266197",
-      appId: "1:728511266197:web:06b9aa9b37fefe3c0c8a9c",
-      measurementId: "G-Q06DJ22R7S",
-    ),
+    options: AppConstants.firebaseOptions,
   );
   setUrlStrategy(PathUrlStrategy());
   runApp(const MyApp());
 }
+
+final mainNavigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -81,9 +66,11 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(builder: (context) {
         return MaterialApp(
+          navigatorKey: mainNavigatorKey,
           debugShowCheckedModeBanner: false,
           scrollBehavior: TouchAndMouseScrollbehaviour(),
           theme: ThemeData(
+            useMaterial3: false,
             fontFamily: 'Poppins',
             primaryColor: kPrimaryColor,
             appBarTheme: AppBarTheme(

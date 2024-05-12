@@ -38,7 +38,7 @@ class UsersProvider extends ChangeNotifier {
   String? _currentUserUniqueCode;
   String? get currentUserUniqueCode => _currentUserUniqueCode;
   final Dio dio = Dio(BaseOptions(headers: {
-    'X-API-KEY': AppConstants.X_API_KEY,
+    'X-API-KEY': AppConstants.dellenhauereBestCMSKey,
   }));
 
   // create new channel's section
@@ -316,10 +316,6 @@ class UsersProvider extends ChangeNotifier {
               userDataUpdate['wordpress_cms_userid'] = code;
             }
           }
-          await pendingUsersProvider.acceptPendingUser(
-            userId: userModel.userId!,
-            comingFromUserUpdate: true,
-          );
         }
       }
       if (invitedByCleared && oldInvitedBy.trim().isNotEmpty) {

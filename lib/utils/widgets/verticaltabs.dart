@@ -134,14 +134,12 @@ class _VerticalTabsState extends State<VerticalTabs>
                                         ? Row(
                                             children: <Widget>[
                                               tab.icon!,
-                                              SizedBox(
-                                                width: 5,
-                                              )
+                                              const SizedBox(width: 5)
                                             ],
                                           )
                                         : Container(),
                                     (tab.text != null)
-                                        ? Container(
+                                        ? SizedBox(
                                             width: widget.tabsWidth - 50,
                                             child: Text(
                                               tab.text!,

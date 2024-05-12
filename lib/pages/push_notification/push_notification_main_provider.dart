@@ -196,7 +196,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
             headers: {
               HttpHeaders.contentTypeHeader: 'application/json',
               HttpHeaders.authorizationHeader:
-                  AppConstants.authorizationHeaderFCMDev,
+                  AppConstants.getAuthorizationHeader,
             },
             body: jsonEncode(notificationPayload),
           );
@@ -257,8 +257,7 @@ class PushNotificationMainProvider extends ChangeNotifier {
         Uri.parse(AppConstants.firebaseUrl),
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',
-          HttpHeaders.authorizationHeader:
-              AppConstants.authorizationHeaderFCMDev,
+          HttpHeaders.authorizationHeader: AppConstants.getAuthorizationHeader,
         },
         body: jsonEncode(notificationPayload),
       );

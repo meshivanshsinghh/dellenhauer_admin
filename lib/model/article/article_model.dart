@@ -20,25 +20,25 @@ class ArticleModel {
   PreviousArticle? nextArticle;
 
   ArticleModel(
-      {this.id,
-      this.headline,
-      this.subheadline,
-      this.content,
-      this.nextArticle,
-      this.previewImage,
-      this.previousArticle,
-      this.relatedArticles,
-      this.createdDate,
-      this.headerImage,
-      this.video,
-      this.badge,
-      this.category,
-      this.tags,
-      this.visible,
-      this.interactionSettings,
-      this.permalink,
-      this.audioPlaylist,
-      this.authorId});
+      {id,
+      headline,
+      subheadline,
+      content,
+      nextArticle,
+      previewImage,
+      previousArticle,
+      relatedArticles,
+      createdDate,
+      headerImage,
+      video,
+      badge,
+      category,
+      tags,
+      visible,
+      interactionSettings,
+      permalink,
+      audioPlaylist,
+      authorId});
 
   ArticleModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -89,33 +89,33 @@ class ArticleModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = this.id;
-    data['headline'] = this.headline;
-    data['subheadline'] = this.subheadline;
-    data['content'] = this.content;
-    data['preview_image'] = this.previewImage;
-    data['created_date'] = this.createdDate;
-    if (this.headerImage != null) {
-      data['header_image'] = this.headerImage!.toJson();
+    final Map<String, dynamic> data = {};
+    data['id'] = id;
+    data['headline'] = headline;
+    data['subheadline'] = subheadline;
+    data['content'] = content;
+    data['preview_image'] = previewImage;
+    data['created_date'] = createdDate;
+    if (headerImage != null) {
+      data['header_image'] = headerImage!.toJson();
     }
-    if (this.video != null) {
-      data['video'] = this.video!.toJson();
+    if (video != null) {
+      data['video'] = video!.toJson();
     }
-    data['badge'] = this.badge;
-    if (this.category != null) {
-      data['category'] = this.category!.map((v) => v.toJson()).toList();
+    data['badge'] = badge;
+    if (category != null) {
+      data['category'] = category!.map((v) => v.toJson()).toList();
     }
-    if (this.tags != null) {
-      data['tags'] = this.tags!.map((v) => v.toJson()).toList();
+    if (tags != null) {
+      data['tags'] = tags!.map((v) => v.toJson()).toList();
     }
-    data['visible'] = this.visible;
-    if (this.interactionSettings != null) {
-      data['interaction_settings'] = this.interactionSettings!.toJson();
+    data['visible'] = visible;
+    if (interactionSettings != null) {
+      data['interaction_settings'] = interactionSettings!.toJson();
     }
-    data['permalink'] = this.permalink;
-    if (this.audioPlaylist != null) {
-      data['audio_playlist'] = this.audioPlaylist!.toJson();
+    data['permalink'] = permalink;
+    if (audioPlaylist != null) {
+      data['audio_playlist'] = audioPlaylist!.toJson();
     }
     if (previousArticle != null) {
       data['previous_article'] = previousArticle?.toJson();
@@ -127,7 +127,7 @@ class ArticleModel {
     if (nextArticle != null) {
       data['next_article'] = nextArticle?.toJson();
     }
-    data['author_id'] = this.authorId;
+    data['author_id'] = authorId;
     return data;
   }
 }
@@ -136,7 +136,7 @@ class HeaderImage {
   bool? show;
   String? url;
 
-  HeaderImage({this.show, this.url});
+  HeaderImage({show, url});
 
   HeaderImage.fromJson(Map<String, dynamic> json) {
     show = json['show'];
@@ -144,9 +144,9 @@ class HeaderImage {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['show'] = this.show;
-    data['url'] = this.url;
+    final Map<String, dynamic> data = {};
+    data['show'] = show;
+    data['url'] = url;
     return data;
   }
 }
@@ -155,7 +155,7 @@ class Video {
   String? href;
   String? platform;
 
-  Video({this.href, this.platform});
+  Video({href, platform});
 
   Video.fromJson(Map<String, dynamic> json) {
     href = json['href'];
@@ -163,9 +163,9 @@ class Video {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['href'] = this.href;
-    data['platform'] = this.platform;
+    final Map<String, dynamic> data = {};
+    data['href'] = href;
+    data['platform'] = platform;
     return data;
   }
 }
@@ -174,7 +174,7 @@ class CategoryModel {
   int? id;
   String? name;
 
-  CategoryModel({this.id, this.name});
+  CategoryModel({id, name});
 
   CategoryModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -182,9 +182,9 @@ class CategoryModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = this.id;
-    data['name'] = this.name;
+    final Map<String, dynamic> data = {};
+    data['id'] = id;
+    data['name'] = name;
     return data;
   }
 }
@@ -193,7 +193,7 @@ class Tags {
   int? id;
   String? name;
 
-  Tags({this.id, this.name});
+  Tags({id, name});
 
   Tags.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -201,9 +201,9 @@ class Tags {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = this.id;
-    data['name'] = this.name;
+    final Map<String, dynamic> data = {};
+    data['id'] = id;
+    data['name'] = name;
     return data;
   }
 }
@@ -213,8 +213,7 @@ class InteractionSettings {
   bool? activateShare;
   bool? activateComment;
 
-  InteractionSettings(
-      {this.activateLike, this.activateShare, this.activateComment});
+  InteractionSettings({activateLike, activateShare, activateComment});
 
   InteractionSettings.fromJson(Map<String, dynamic> json) {
     activateLike = json['activate_like'];
@@ -223,10 +222,10 @@ class InteractionSettings {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['activate_like'] = this.activateLike;
-    data['activate_share'] = this.activateShare;
-    data['activate_comment'] = this.activateComment;
+    final Map<String, dynamic> data = {};
+    data['activate_like'] = activateLike;
+    data['activate_share'] = activateShare;
+    data['activate_comment'] = activateComment;
     return data;
   }
 }
@@ -236,7 +235,7 @@ class AudioPlaylist {
   String? badge;
   List<AudioTracks>? tracks;
 
-  AudioPlaylist({this.title, this.badge, this.tracks});
+  AudioPlaylist({title, badge, tracks});
 
   AudioPlaylist.fromJson(Map<String, dynamic> json) {
     title = json['title'];
@@ -250,11 +249,11 @@ class AudioPlaylist {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['title'] = this.title;
-    data['badge'] = this.badge;
-    if (this.tracks != null) {
-      data['tracks'] = this.tracks!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = {};
+    data['title'] = title;
+    data['badge'] = badge;
+    if (tracks != null) {
+      data['tracks'] = tracks!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -268,13 +267,7 @@ class AudioTracks {
   String? duration;
   String? trackId;
 
-  AudioTracks(
-      {this.title,
-      this.author,
-      this.url,
-      this.image,
-      this.duration,
-      this.trackId});
+  AudioTracks({title, author, url, image, duration, trackId});
 
   AudioTracks.fromJson(Map<String, dynamic> json) {
     title = json['title'];
@@ -286,13 +279,13 @@ class AudioTracks {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['title'] = this.title;
-    data['author'] = this.author;
-    data['url'] = this.url;
-    data['image'] = this.image;
-    data['duration'] = this.duration;
-    data['track_id'] = this.trackId;
+    final Map<String, dynamic> data = {};
+    data['title'] = title;
+    data['author'] = author;
+    data['url'] = url;
+    data['image'] = image;
+    data['duration'] = duration;
+    data['track_id'] = trackId;
     return data;
   }
 }
@@ -303,7 +296,7 @@ class RelatedArticle {
   String? subheadline;
   String? previewImage;
 
-  RelatedArticle({this.id, this.headline, this.subheadline, this.previewImage});
+  RelatedArticle({id, headline, subheadline, previewImage});
 
   RelatedArticle.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -327,7 +320,7 @@ class PreviousArticle {
   String? headline;
   String? subheadline;
 
-  PreviousArticle({this.id, this.headline, this.subheadline});
+  PreviousArticle({id, headline, subheadline});
 
   PreviousArticle.fromJson(Map<String, dynamic> json) {
     id = json['id'];
