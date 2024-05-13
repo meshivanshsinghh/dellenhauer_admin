@@ -1,4 +1,3 @@
-import 'package:dellenhauer_admin/pages/settings/admin_password_change.dart';
 import 'package:dellenhauer_admin/pages/settings/blocked_numbers.dart';
 import 'package:dellenhauer_admin/utils/colors.dart';
 import 'package:flutter/material.dart';
@@ -58,18 +57,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(
               height: 30,
             ),
-            buildItem(
-              'Change Login Password',
-              FontAwesomeIcons.lock,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminPasswordChange(),
-                  ),
-                );
-              },
-            ),
+            // buildItem(
+            //   'Change Login Password',
+            //   FontAwesomeIcons.lock,
+            //   () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => const AdminPasswordChange(),
+            //       ),
+            //     );
+            //   },
+            // ),
+
             buildItem(
               'Blocked Numbers',
               FontAwesomeIcons.phone,

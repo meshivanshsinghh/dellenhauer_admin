@@ -53,33 +53,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   Future _loadData() async {
-    mostOpenedArticles = _apiService.getMostViewedArticles(
+    mostOpenedArticles = _apiService.getAnalyticsEntries(
       eventName: 'article_opened',
       start: selectedDateRange.start,
       end: selectedDateRange.end,
     );
 
-    mostLikedArticles = _apiService.getMostViewedArticles(
+    mostLikedArticles = _apiService.getAnalyticsEntries(
       eventName: 'article_view_duration',
       start: selectedDateRange.start,
       end: selectedDateRange.end,
     );
-    mostViewedArticles = _apiService.getMostViewedArticles(
+    mostViewedArticles = _apiService.getAnalyticsEntries(
       eventName: 'article_share',
       start: selectedDateRange.start,
       end: selectedDateRange.end,
     );
-    mostSharedArticles = _apiService.getMostViewedArticles(
+    mostSharedArticles = _apiService.getAnalyticsEntries(
       eventName: 'article_share',
       start: selectedDateRange.start,
       end: selectedDateRange.end,
     );
-    mostJoinedChannels = _apiService.getMostViewedArticles(
+    mostJoinedChannels = _apiService.getAnalyticsEntries(
       eventName: 'channel_join',
       start: selectedDateRange.start,
       end: selectedDateRange.end,
     );
-    mostDownloadedArticles = _apiService.getMostViewedArticles(
+    mostDownloadedArticles = _apiService.getAnalyticsEntries(
       eventName: 'article_downloaded',
       start: selectedDateRange.start,
       end: selectedDateRange.end,

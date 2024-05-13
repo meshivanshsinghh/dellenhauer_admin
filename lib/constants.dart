@@ -37,6 +37,8 @@ class AppConstants {
     return appUrl;
   }
 
+  static String getAnalyticsData = '$appBaseUrl/getAnalyticsData';
+
   static String acceptPendingUser =
       '$appBaseUrl/sendActivationPushNotification';
   static String deleteChannelFromDatabase =

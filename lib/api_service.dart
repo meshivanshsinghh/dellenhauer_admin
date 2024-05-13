@@ -10,8 +10,6 @@ class ApiService {
     'X-API-KEY': AppConstants.dellenhauereBestCMSKey,
   }));
 
-  final baseUrlAnalyticsApi =
-      'https://dellenhauerapi-e48eb97aae38.herokuapp.com/analytics/';
   // update user data
   Future<void> updateUserData(Map<String, dynamic> data) async {
     try {
@@ -35,7 +33,7 @@ class ApiService {
   }
 
   // get analytics entries
-  Future<List<AnalyticsModel>> getMostViewedArticles({
+  Future<List<AnalyticsModel>> getAnalyticsEntries({
     required String eventName,
     required DateTime start,
     required DateTime end,
@@ -44,20 +42,16 @@ class ApiService {
     try {
       String startDate = formatDate(start);
       String endDate = formatDate(end);
-      Response response = await _dio.get(
-        '$baseUrlAnalyticsApi$eventName?start_date=$startDate&end_date=$endDate',
-      );
+      final url =
+          '${AppConstants.getAnalyticsData}?eventName=$eventName&start_date=$startDate&end_date=$endDate';
+      Response response = await _dio.get(url);
 
       if (response.statusCode == 200) {
         for (var data in response.data) {
           articles.add(AnalyticsModel.fromJson(data));
         }
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
-    }
+    } catch (_) {}
     return articles;
   }
 

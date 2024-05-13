@@ -11,7 +11,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get hasData => _hasData;
   bool _isLoadingMoreContent = false;
   bool get isLoadingMoreContent => _isLoadingMoreContent;
-  List<DocumentSnapshot> _data = [];
+  final List<DocumentSnapshot> _data = [];
   List<DocumentSnapshot> get data => _data;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
@@ -36,16 +36,12 @@ class SettingsProvider extends ChangeNotifier {
     QuerySnapshot querySnapshot;
     if (_lastVisible == null) {
       querySnapshot = await firebaseFirestore
-          .collection('admin')
-          .doc('settings')
           .collection('blocked_numbers')
           .orderBy(orderBy, descending: descending)
           .limit(15)
           .get();
     } else {
       querySnapshot = await firebaseFirestore
-          .collection('admin')
-          .doc('settings')
           .collection('blocked_numbers')
           .orderBy(orderBy, descending: descending)
           .startAfter([_lastVisible![orderBy]])
@@ -73,25 +69,13 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateAdminPassword(String newPassword) async {
-    await firebaseFirestore.collection('admin').doc('settings').update({
-      'admin_password': newPassword,
-    }).whenComplete(() => setLoading(false));
-  }
-
   Future<bool> addPhoneNumber(String phoneNumber) async {
     QuerySnapshot query = await firebaseFirestore
-        .collection('admin')
-        .doc('settings')
         .collection('blocked_numbers')
         .where('phoneNumber', isEqualTo: phoneNumber)
         .get();
     if (query.docs.isEmpty) {
-      await firebaseFirestore
-          .collection('admin')
-          .doc('settings')
-          .collection('blocked_numbers')
-          .add({
+      await firebaseFirestore.collection('blocked_numbers').add({
         'createdAt': DateTime.now().millisecondsSinceEpoch,
         'phoneNumber': phoneNumber,
       });
@@ -115,15 +99,11 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> removeNumberFromDatabase(String phoneNumber) async {
     QuerySnapshot query = await firebaseFirestore
-        .collection('admin')
-        .doc('settings')
         .collection('blocked_numbers')
         .where('phoneNumber', isEqualTo: phoneNumber)
         .get();
     if (query.docs.isNotEmpty) {
       await firebaseFirestore
-          .collection('admin')
-          .doc('settings')
           .collection('blocked_numbers')
           .doc(query.docs[0].id)
           .delete();

@@ -70,5 +70,7 @@ left:
 - change remote config logic for blocked numbers 
 - add more channels to admin panel 
 - deploy prod and dev environment
-- remove change password logic 
-- update dellenhauer dev rules in cloud firestore and also update 
+- remove change password logic done 
+- update dellenhauer dev rules in cloud firestore and also update   done 
+- look for channelrequests logic when adding user directly from admin panel.  - done 
+- code for google analytics 

@@ -35,7 +35,7 @@ class _AnalayticsDetailScreenState extends State<AnalayticsDetailScreen> {
   }
 
   Future loadData() async {
-    future = apiService.getMostViewedArticles(
+    future = apiService.getAnalyticsEntries(
       eventName: widget.eventName,
       start: selectedDateRange.start,
       end: selectedDateRange.end,

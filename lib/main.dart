@@ -21,6 +21,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:provider/provider.dart';
 
+final mainNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -29,8 +31,6 @@ void main() async {
   setUrlStrategy(PathUrlStrategy());
   runApp(const MyApp());
 }
-
-final mainNavigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
